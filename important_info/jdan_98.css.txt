@@ -1,0 +1,68 @@
+Here are the top 10 most important pieces of information from the provided files:
+
+---
+**1. Project Description and Core Features**
+98.css is a design system for building faithful recreations of old user interfaces. It is a CSS-only file, meaning it ships without any JavaScript and is compatible with any frontend framework. Its purpose is to take semantic HTML and style it to look like classic UIs, such as Windows 98. Visual examples show a typical Windows 98 dialog window and highlight pixel-perfect borders.
+
+---
+**2. CDN Installation and Basic Usage Example (HTML Head)**
+The easiest way to use 98.css is by importing it directly from unpkg via a `<link>` tag in your HTML `<head>`:
+
+```html
+<link rel="stylesheet" href="https://unpkg.com/98.css" />
+```
+
+---
+**3. Basic HTML Structure Example for UI Components**
+To apply the 98.css styles, you use specific class names on semantic HTML elements. Here's an example of the basic structure for a window component:
+
+```html
+<div class="window" style="margin: 32px; width: 250px">
+  <div class="title-bar">
+    <div class="title-bar-text">
+      My First VB4 Program
+    </div>
+  </div>
+  <div class="window-body">
+    <p>Hello, world!</p>
+  </div>
+</div>
+```
+
+---
+**4. NPM Installation**
+For developers working with Node.js projects, 98.css can be installed via npm:
+
+```
+npm install 98.css
+```
+
+---
+**5. Comprehensive Documentation Link**
+For specific instructions and a detailed reference on all available components and their usage, refer to the official documentation page:
+[https://jdan.github.io/98.css/](https://jdan.github.io/98.css/)
+
+---
+**6. Examples of Framework Integration**
+The project provides ready-to-use examples demonstrating how 98.css can be integrated with popular frontend frameworks and vanilla JavaScript:
+*   [React example](https://codesandbox.io/s/objective-chandrasekhar-t5t6h?file=/src/index.js)
+*   [Vanilla JavaScript example](https://codesandbox.io/s/late-sound-miqho?file=/index.html)
+
+---
+**7. Contribution Guidelines**
+The project encourages community contributions. You can report bugs or issues on the [GitHub issues page](https://github.com/jdan/98.css/issues). Pull requests are welcome, especially from those new to open-source, with the promise of code review.
+
+---
+**8. Local Development Setup and Build Commands**
+To set up a local development environment and build the project, use the following commands:
+*   Install dependencies: `npm install`
+*   Start development server (watches for changes, rebuilds, reloads browser): `npm start`
+*   Manually build to the `dist/` directory: `npm run build`
+
+---
+**9. Project License**
+98.css is licensed under the [MIT License](https://github.com/jdan/98.css/blob/main/LICENSE), which is a permissive free software license.
+
+---
+**10. Included Font Information and Licensing**
+For faithful recreation of old UIs, specific fonts are crucial. The repository includes font files for "MS Sans Serif" and "MS Sans Serif Bold". These fonts were created by "lou" using Fontstruct and are licensed under a Creative Commons Attribution Share Alike license (CC BY-SA 3.0), requiring attribution and allowing redistribution under the same license.
