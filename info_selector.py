@@ -38,8 +38,8 @@ def scraper(urls):
         # Write to file for easy access
         extracted_info = extract_important_info(all_files_content)
         formatted_url = url.split("github.com/")[-1].replace("/", "_")
-        print(f"📝 Writing to important_info/{formatted_url}.txt")
-        with open(f"important_info/{formatted_url}.txt", "w") as f:
+        print(f"📝 Writing to important_info/info_selector/{formatted_url}.txt")
+        with open(f"important_info/info_selector/{formatted_url}.txt", "w") as f:
             f.write(extracted_info)
 
     return files_scraped
