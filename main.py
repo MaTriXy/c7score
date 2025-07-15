@@ -45,34 +45,41 @@ def score_file(url, snippet_url):
 
     ## Evaluation tests ##
 
-    # Checks if the snippets are relevant to the important info
-    # llm_score, llm_total = evaluator.llm_evaluate(important_info)
-    # print(f"📋 LLM Score breakdown: {llm_score}")
-    # print(f"📊 Snippets contain important info and syntactically correct {url}: {llm_total}")
+    llm_score, llm_total = evaluator.llm_evaluate(important_info)
+    print(f"📋 LLM Score breakdown: {llm_score}")
+    print(f"📊 Snippets contain important info and syntactically correct {url}: {llm_total}")
 
-    # Checks if all the required components are present and not empty in each snippet
-    completion_score = evaluator.completion_evaluate()
-    print(f"📊 Snippets are complete and with code: {completion_score}")
+    snippet_complete = evaluator.snippet_complete()
+    print(f"📊 Snippets contain all the required components: {snippet_complete}")
 
-    # Checks if any snippets are just about error messages
-    error_snippet = evaluator.error_snippet()
-    print(f"📊 Snippets are not just about error messages: {error_snippet}")
-
-    # Checks if the code snippets are short
     code_snippet_length = evaluator.code_snippet_length()
     print(f"📊 Code snippets contain meaningful information: {code_snippet_length}")
 
-    # Checks if there are multiple code snippets in a snippet
     multiple_code_snippets = evaluator.multiple_code_snippets()
     print(f"📊 Each snippet has only one code snippet: {multiple_code_snippets}")
 
-    # Checks if the languages aren't proper languages
-    language_checker = evaluator.language_checker()
-    print(f"📊 Languages are proper languages: {language_checker}")
+    language_checker = evaluator.language_desc()
+    print(f"📊 Languages are proper and not just descriptions or console outputs: {language_checker}")
 
-    
+    contains_list = evaluator.contains_list()
+    print(f"📊 APIDOC code is not just a list: {contains_list}")
 
-    print(f"✅ Total quality score: {(int(completion_score) + int(error_snippet) + int(code_snippet_length)) / 4} ✅")
+    bibtex_citations = evaluator.bibtex_citations()
+    print(f"📊 Snippets contain bibtex citations: {bibtex_citations}")
+
+    license_info = evaluator.license_info()
+    print(f"📊 Snippets contain license information: {license_info}")
+
+    directory_structure = evaluator.directory_structure()
+    print(f"📊 Snippets contain directory structure: {directory_structure}")
+
+    imports = evaluator.imports()
+    print(f"📊 Snippets contain imports: {imports}")
+
+    installs = evaluator.installs()
+    print(f"📊 Snippets contain installations: {installs}")
+
+    print(f"✅ Total quality score: {(llm_total + snippet_complete + code_snippet_length + multiple_code_snippets + language_checker + contains_list + bibtex_citations + license_info + directory_structure + imports + installs) / 90} ✅")
 
 
 
@@ -85,7 +92,7 @@ def main():
     url = args.url
     snippet_url = args.snippet
 
-    create_file(url)
+    # create_file(url)
     score_file(url, snippet_url)
 
 

@@ -10,20 +10,20 @@ Uses Gemini model paired with tool-calling to determine the most important infor
 Scrapes corresponding file snippets from context7.com and compares them to the important information found in `search.py`.
 
 Ideas for tests:
-* Are the snippets relevant and contain important information -> `llm_evaluate`
-* Are the snippets worded properly and free of errors -> `llm_evaluate`
-* Are the snippets complete (every section is filled, no parts are empty) -> `completion_evaluate`
-* Are any of the snippets just about Error messages -> `error_snippet`
-* Are any code snippets very short or long? Too short or too long could indicate unhelpful docs or bash/shell/terminal commands such as directory structure or lists -> `code_snippet_length`
+* Are the snippets relevant, sensible, and free of errors -> `llm_evaluate`
+* Are any of the categories in a snippet missing? -> `snippet_complete`
+* Are any code snippets very short? Too short or too long could indicate unhelpful docs or information such as directory structure or lists -> `code_snippet_length`
 * Are there multiple code snippets in a snippet? -> `multiple_code_snippets`
-* Are the languages actually descriptions (e.g., "Build Script", "forte-build-script", "CLI Arguments")? Or none or console output? (e.g., pretty-printed tables, etc.) -> `language_checker`
-* Are HTML files showing appropriate examples or just source code
+* Are the languages actually descriptions (e.g., "FORTE Build System Configuration", "CLI Arguments")? Or none or console output? (e.g., pretty-printed tables, etc.) -> `language_checker`
+* check if code is just a list or a general description for an argument (would have - or numbered list). Shell and bash commands have these, which are acceptable. -> `contains_list`
+* check if there are bibtex citations (would have language tag Bibtex) -> `bibtex_citations`
+* Are any of the snippets about licensing -> `license_check`
+* Are any of the snippets just the directory structure -> `directory_structure`
+* Are any of the snippets just imports? (e.g. import, require, etc.) -> `import_check`
+* Are any of the snippets just installations? (e.g. pip install, etc.) -> `installation_check`
 
 
-
-TODO: llm_evaluate function is returning less than it should. Should snippets contain other languages? (some are translation libraries where this would make sense, but some just are in other languages)
-
-## Running it all
+## Running it
 
 Create a `.env` file with GITHUB_TOKEN and GEMINI_API_TOKEN. 
 
