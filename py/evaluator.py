@@ -1,4 +1,3 @@
-import re
 class Evaluator:
     def __init__(self, client, snippets):
         self.client = client
@@ -109,19 +108,20 @@ class Evaluator:
         language_checker = 0
         for snippet in snippets_list:
             lang_snippet = self.access_category(snippet, "language")
-            if (len(lang_snippet.split(" ")) == 1) and (len(lang_snippet.split("-")) == 1) and (lang_snippet.lower() != "none"):
+            if (lang_snippet == "none" or "console" in lang_snippet):
                 language_checker += 1
-        return (language_checker / len(snippets_list)) * 10
+        return ((len(snippets_list) - language_checker) / len(snippets_list)) * 10
     
     # Checks if the code contains a list
     def contains_list(self):
         snippets_list = self.split_snippets()
         apidoc_list = 0
         for snippet in snippets_list:
-            snippet_lower = snippet.lower()
-            codes = self.access_category(snippet_lower, "code")
+            codes = self.access_category(snippet, "code")
             if (
-                any(sym in code.split("code:")[-1].strip().strip("\`") for code in codes for sym in ["◯", "1\."])
+                # Check for both 1. and 2. to make sure its a numbered list and not something else
+                any("◯" in code.split("code:")[-1].strip().strip("\`") for code in codes)
+                or any(("1\. " and "2\. ") in code.split("code:")[-1].strip().strip("\`") for code in codes)
             ):
                 apidoc_list += 1
         return ((len(snippets_list) - apidoc_list) / len(snippets_list)) * 10
@@ -131,8 +131,7 @@ class Evaluator:
         snippets_list = self.split_snippets()
         bibtex_citations = 0
         for snippet in snippets_list:
-            snippet_lower = snippet.lower()
-            lang = self.access_category(snippet_lower, "language")
+            lang = self.access_category(snippet, "language")
             if "bibtex" in lang:
                 bibtex_citations += 1
         return ((len(snippets_list) - bibtex_citations) / len(snippets_list)) * 10
@@ -142,8 +141,7 @@ class Evaluator:
         snippets_list = self.split_snippets()
         license_check = 0
         for snippet in snippets_list:
-            snippet_lower = snippet.lower()
-            source = self.access_category(snippet_lower, "source")
+            source = self.access_category(snippet, "source")
             if "license" in source:
                 license_check += 1
         return ((len(snippets_list) - license_check) / len(snippets_list)) * 10
@@ -153,9 +151,8 @@ class Evaluator:
         snippets_list = self.split_snippets()
         directory_structure = 0
         for snippet in snippets_list:
-            snippet_lower = snippet.lower()
-            title = self.access_category(snippet_lower, "title")
-            codes = self.access_category(snippet_lower, "code")
+            title = self.access_category(snippet, "title")
+            codes = self.access_category(snippet, "code")
             if (
                 any(t in title for t in ["directory", "structure", "workflow"])
                 and any(shape in code.split("code:")[-1].strip().strip("\`") for code in codes for shape in ["├─", "└─", "|\-"])  # Code contains special directory symbols
@@ -168,10 +165,8 @@ class Evaluator:
         snippets_list = self.split_snippets()
         import_check = 0
         for snippet in snippets_list:
-
-            snippet_lower = snippet.lower()
-            title = self.access_category(snippet_lower, "title")
-            codes = self.access_category(snippet_lower, "code")
+            title = self.access_category(snippet, "title")
+            codes = self.access_category(snippet, "code")
             if (
                 any(t in title for t in ["import", "importing"])  # Title contains keywords
                 and any(code.split("code:")[-1].strip().strip("\`").count("\n") == 2 for code in codes)  # Code is a single line
@@ -185,10 +180,8 @@ class Evaluator:
         snippets_list = self.split_snippets()
         installation_check = 0
         for snippet in snippets_list:
-
-            snippet_lower = snippet.lower()
-            title = self.access_category(snippet_lower, "title")
-            codes = self.access_category(snippet_lower, "code")
+            title = self.access_category(snippet, "title")
+            codes = self.access_category(snippet, "code")
             if (
                 any(t in title for t in ["install", "initialize", "initializing"])  # Title contains keywords
                 and any(code.split("code:")[-1].strip().strip("\`").count("\n") == 2 for code in codes)  # Code is a single line

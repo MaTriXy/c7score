@@ -1,0 +1,67 @@
+Google search results: Here is a numbered list of crucial technical information from the `mhsanaei/3x-ui` GitHub repository to help you use it in your coding:
+
+### 1. API Authentication
+To interact with the 3x-ui API, you first need to authenticate. The API uses session-based authentication. You can obtain a session cookie by sending a POST request to the `/login` endpoint with your username and password. The session ID will be returned in a cookie named "session".
+
+```bash
+curl --location 'http://localhost:2053/login' \
+--data-urlencode 'username=admin' \
+--data-urlencode 'password=admin'
+```
+
+### 2. Listing Inbounds
+You can retrieve a list of all inbounds, including their client statistics. This is done by making a GET request to the `/panel/api/inbounds/list` endpoint. This is useful for getting a complete overview of all the configured inbounds.
+
+```bash
+curl --location 'http://localhost:2053/panel/api/inbounds/list' \
+--header 'Accept: application/json'
+```
+
+### 3. Adding a New Inbound
+To add a new inbound configuration, you need to send a POST request to `/panel/api/inbounds/add`. A critical detail is that any sub-arrays or objects within the JSON request body must be stringified for the panel to parse them correctly.
+
+### 4. Retrieving Client Traffic Information
+The API allows you to get traffic statistics for a specific client. You can do this by making a GET request to `/panel/api/inbounds/getClientTraffics/{email}`, replacing `{email}` with the client's email address.
+
+```bash
+curl --location 'http://localhost:2053/panel/api/inbounds/getClientTraffics/s729v2km' \
+--header 'Accept: application/json'
+```
+
+### 5. Adding a Client to an Inbound
+You can add a new client to a specific inbound by sending a POST request to `/panel/api/inbounds/addClient`. The request body must contain the inbound `id` and the client's settings as a stringified JSON object.
+
+```bash
+curl --location 'http://localhost:2053/panel/api/inbounds/addClient' \
+--header 'Accept: application/json' \
+--data '{
+    "id": 5,
+    "settings": "{\"clients\": [{\"id\": \"bbfad557-28f2-47e5-9f3d-e3c7f532fbda\",\"flow\": \"\",\"email\": \"dp1plmlt8\",\"limitIp\": 0,\"totalGB\": 0,\"expiryTime\": 0,\"enable\": true,\"tgId\": \"\",\"subId\": \"2rv0gb458kbfl532\",\"reset\": 0}]}"
+}'
+```
+
+### 6. Using the JavaScript SDK
+For easier integration with Node.js applications, a JavaScript SDK is available. This SDK simplifies interaction with the 3x-ui panel by providing an abstraction layer around the API.
+
+```javascript
+import { XuiApi } from "3x-ui";
+
+const api = new XuiApi("http://username:password@localhost:2053");
+api.debug = true; // Enable debug mode
+api.stdTTL = 60; // Cache time in seconds
+
+const inbounds = await api.getInbounds();
+const clientStat = await api.getClient("email or clientId");
+```
+
+### 7. Resetting Client Traffic
+To reset the traffic usage for a specific client, you can send a POST request to `/panel/api/inbounds/resetClientTraffic/{id}`. This is useful for managing client data usage.
+
+### 8. Deleting a Client from an Inbound
+To remove a client, you can make a POST request to `/panel/api/inbounds/{inboundId}/delClient/{clientId}`. This will permanently delete the client from the specified inbound.
+
+### 9. Creating a Database Backup
+You can trigger a database backup by sending a GET request to `/panel/api/inbounds/createbackup`. This is a convenient way to programmatically back up your 3x-ui configuration.
+
+### 10. Viewing Online Clients
+The API provides a way to see all currently online clients by making a GET request to `/panel/api/onlineClients`. This can be used for real-time monitoring of user activity.

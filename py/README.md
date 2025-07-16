@@ -1,19 +1,16 @@
 # Snippet Evaluator
 
-1. Given a Github repo URL, prompt an LLM to find the top 10 most critical pieces of information. This information can be code snippets or examples. `search.ts`
-2. Search the parsed code snippets (found on the Context7 website), and make sure that the important information is contained in them. `evaluator.ts`
+1. Given a Github repo URL, prompt an LLM to find the top 10 most critical pieces of information. This information can be code snippets or examples. `search.py`
+2. Search the parsed code snippets (found on the Context7 website), and make sure that the important information is contained in them. `evaluator.py`
 
 ## Search
 Uses Gemini model paired with tool-calling to determine the most important information about a library. The tools used are Google search and URL context (retrives the content from a link either provided in the prompt or found via Google Search). This effectively combines the scraping the provided url and retrieving contextual information outside of the link provided.
 
 ## Evaluator
-Scrapes corresponding file snippets from context7.com and compares them to the important information found in `search.ts`.
+Scrapes corresponding file snippets from context7.com and compares them to the important information found in `search.py`.
 
 Ideas for tests:
-* Are the snippets relevant, sensible, and free of errors -> `llm_evaluate` 
-
-**llm_evaluate** uses an LLM to compare the context considered important in `search.ts`. TODO: replace with test-context-file.ts.
-
+* Are the snippets relevant, sensible, and free of errors -> `llm_evaluate`
 * Are any of the categories in a snippet missing? -> `snippet_complete`
 * Are any code snippets very short? Too short or too long could indicate unhelpful docs or information such as directory structure or lists -> `code_snippet_length`
 * Are there multiple code snippets in a snippet? -> `multiple_code_snippets`
@@ -28,15 +25,13 @@ Ideas for tests:
 
 ## Running it
 
-1. Create a `.env` file with GITHUB_TOKEN and GEMINI_API_TOKEN.
+Create a `.env` file with GITHUB_TOKEN and GEMINI_API_TOKEN. 
 
-2. Use `npm install` to install all the dependencies.
+Use `main.py --url URL --snippet SNIPPET_URL`. The `--url` expects the original source url that is to be converted into snippets. The `--snippet` expects the context7 url to the snippets. 
 
-3. Use `npx ts-node main.ts --url URL --snippet SNIPPET_URL`. The `--url` expects the original source URL that is to be converted into snippets. The `--snippet` expects the context7 URL to the snippets.
+An example of this is:
 
-    An example of this is:
 
-    `npx ts-node src/main.ts --url https://biopython.org/wiki/Documentation --snippet https://context7.com/context7/biopython_org-wiki-documentation/llms.txt`
+`python main.py --url https://biopython.org/wiki/Documentation --snippet https://context7.com/context7/biopython_org-wiki-documentation/llms.txt`
 
-4. To run the `tester.ts` file, use:
-    `npm run test -- test`
+

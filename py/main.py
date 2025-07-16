@@ -26,18 +26,19 @@ def create_file(url):
     generated_context = search_response.candidates[0].url_context_metadata
     # Gemini has bug where it sometimes returns None
     # https://github.com/googleapis/python-genai/issues/1039
-    if not generated_context:
+
+    if search_response == None:
         # Retry generation
         search_response = search.google_search()
 
     file_url = url.replace("/", "\\")
-    with open(f"important_info/{file_url}.txt", "w") as f:
+    with open(f"/important_info/{file_url}.txt", "w") as f:
         f.write(f"Google search results: {search_response.text}")
 
 def score_file(url, snippet_url):
     file = url.replace("/", "\\")
     print(f"📊 Scoring ...")
-    with open(f"important_info/{file}.txt", "r") as info_file:
+    with open(f"/important_info/{file}.txt", "r") as info_file:
         important_info = info_file.read()
 
     snippets = scrape_context7_snippets(snippet_url)

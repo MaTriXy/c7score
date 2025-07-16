@@ -9,6 +9,7 @@ from evaluator import Evaluator
 from utils import scrape_context7_snippets
 from main import create_file
 import os
+from main import create_file
 
 env_config = dotenv_values(".env")
 
@@ -61,14 +62,33 @@ def tester(urls, func_to_test: str):
         else:
             print(f"✅ {llms_txt}")
 
+# TODO: fix this test case
+def llm_evaluate_tester():
+    urls = {"https://context7.com/climblee/uv-ui/llms"}
+    for url in urls:
+        create_file(url)
+        path = url.replace("/", "\\")
+        with open(f"important_info/{path}.txt", "r") as f:
+            important_info = f.read()
+        snippets = scrape_context7_snippets(url)
+        evaluator = Evaluator(client, snippets)
+        llm_score, llm_total = evaluator.llm_evaluate(important_info)
+        print(f"📊 LLM Score breakdown: {llm_score}")
+        print(f"📊 Snippets contain important info and syntactically correct {url}: {llm_total}")
+
+
 test_file_path()
 print("--------------------------------")
 test_cases = {
     "snippet_complete": {"https://context7.com/steamre/steamkit/llms.txt?tokens=18483": 2,
                 "https://context7.com/1password/onepassword-sdk-js/llms.txt": 0    
     },
-    # TODO: fix this test case
-    "contains_list": {"https://context7.com/directus/directus/llms.txt?topic=1.&tokens=100000": 2,
+    "language_desc": {"https://context7.com/eclipse-4diac/4diac-forte/llms.txt": 0,
+                      "https://context7.com/technomancy-dev/00/llms.txt": 0,
+                      "https://context7.com/pnxenopoulos/awpy/llms.txt": 7,
+                      "https://context7.com/aflplusplus/aflplusplus/llms.txt": 2,
+    },
+    "contains_list": {"https://context7.com/directus/directus/llms.txt?topic=1.&tokens=100000": 1,
                     "https://context7.com/context7/ctrl-plex_vercel_app/llms.txt": 1,
                     "https://context7.com/mhsanaei/3x-ui/llms.txt": 0,
                     "https://context7.com/huntabyte/shadcn-svelte/llms.txt": 1,
@@ -105,5 +125,3 @@ for test in test_cases:
 # llm_evaluate: https://context7.com/climblee/uv-ui (for other languages)
 # code_snippet_length: https://context7.com/context7/coderabbitai_github_io-bitbucket, https://context7.com/context7/tailwindcss, https://context7.com/eclipse-4diac/4diac-forte, https://context7.com/humanlayer/12-factor-agents
 # multiple_code_snippets: https://context7.com/context7/tailwindcss, https://context7.com/1password/onepassword-sdk-js, https://context7.com/nvidia-omniverse/ext-7z
-# language_desc: https://context7.com/eclipse-4diac/4diac-forte, https://context7.com/technomancy-dev/00, https://context7.com/pnxenopoulos/awpy, https://context7.com/aflplusplus/aflplusplus
-# contains_list: https://context7.com/mhsanaei/3x-ui (the lists here are good, we want them), https://context7.com/huntabyte/shadcn-svelte, https://context7.com/directus/directus, https://context7.com/context7/ctrl-plex_vercel_app

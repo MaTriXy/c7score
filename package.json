@@ -1,0 +1,38 @@
+{
+  "name": "contexttrace",
+  "version": "1.0.0",
+  "description": "1. Given a Github repo URL, prompt an LLM to find the top 10 most critical pieces of information. This information can be code snippets or examples. `search.py` 2. Search the parsed code snippets (found on the Context7 website), and make sure that the important information is contained in them. `evaluator.py`",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/main.ts",
+    "dev": "ts-node src/main.ts",
+    "build": "tsc",
+    "test": "ts-node src/tester.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/upstash/ContextTrace.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/upstash/ContextTrace/issues"
+  },
+  "homepage": "https://github.com/upstash/ContextTrace#readme",
+  "dependencies": {
+    "@google/genai": "^1.9.0",
+    "@octokit/core": "^6.1.2",
+    "@types/turndown": "^5.0.5",
+    "axios": "^1.7.2",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "html-to-markdown": "^1.0.0",
+    "turndown": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
