@@ -1,23 +1,25 @@
+import re
 class Evaluator:
     def __init__(self, client, snippets):
         self.client = client
         self.snippets = snippets
 
     def split_snippets(self):
-        return self.snippets.split("\-" * 40)
+        return self.snippets.split("-" * 40)
     
     def access_category(self, snippet, category):
         snippet_lower = snippet.lower()
         okay = ["title", "description", "language", "source"]
         if category in okay:
-            return snippet_lower.split(f"{category}:")[-1].split("\n")[0].strip()
-        # Handles code blocks
+            parts = snippet_lower.split(f"{category}:")
+            if len(parts) > 1:
+                return parts[len(parts) - 1].split("\n")[0].strip()
         else:
             return snippet_lower.split(f"{category}:")
 
     # Evaluates relevancy and correctness of snippets
     def llm_evaluate(self, important_info):
-        snippet_del = "\-" * 40
+        snippet_del = "-" * 40
         prompt = f"""For each criterion, provide
         a score between 0 and 10, where 0 is the   
         criterion was not met at all, 5 is the criterion 
@@ -31,7 +33,7 @@ class Evaluator:
         compares the required information with the snippets.
         The snippets are separated by 
         {snippet_del}
-        and the code blocks are enclosed in \`\`\`.
+        and the code blocks are enclosed in ```.
         Do not include the snippets in your response.
         Make sure to start your response with "&---".
         Your scores should represent a ratio of how many
@@ -78,19 +80,10 @@ class Evaluator:
         snippets_list = self.split_snippets()
         code_snippets = 0
         for snippet in snippets_list:
-            snippet_lower = snippet.lower()
-            languages = ["apidoc", "terminal", "shell", "bash", "text"]
-            if "code:" in snippet_lower and any(el in snippet_lower for el in languages):
-                code_blocks = snippet.split("code:")
-                snippet_code_blocks = 0
-                # Check if every code block in the snippet is the proper length
-                for block in code_blocks:
-                    snippet_code_blocks += 1
-                    block = block.replace("\`\`\`", " ").replace("\n", " ")
-                    words_in_code = len(block.split(" "))
-                    if words_in_code > 5 or (("text" or "apidoc") in snippet_lower and words_in_code < 150):
-                        code_snippets += 1
-        return (code_snippets / snippet_code_blocks)
+            codes = self.access_category(snippet, "code")
+            if any(len([token for token in code.split("code:")[-1].replace("```", "").strip().replace("\n", " ").split(" ") if token.strip()]) < 5 for code in codes):
+                code_snippets += 1
+        return ((len(snippets_list) - code_snippets) / len(snippets_list)) * 10
 
     # Checks if there are multiple code snippets in a snippet
     def multiple_code_snippets(self):
@@ -98,9 +91,9 @@ class Evaluator:
         multiple_code_snippets = 0
         for snippet in snippets_list:
             # CODE and LANGUAGE repeat for multiple code snippets
-            if len(snippet.split("CODE:")) <= 2 or len(snippet.split("LANGUAGE:")) <= 2:
+            if len(snippet.split("CODE:")) > 2 or len(snippet.split("LANGUAGE:")) > 2:
                 multiple_code_snippets += 1
-        return (multiple_code_snippets / len(snippets_list)) * 10
+        return ((len(snippets_list) - multiple_code_snippets)) / len(snippets_list) * 10
 
     # Checks if the languages are actually descriptions
     def language_desc(self):
@@ -118,10 +111,12 @@ class Evaluator:
         apidoc_list = 0
         for snippet in snippets_list:
             codes = self.access_category(snippet, "code")
+            for code in codes:
+                print(code.split("code:")[-1].strip().strip("`"))
             if (
                 # Check for both 1. and 2. to make sure its a numbered list and not something else
-                any("◯" in code.split("code:")[-1].strip().strip("\`") for code in codes)
-                or any(("1\. " and "2\. ") in code.split("code:")[-1].strip().strip("\`") for code in codes)
+                any("◯" in code.split("code:")[-1].strip().strip("`") for code in codes)
+                or any(("1. " and "2. ") in code.split("code:")[-1].strip().strip("`") for code in codes)
             ):
                 apidoc_list += 1
         return ((len(snippets_list) - apidoc_list) / len(snippets_list)) * 10
@@ -155,7 +150,7 @@ class Evaluator:
             codes = self.access_category(snippet, "code")
             if (
                 any(t in title for t in ["directory", "structure", "workflow"])
-                and any(shape in code.split("code:")[-1].strip().strip("\`") for code in codes for shape in ["├─", "└─", "|\-"])  # Code contains special directory symbols
+                and any(shape in code.split("code:")[-1].strip().strip("`") for code in codes for shape in ["├─", "└─", "|-"])  # Code contains special directory symbols
             ):
                 directory_structure += 1
         return ((len(snippets_list) - directory_structure) / len(snippets_list)) * 10
@@ -169,8 +164,8 @@ class Evaluator:
             codes = self.access_category(snippet, "code")
             if (
                 any(t in title for t in ["import", "importing"])  # Title contains keywords
-                and any(code.split("code:")[-1].strip().strip("\`").count("\n") == 2 for code in codes)  # Code is a single line
-                and any("/" not in code.split("code:")[-1].strip().strip("\`") for code in codes)  # Code contains a path
+                and any(code.split("code:")[-1].strip().strip("`").count("\n") == 2 for code in codes)  # Code is a single line
+                and any("/" not in code.split("code:")[-1].strip().strip("`") for code in codes)  # Code contains a path
             ):
                 import_check += 1
         return ((len(snippets_list) - import_check) / len(snippets_list)) * 10
@@ -184,7 +179,7 @@ class Evaluator:
             codes = self.access_category(snippet, "code")
             if (
                 any(t in title for t in ["install", "initialize", "initializing"])  # Title contains keywords
-                and any(code.split("code:")[-1].strip().strip("\`").count("\n") == 2 for code in codes)  # Code is a single line
+                and any(code.split("code:")[-1].strip().strip("`").count("\n") == 2 for code in codes)  # Code is a single line
             ):
                 installation_check += 1
         return ((len(snippets_list) - installation_check) / len(snippets_list)) * 10

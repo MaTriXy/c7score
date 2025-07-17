@@ -9,7 +9,7 @@ from evaluator import Evaluator
 from utils import scrape_context7_snippets
 from main import create_file
 import os
-from main import create_file
+import ast
 
 env_config = dotenv_values(".env")
 
@@ -52,7 +52,7 @@ def tester(urls, func_to_test: str):
 
     for llms_txt, expected_snippet_num in urls.items():
         snippets = scrape_context7_snippets(llms_txt)
-        snippet_num = len(snippets.split("\-" * 40))
+        snippet_num = len(snippets.split("-" * 40))
 
         func = getattr(Evaluator(client, snippets), func_to_test)
         score = func()
@@ -62,20 +62,26 @@ def tester(urls, func_to_test: str):
         else:
             print(f"✅ {llms_txt}")
 
-# TODO: fix this test case
+# Determines how well the LLM aligns with human eval
 def llm_evaluate_tester():
-    urls = {"https://context7.com/climblee/uv-ui/llms"}
-    for url in urls:
-        create_file(url)
-        path = url.replace("/", "\\")
-        with open(f"important_info/{path}.txt", "r") as f:
-            important_info = f.read()
-        snippets = scrape_context7_snippets(url)
-        evaluator = Evaluator(client, snippets)
-        llm_score, llm_total = evaluator.llm_evaluate(important_info)
-        print(f"📊 LLM Score breakdown: {llm_score}")
-        print(f"📊 Snippets contain important info and syntactically correct {url}: {llm_total}")
-
+    print("📊 Testing LLM evaluate...")
+    url = "https://github.com/climblee/uv-ui"
+    score_breakdown = [2, 10, 10, 10, 10, 10, 7.5, 7.5]
+    score_breakdown_total = sum(score_breakdown)
+ 
+    # create_file(url)
+    path = url.replace("/", "\\")
+    with open(f"py/important_info/{path}.txt", "r") as f:
+        important_info = f.read()
+    snippets = scrape_context7_snippets(url)
+    evaluator = Evaluator(client, snippets)
+    llm_score, llm_total = evaluator.llm_evaluate(important_info)
+    print(f"📊 {url}: {llm_score}")
+    print(f"llm_total: {llm_total}")
+    if abs(ast.literal_eval(llm_total) - score_breakdown_total) <= 5:
+        print(f"✅ LLM Score breakdown: {llm_total}")
+    else:
+        print(f"❌ LLM Score breakdown: {llm_total} (expected: {score_breakdown_total})")
 
 test_file_path()
 print("--------------------------------")
@@ -83,15 +89,25 @@ test_cases = {
     "snippet_complete": {"https://context7.com/steamre/steamkit/llms.txt?tokens=18483": 2,
                 "https://context7.com/1password/onepassword-sdk-js/llms.txt": 0    
     },
+    "code_snippet_length": {"https://context7.com/eclipse-4diac/4diac-forte/llms.txt": 13,
+                            "https://context7.com/context7/coderabbitai_github_io-bitbucket/llms.txt": 1,
+                            "https://context7.com/context7/tailwindcss/llms.txt": 16,
+                            "https://context7.com/humanlayer/12-factor-agents/llms.txt": 29,
+    },
+    "multiple_code_snippets": {"https://context7.com/context7/tailwindcss/llms.txt": 9,
+                               "https://context7.com/1password/onepassword-sdk-js/llms.txt": 4,
+                               "https://context7.com/nvidia-omniverse/ext-7z/llms.txt": 3,
+    },
     "language_desc": {"https://context7.com/eclipse-4diac/4diac-forte/llms.txt": 0,
                       "https://context7.com/technomancy-dev/00/llms.txt": 0,
                       "https://context7.com/pnxenopoulos/awpy/llms.txt": 7,
                       "https://context7.com/aflplusplus/aflplusplus/llms.txt": 2,
     },
-    "contains_list": {"https://context7.com/directus/directus/llms.txt?topic=1.&tokens=100000": 1,
+    "contains_list": {"https://context7.com/huntabyte/shadcn-svelte/llms.txt": 0,
+                    "https://context7.com/directus/directus/llms.txt?topic=1.&tokens=100000": 1,
                     "https://context7.com/context7/ctrl-plex_vercel_app/llms.txt": 1,
                     "https://context7.com/mhsanaei/3x-ui/llms.txt": 0,
-                    "https://context7.com/huntabyte/shadcn-svelte/llms.txt": 1,
+                    
     },
     "bibtex_citations": {"https://context7.com/cleardusk/3ddfa_v2/llms.txt": 2,
                          "https://context7.com/context7/zh_d2l_ai/llms.txt?tokens=53303": 1 
@@ -120,8 +136,4 @@ test_cases = {
 for test in test_cases:
     tester(test_cases[test], test)
     print("--------------------------------")
-
-# TODO tests
-# llm_evaluate: https://context7.com/climblee/uv-ui (for other languages)
-# code_snippet_length: https://context7.com/context7/coderabbitai_github_io-bitbucket, https://context7.com/context7/tailwindcss, https://context7.com/eclipse-4diac/4diac-forte, https://context7.com/humanlayer/12-factor-agents
-# multiple_code_snippets: https://context7.com/context7/tailwindcss, https://context7.com/1password/onepassword-sdk-js, https://context7.com/nvidia-omniverse/ext-7z
+# llm_evaluate_tester()

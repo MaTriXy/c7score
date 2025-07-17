@@ -5,6 +5,7 @@ import { Octokit } from '@octokit/core';
 import { Evaluator } from './evaluator';
 import { scrapeContext7Snippets } from './utils';
 import fs from 'fs/promises';
+import { createFile } from './main';
 
 interface EnvConfig {
   GEMINI_API_TOKEN?: string;
@@ -38,9 +39,9 @@ async function testFilePath(): Promise<void> {
     console.log(`📊 TESTING create_file ...`);
     try {
       const path = url.replace(/\//g, '\\');
-      await fs.writeFile(`important_info/${path}.txt`, 'Google search results: ');
+      await fs.writeFile(`src/important_info/${path}.txt`, 'Google search results: ');
       console.log(`✅ Created file for ${url}`);
-      await fs.unlink(`important_info/${path}.txt`);
+      await fs.unlink(`src/important_info/${path}.txt`);
       console.log(`✅ Removed file for ${url}`);
     } catch (error) {
       console.error(`❌ Error creating files for ${url}: ${error}`);
@@ -72,11 +73,43 @@ async function tester(urls: TestCase, funcToTest: string): Promise<void> {
   }
 }
 
+// Expects the file to already exist under important_info/
+async function llmEvaluateTester(): Promise<void> {
+  const url = 'https://github.com/climblee/uv-ui';
+  const scoreBreakdown = [2, 10, 10, 10, 10, 10, 7.5, 7.5];
+  const scoreBreakdownTotal = scoreBreakdown.reduce((a, b) => a + b, 0);
+
+  const path = url.replace(/\//g, '\\');
+  const importantInfo = await fs.readFile(`src/important_info/${path}.txt`, 'utf8');
+  const snippets = await scrapeContext7Snippets(url);
+  const evaluator = new Evaluator(client, snippets);
+  const llmResult = await evaluator.llmEvaluate(importantInfo);
+  console.log("match: ", llmResult.total);
+  if (Math.abs(Number(
+    
+  ) - scoreBreakdownTotal) <= 5) {
+    console.log(`✅ LLM Score breakdown: ${llmResult.total}`);
+  } else {
+    console.log(`❌ LLM Score breakdown: ${llmResult.total} (expected: ${scoreBreakdownTotal})`);
+  }
+}
+
 const testCases: { [key: string]: TestCase } = {
-  // snippetComplete: {
-  //   'https://context7.com/steamre/steamkit/llms.txt?tokens=18483': 2, // Num of snippets with what we don't want
-  //   'https://context7.com/1password/onepassword-sdk-js/llms.txt': 0,
-  // },
+  snippetComplete: {
+    'https://context7.com/steamre/steamkit/llms.txt?tokens=18483': 2, // Num of snippets with what we don't want
+    'https://context7.com/1password/onepassword-sdk-js/llms.txt': 0,
+  },
+  codeSnippetLength: {
+    'https://context7.com/eclipse-4diac/4diac-forte/llms.txt': 13,
+    'https://context7.com/context7/coderabbitai_github_io-bitbucket/llms.txt': 1,
+    'https://context7.com/context7/tailwindcss/llms.txt': 16,
+    'https://context7.com/humanlayer/12-factor-agents/llms.txt': 29,
+  },
+  multipleCodeSnippets: {
+    'https://context7.com/context7/tailwindcss/llms.txt': 9,
+    'https://context7.com/1password/onepassword-sdk-js/llms.txt': 4,
+    'https://context7.com/nvidia-omniverse/ext-7z/llms.txt': 3,
+  },
   languageDesc: {
     'https://context7.com/eclipse-4diac/4diac-forte/llms.txt': 0,
     'https://context7.com/technomancy-dev/00/llms.txt': 0,
@@ -130,3 +163,6 @@ program
   });
 
 program.parse(process.argv);
+
+// Uncomment to test LLM evaluate
+// llmEvaluateTester();

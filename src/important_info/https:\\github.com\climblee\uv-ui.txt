@@ -1,0 +1,303 @@
+Google search results: Here is a list of the most crucial technical information for the `uv-ui` library:
+
+### 1. Easycom Component Registration
+The `uv-ui` library supports the `easycom` feature of `uni-app`, which allows for the automatic registration of components. By configuring your `pages.json` file, you can use any `uv-ui` component directly in your templates without needing to manually import and register it in each page or component. This significantly simplifies development and keeps your code cleaner.
+
+```json
+// pages.json
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"uv-(.*)": "@/uni_modules/uv-ui-tools/components/uv-$1/uv-$1.vue"
+		}
+	},
+	"pages": [
+		// ...
+	]
+}
+```
+
+### 2. Global Configuration and Initialization
+You can manage global configurations, such as utility functions and component settings, through the `main.js` file. This allows you to set up functionalities like `console.log` wrappers or integrate Vuex without modifying the library's source code. The library's instance is attached to `uni.$uv`, making its properties and methods accessible throughout your application.
+
+```javascript
+// main.js
+import App from './App'
+import uvUI from '@/uni_modules/uv-ui-tools'
+
+// #ifndef VUE3
+import Vue from 'vue'
+Vue.config.productionTip = false
+App.mpType = 'app'
+const app = new Vue({
+    ...App
+})
+app.$mount()
+// #endif
+
+// #ifdef VUE3
+import { createSSRApp } from 'vue'
+export function createApp() {
+  const app = createSSRApp(App)
+  return {
+    app
+  }
+}
+// #endif
+
+uni.$uv = uvUI
+```
+
+### 3. Built-in Request Function
+The library includes a powerful and configurable request function for handling API calls, which is integrated with `uv-ui` components like `uv-upload`. You can define interceptors for requests and responses to globally manage aspects like adding authentication tokens to headers or handling API errors. This centralization prevents repetitive code for API interactions.
+
+```javascript
+// http.interceptor.js
+const install = (Vue, vm) => {
+	// Request Interceptor
+	uni.$uv.http.interceptor.request = (config) => {
+		config.data = config.data || {}
+		if (config.method?.toUpperCase() === 'POST' || config.method?.toUpperCase() === 'PUT') {
+			config.data = JSON.stringify(config.data)
+		}
+		// You can add a token to the header here
+		// if (token) config.header.token = token;
+		return config
+	}
+	
+	// Response Interceptor
+	uni.$uv.http.interceptor.response = (response) => {
+		// Handle unsuccessful responses
+		return response.data
+	}
+}
+
+export default {
+	install
+}
+```
+
+### 4. Form Validation
+The `uv-form` and `uv-form-item` components work together to provide comprehensive form creation and validation capabilities. You define validation rules within the `rules` prop on the `uv-form` component and associate them with specific form fields using the `prop` attribute on `uv-form-item`. The form can then be validated by calling the `validate` method on the form's ref.
+
+```html
+<template>
+	<uv-form labelPosition="left" :model="model1" :rules="rules" ref="form1">
+		<uv-form-item label="Name" prop="userInfo.name" borderBottom ref="item1">
+			<uv-input v-model="model1.userInfo.name" border="none"></uv-input>
+		</uv-form-item>
+		<uv-form-item label="Gender" prop="sex" borderBottom @click="showSex = true" ref="item1">
+			<uv-input v-model="model1.sex" disabled disabledColor="#ffffff" placeholder="Please select gender" border="none"></uv-input>
+			<template v-slot:right>
+				<uv-icon name="arrow-right"></uv-icon>
+			</template>
+		</uv-form-item>
+	</uv-form>
+</template>
+<script>
+	export default {
+		data() {
+			return {
+				model1: {
+					userInfo: {
+						name: 'uView UI',
+					},
+					sex: '',
+				},
+				rules: {
+					'userInfo.name': {
+						type: 'string',
+						required: true,
+						message: 'Please fill in your name',
+						trigger: ['blur', 'change']
+					},
+					'sex': {
+						type: 'string',
+						max: 1,
+						required: true,
+						message: 'Please select gender',
+						trigger: ['blur', 'change']
+					},
+				}
+			}
+		}
+	}
+</script>
+```
+
+### 5. Toast Notifications
+To display temporary, non-intrusive messages, you can use the `uv-toast` component. First, include the `<uv-toast ref="toast"></uv-toast>` component in your main `App.vue` file. Then, you can trigger it from any page or component by calling `this.$refs.toast.show()`, passing in the configuration for the message, type, and duration.
+
+```html
+<!-- App.vue -->
+<template>
+	<view>
+		<uv-toast ref="toast"></uv-toast>
+		<!-- ... -->
+	</view>
+</template>
+
+<!-- Any other page/component -->
+<script>
+	export default {
+		methods: {
+			showToast() {
+				this.$refs.toast.show({
+					type: 'success',
+					message: "Login successful",
+					iconUrl: 'https://cdn.uviewui.com/uview/demo/toast/success.png'
+				});
+			}
+		}
+	}
+</script>
+```
+
+### 6. Modal Dialogs
+The `uv-modal` component is used to show confirmation dialogs, prompts, or important alerts that require user interaction. You control its visibility with a `v-model` or a `show` prop and can handle user actions by listening to the `confirm` and `cancel` events. The content of the modal can be simple text or a more complex structure using slots.
+
+```html
+<template>
+	<uv-modal :show="show" :title="title" :content='content' @confirm="confirm" @cancel="cancel" showCancelButton></uv-modal>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				show: true,
+				title: 'Title',
+				content: 'This is the modal content'
+			}
+		},
+		methods: {
+			confirm() {
+				this.show = false;
+				console.log('confirm');
+			},
+			cancel(){
+				this.show = false;
+				console.log('cancel');
+			}
+		}
+	}
+</script>
+```
+
+### 7. File Uploading
+The `uv-upload` component simplifies handling file uploads, including previews, deletion, and progress indicators. It integrates with the library's built-in request function, so your API interceptors for authentication will work automatically. You can handle the upload lifecycle through events like `afterRead` (for previewing) and `delete` (for removing a file).
+
+```html
+<template>
+	<uv-upload
+		:fileList="fileList1"
+		@afterRead="afterRead"
+		@delete="deletePic"
+		name="1"
+		multiple
+		:maxCount="10"
+	></uv-upload>
+</template>
+<script>
+	export default {
+		data() {
+			return {
+				fileList1: [],
+			}
+		},
+		methods: {
+			// Delete picture
+			deletePic(event) {
+				this[`fileList${event.name}`].splice(event.index, 1)
+			},
+			// New picture preview
+			async afterRead(event) {
+				// When multiple selections are enabled, `event.file` is an array. Here we handle both single and multiple selections.
+				let lists = [].concat(event.file)
+				for (let i = 0; i < lists.length; i++) {
+					const result = await this.uploadFilePromise(lists[i].url)
+					// ... logic to handle upload result
+				}
+			},
+		}
+	}
+</script>
+```
+
+### 8. Customizing Component Styles
+While `uv-ui` provides a default theme, you can deeply customize the styles to match your brand's identity. This is achieved by overriding the library's Sass variables. You can define your custom variables in a `uni.scss` file located in the root of your project, allowing for global style changes across all `uv-ui` components.
+
+```scss
+// uni.scss
+/* Note: This file does not need to be imported into main.js */
+
+/* Define the theme color */
+$uv-primary: #2979ff;
+$uv-primary-light: #ecf5ff;
+$uv-primary-dark: #2b85e4;
+$uv-primary-disabled: #a0cfff;
+
+/* Define other common colors */
+$uv-error: #f56c6c;
+$uv-warning: #f9ae3d;
+// ... more variables
+```
+
+### 9. Using the Icon Set
+`uv-ui` comes with a large set of built-in icons that can be easily used via the `uv-icon` component. You simply specify the `name` of the icon you want to use. This component also allows for custom icons by providing a URL to an image file, giving you flexibility in your UI design.
+
+```html
+<template>
+	<view class="icon-wrap">
+		<!-- Basic Usage -->
+		<uv-icon name="photo" color="#2979ff" size="28"></uv-icon>
+
+		<!-- Using an image URL as an icon -->
+		<uv-icon name="https://cdn.uviewui.com/uview/icon/kefu-ermai.png" size="28"></uv-icon>
+	</view>
+</template>
+```
+
+### 10. List Component with Load More Functionality
+The `uv-list` component is designed to efficiently display long lists of data with support for "load more" functionality. You can combine it with `uv-list-item` to render your data and a `uv-load-more` component to show the loading status. By listening to the `@scrolltolower` event on `uv-list`, you can trigger a function to fetch the next page of data.
+
+```html
+<template>
+	<uv-list @scrolltolower="scrolltolower">
+		<uv-list-item v-for="(item, index) in indexList" :key="index">
+			<uv-cell :title="`List item ${item}`">
+				<template v-slot:icon>
+					<uv-avatar shape="square" size="35" :src="item.url" customStyle="margin: -3px 5px -3px 0"></uv-avatar>
+				</template>
+			</uv-cell>
+		</uv-list-item>
+		<uv-load-more :status="status" />
+	</uv-list>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				indexList: [],
+				status: 'loading',
+				urls: [
+					// ... array of image urls
+				]
+			}
+		},
+		onLoad() {
+			this.loadmore();
+		},
+		methods: {
+			scrolltolower() {
+				this.loadmore();
+			},
+			loadmore() {
+				// ... logic to fetch more data and append to indexList
+			}
+		}
+	}
+</script>
+```

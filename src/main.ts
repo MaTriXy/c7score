@@ -35,7 +35,7 @@ const modelConfig: GenerateContentConfig = {
 };
 
 
-async function createFile(url: string): Promise<void> {
+export async function createFile(url: string): Promise<void> {
   const search = new Search(url, { generateContent: client.models.generateContent.bind(client.models) }, modelConfig);
   let searchResponse = await search.googleSearch();
   
@@ -48,7 +48,7 @@ async function createFile(url: string): Promise<void> {
   }
 
   const filePath = url.replace(/\//g, '\\');
-  await fs.writeFile(`important_info/${filePath}.txt`, `Google search results: ${searchResponse.text}`);
+  await fs.writeFile(`src/important_info/${filePath}.txt`, `Google search results: ${searchResponse.text}`);
 }
 
 async function scoreFile(url: string, snippetUrl: string): Promise<void> {
@@ -57,7 +57,7 @@ async function scoreFile(url: string, snippetUrl: string): Promise<void> {
   let importantInfo: string;
 
   try {
-    importantInfo = await fs.readFile(`important_info/${filePath}.txt`, 'utf-8');
+    importantInfo = await fs.readFile(`src/important_info/${filePath}.txt`, 'utf-8');
   } catch (error) {
     console.error(`Error reading file ${filePath}:`, error);
     return;

@@ -15,11 +15,12 @@ auth = Auth.Token(env_config["GITHUB_TOKEN"])
 g = Github(auth=auth)
 
 # Web search tool
-grounding_tool = types.Tool(google_search=types.GoogleSearch())
+# grounding_tool = types.Tool(google_search=types.GoogleSearch())
 url_context_tool = types.Tool(url_context=types.UrlContext())
-model_config = types.GenerateContentConfig(tools=[grounding_tool, url_context_tool],
+# model_config = types.GenerateContentConfig(tools=[grounding_tool, url_context_tool],
+#                                            response_modalities=["TEXT"])
+model_config = types.GenerateContentConfig(tools=[url_context_tool],
                                            response_modalities=["TEXT"])
-
 def create_file(url):
     search = Search(url, client, model_config)
     search_response = search.google_search()
@@ -32,13 +33,13 @@ def create_file(url):
         search_response = search.google_search()
 
     file_url = url.replace("/", "\\")
-    with open(f"/important_info/{file_url}.txt", "w") as f:
+    with open(f"py/important_info/{file_url}.txt", "w") as f:
         f.write(f"Google search results: {search_response.text}")
 
 def score_file(url, snippet_url):
     file = url.replace("/", "\\")
     print(f"📊 Scoring ...")
-    with open(f"/important_info/{file}.txt", "r") as info_file:
+    with open(f"py/important_info/{file}.txt", "r") as info_file:
         important_info = info_file.read()
 
     snippets = scrape_context7_snippets(snippet_url)

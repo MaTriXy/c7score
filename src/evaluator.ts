@@ -40,15 +40,21 @@ export class Evaluator {
   async llmEvaluate(importantInfo: string): Promise<EvaluationResult> {
     const snippetDelimiter = '-'.repeat(40);
     const prompt = `
-      For each criterion, provide a score between 0 and 10, where 0 is the criterion was not met at all, 
-      5 is the criterion was partially met, and 10 is the criterion was fully met with no room for improvement. 
-      Also include a short explanation for each score. At the end of your response, calculate a **Total Score** 
-      by summing the 8 individual scores. The maximum possible total is 80. Format your response so that the 
-      score for each criterion and the explanation are on a new line. Each criterion compares the required 
-      information with the snippets. The snippets are separated by ${snippetDelimiter} and the code blocks 
+      For each criterion, provide
+        a score between 0 and 10, where 0 is the   
+        criterion was not met at all, 5 is the criterion 
+        was partially met, and 10 is the criterion was fully met
+        with no room for improvement. Also include 
+        a short explanation for each score. At the end of your response, 
+        calculate a **Total Score** by summing the 10 individual scores. 
+        The maximum possible total is 80. Format your response so that
+        the score for each criterion and the explanation
+        are on a new line. Each criterion
+        compares the required information with the snippets.
+        The snippets are separated by ${snippetDelimiter} and the code blocks 
       are enclosed in \`\`\`. Do not include the snippets in your response. Make sure to start your response 
       with "&---". Your scores should represent a ratio of how many snippets meet the criterion out of the 
-      total number of snippets.
+      total number of snippets. Your scores must be preceded by **Total Score:**.
 
       Criteria:
       1. The snippets include some variation of all the required information.
@@ -76,9 +82,9 @@ export class Evaluator {
     });
 
     const responseText = response.text?.split('&---')[1] ?? '';
-    const [scores, total] = responseText.split('**Total Score**: ');
+    const [scores, total] = responseText.split('**Total Score:** ');
 
-    return { scores, total: total?.split('-')[1] ?? '0' };
+    return { scores, total: total};
   }
 
   // Checks if code snippets exist
@@ -100,25 +106,17 @@ export class Evaluator {
   codeSnippetLength(): number {
     const snippetsList = this.splitSnippets();
     let codeSnippets = 0;
-    let totalCodeBlocks = 0;
 
     for (const snippet of snippetsList) {
-      const languages = ['apidoc', 'terminal', 'shell', 'bash', 'text'];
-      if (snippet.includes('code:') && languages.some((lang) => snippet.includes(lang))) {
-        const codeBlocks = snippet.split('code:');
-        // Check if every code block in the snippet is the proper length
-        for (const block of codeBlocks.slice(1)) {
-          totalCodeBlocks++;
-          const cleanedBlock = block.replace(/```/g, ' ').replace(/\n/g, ' ');
-          const wordsInCode = cleanedBlock.split(' ').length;
-          if (wordsInCode > 5 || (['text', 'apidoc'].some((lang) => snippet.includes(lang)) && wordsInCode < 150)) {
-            codeSnippets++;
-          }
-        }
+      const codes = this.accessCategory(snippet, 'code') as string[]
+      if (codes.some(code => {
+        const cleanedCode = code.split('code:').slice(-1)[0].trim().replace(/`/g, '').trim().replace(/\n/g, ' ');
+        return cleanedCode.split(' ').filter(word => word.trim() !== '').length < 5;
+      })) {
+        codeSnippets++;
       }
     }
-
-    return totalCodeBlocks > 0 ? (codeSnippets / totalCodeBlocks) * 10 : 0;
+    return ((snippetsList.length - codeSnippets) / snippetsList.length) * 10;
   }
 
   // Checks if there are multiple code snippets in a snippet
@@ -128,12 +126,12 @@ export class Evaluator {
 
     // CODE and LANGUAGE repeat for multiple code snippets
     for (const snippet of snippetsList) {
-      if (snippet.split('CODE:').length <= 2 || snippet.split('LANGUAGE:').length <= 2) {
+      if (snippet.split('CODE:').length > 2 || snippet.split('LANGUAGE:').length > 2) {
         multipleCodeSnippets++;
       }
     }
 
-    return (multipleCodeSnippets / snippetsList.length) * 10;
+    return ((snippetsList.length - multipleCodeSnippets) / snippetsList.length) * 10;
   }
 
   // Checks if the languages are actually descriptions
