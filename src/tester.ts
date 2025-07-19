@@ -75,25 +75,32 @@ async function tester(urls: TestCase, funcToTest: string): Promise<void> {
 
 // Expects the file to already exist under important_info/
 async function llmEvaluateTester(): Promise<void> {
-  const url = 'https://github.com/climblee/uv-ui';
-  const scoreBreakdown = [2, 10, 10, 10, 10, 10, 7.5, 7.5];
-  const scoreBreakdownTotal = scoreBreakdown.reduce((a, b) => a + b, 0);
+  console.log('📊 Testing LLM evaluate...');
+  const urls = {"https://github.com/climblee/uv-ui": [2, 10, 10, 10, 10, 10, 7.5, 7.5],
+                "https://github.com/long2ice/asynch": [10, 10, 9.2, 10, 10, 10, 10, 10]};
 
-  const path = url.replace(/\//g, '\\');
-  const importantInfo = await fs.readFile(`src/important_info/${path}.txt`, 'utf8');
-  const snippets = await scrapeContext7Snippets(url);
-  const evaluator = new Evaluator(client, snippets);
-  const llmResult = await evaluator.llmEvaluate(importantInfo);
-  console.log("match: ", llmResult.total);
-  if (Math.abs(Number(
-    
-  ) - scoreBreakdownTotal) <= 5) {
-    console.log(`✅ LLM Score breakdown: ${llmResult.total}`);
-  } else {
-    console.log(`❌ LLM Score breakdown: ${llmResult.total} (expected: ${scoreBreakdownTotal})`);
+  for (const [url, scoreBreakdown] of Object.entries(urls)) {
+    const scoreBreakdownTotal = scoreBreakdown.reduce((a, b) => a + b, 0);
+    const path = url.replace(/\//g, '\\');
+    const importantInfo = await fs.readFile(`src/important_info/${path}.txt`, 'utf8');
+    const snippets = await scrapeContext7Snippets(url);
+    const evaluator = new Evaluator(client, snippets);
+    const llmResult = await evaluator.llmEvaluate(importantInfo);
+  
+    if (Math.abs(Number(llmResult.total) - scoreBreakdownTotal) <= 5) {
+      console.log(`✅ LLM score matches human score of: ${llmResult.total}`);
+    } else {
+      console.log(`❌ LLM Score: ${llmResult.total} (expected: ${scoreBreakdownTotal})`);
+      // TODO: Fix this line
+      // console.log(`Difference per criterion: ${llmResult.scores.map((s, i) => Math.abs(Number(s) - scoreBreakdown[i])).join(', ')}`);
+    }
   }
 }
 
+llmEvaluateTester();
+console.log('--------------------------------');
+testFilePath();
+console.log('--------------------------------');
 const testCases: { [key: string]: TestCase } = {
   snippetComplete: {
     'https://context7.com/steamre/steamkit/llms.txt?tokens=18483': 2, // Num of snippets with what we don't want
@@ -163,6 +170,3 @@ program
   });
 
 program.parse(process.argv);
-
-// Uncomment to test LLM evaluate
-// llmEvaluateTester();

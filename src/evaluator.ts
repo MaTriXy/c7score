@@ -26,7 +26,7 @@ export class Evaluator {
 
   accessCategory(snippet: string, category: string): string | string[] {
     const snippetLower = snippet.toLowerCase();
-    const validCategories = ['title', 'description', 'language', 'source'];
+    const validCategories = ['title', 'description', 'source'];
 
     if (validCategories.includes(category)) {
       const parts = snippetLower.split(`${category}:`);
@@ -40,51 +40,55 @@ export class Evaluator {
   async llmEvaluate(importantInfo: string): Promise<EvaluationResult> {
     const snippetDelimiter = '-'.repeat(40);
     const prompt = `
-      For each criterion, provide
-        a score between 0 and 10, where 0 is the   
-        criterion was not met at all, 5 is the criterion 
-        was partially met, and 10 is the criterion was fully met
-        with no room for improvement. Also include 
-        a short explanation for each score. At the end of your response, 
-        calculate a **Total Score** by summing the 10 individual scores. 
-        The maximum possible total is 80. Format your response so that
-        the score for each criterion and the explanation
-        are on a new line. Each criterion
-        compares the required information with the snippets.
-        The snippets are separated by ${snippetDelimiter} and the code blocks 
-      are enclosed in \`\`\`. Do not include the snippets in your response. Make sure to start your response 
-      with "&---". Your scores should represent a ratio of how many snippets meet the criterion out of the 
-      total number of snippets. Your scores must be preceded by **Total Score:**.
+    For each criterion, provide
+    a score between 0 and 10, where 0 is the   
+    criterion was not met at all, 5 is the criterion 
+    was partially met, and 10 is the criterion was fully met
+    with no room for improvement. Each criterion
+    compares the required information with the snippets.
+    The snippets are separated by ${snippetDelimiter} and the code blocks 
+    are enclosed in \`\`\`. Do not include the snippets in your response.
+    Your scores should represent a ratio of how many
+    snippets meet the criterion out of the total number of snippets.
+    The maximum possible total score is 80 and the minimum is 0.
+    Refrain from giving a score of 0 for any criterion unless there is an extreme case.
 
-      Criteria:
-      1. The snippets include some variation of all the required information.
-      2. Snippets contain unique information that is not already included in another snippet.
-      3. There are no snippets that are confusingly worded or unclear.
-      4. No snippets contain syntax errors.
-      5. Snippets are formatted in such a way that you can easily isolate the code.
-      6. Titles and descriptions are sensible.
+    Criteria:
+      1. The snippets include some variation of all the required information. It does not need to be exact, but should
+      convery the same idea.
+      2. Snippets contain unique information that is not already included in another snippet. There can be some overlap, but
+      the snippets should not be identical.
+      3. There are no snippets that are confusingly worded or unclear. This could be grammatical or spelling errors.
+      4. No snippets contain any obvious syntax errors.
+      5. Snippets are formatted in such a way that you can easily isolate the code (e.g., no placeholders or ellipses).
+      6. Titles and descriptions are sensible (e.g., the description shouldn't be about requests when the code is about
+      visualizing data).
       7. The programming language of the code snippet is correct.
       8. All the text, even in the code snippets, are in English.
 
-      Required information: ${importantInfo}
-      Snippets: ${this.snippets}
+    Required information: ${importantInfo}
+    Snippets: ${this.snippets}
     `;
 
     const response = await this.client.models.generateContent({
       model: 'gemini-2.5-pro',
       contents: prompt,
       config: {
-        tools: [
-          { functionDeclarations: [{ name: 'googleSearch', description: 'Search Google for relevant information' }] },
-          { functionDeclarations: [{ name: 'urlContext', description: 'Retrieve context from a URL' }] },
-        ]
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: 'object',
+        properties: {
+          scores: { type: 'array', items: { type: 'number' } },
+          total: { type: 'number' },
+        },
       },
+    },
     });
+    const jsonResponse = JSON.parse(response.text ?? '{}');
+    const scores = jsonResponse.scores;
+    const total = jsonResponse.total;
 
-    const responseText = response.text?.split('&---')[1] ?? '';
-    const [scores, total] = responseText.split('**Total Score:** ');
-
-    return { scores, total: total};
+    return { scores, total };
   }
 
   // Checks if code snippets exist
@@ -140,8 +144,12 @@ export class Evaluator {
     let languageChecker = 0;
 
     for (const snippet of snippetsList) {
-      const langSnippet = this.accessCategory(snippet, 'language') as string;
-      if (langSnippet.includes("none") || langSnippet.includes("console")) {
+      const langSnippet = this.accessCategory(snippet, 'language') as string[];
+      if (langSnippet.some(l => {
+        if (l.includes("```")) {
+          return l.split("code:\n```")[0].trim().includes("none") || l.split("code:\n```")[0].trim().includes("console")
+        }
+      })) {
         languageChecker++;
       }
     }
@@ -176,8 +184,12 @@ export class Evaluator {
     let bibtexCitations = 0;
 
     for (const snippet of snippetsList) {
-      const lang = this.accessCategory(snippet, 'language') as string;
-      if (lang.includes('bibtex')) {
+      const langSnippet = this.accessCategory(snippet, 'language') as string[];
+      if (langSnippet.some(l => {
+        if (l.includes("```")) {
+          return l.split("code:\n```")[0].trim().includes("bibtex")
+        }
+      })) {
         bibtexCitations++;
       }
     }

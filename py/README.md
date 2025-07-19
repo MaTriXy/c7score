@@ -22,6 +22,7 @@ Ideas for tests:
 * Are any of the snippets just imports? (e.g. import, require, etc.) -> `imports`
 * Are any of the snippets just installations? (e.g. pip install, etc.) -> `installs`
 
+The py version of `evaluator` includes linter tests.
 
 ## Running it
 

@@ -39,10 +39,10 @@ def test_file_path():
         print(f"📊 TESTING create_file ...")
         try:
             path = url.replace("/", "\\")
-            with open(f"important_info/{path}.txt", "w") as f:
+            with open(f"py/important_info/{path}.txt", "w") as f:
                 f.write(f"Google search results: ")
             print(f"✅ Created file for {url}")
-            os.remove(f'important_info/{path}.txt')
+            os.remove(f'py/important_info/{path}.txt')
             print(f"✅ Removed file for {url}")
         except Exception as e:
             print(f"❌ Error creating files for {url}: {e}")
@@ -65,25 +65,42 @@ def tester(urls, func_to_test: str):
 # Determines how well the LLM aligns with human eval
 def llm_evaluate_tester():
     print("📊 Testing LLM evaluate...")
-    url = "https://github.com/climblee/uv-ui"
-    score_breakdown = [2, 10, 10, 10, 10, 10, 7.5, 7.5]
-    score_breakdown_total = sum(score_breakdown)
- 
-    # create_file(url)
-    path = url.replace("/", "\\")
-    with open(f"py/important_info/{path}.txt", "r") as f:
-        important_info = f.read()
-    snippets = scrape_context7_snippets(url)
-    evaluator = Evaluator(client, snippets)
-    llm_score, llm_total = evaluator.llm_evaluate(important_info)
-    print(f"📊 {url}: {llm_score}")
-    print(f"llm_total: {llm_total}")
-    if abs(ast.literal_eval(llm_total) - score_breakdown_total) <= 5:
-        print(f"✅ LLM Score breakdown: {llm_total}")
-    else:
-        print(f"❌ LLM Score breakdown: {llm_total} (expected: {score_breakdown_total})")
+    urls = {"https://github.com/climblee/uv-ui": [2, 10, 10, 10, 10, 10, 7.5, 7.5],
+            "https://github.com/long2ice/asynch": [10, 10, 9.2, 10, 10, 10, 10, 10]}
+    
+    for url, score_breakdown in urls.items():
+        score_breakdown_total = sum(score_breakdown)
+        # create_file(url)
+        path = url.replace("/", "\\")
+        with open(f"py/important_info/{path}.txt", "r") as f:
+            important_info = f.read()
+        snippets = scrape_context7_snippets(url)
+        evaluator = Evaluator(client, snippets)
+        llm_score, llm_total = evaluator.llm_evaluate(important_info)
+        if abs(llm_total - score_breakdown_total) <= 5:
+            print(f"✅ LLM score matches human score of: {llm_total}")
+        else:
+            print(f"❌ LLM Score: {llm_total} (expected: {score_breakdown_total})")
+            print(f"Difference per criterion: {[abs(list1 - list2) for list1, list2 in zip(llm_score, score_breakdown)]}")
 
+def test_linter():
+    print("📊 Testing linter...")
+    urls = ["https://context7.com/aflplusplus/aflplusplus/llms.txt", # C & C++ & Shell
+            "https://context7.com/harrisonkramer/optiland/llms.txt", # Python
+            
+            ]
+    for url in urls:
+        snippets = scrape_context7_snippets(url)
+        snippet_num = len(snippets.split("-" * 40))
+        func = getattr(Evaluator(client, snippets), "syntax_eval")
+        score = func()
+        print(f"✅ {url}: {score}")
+
+llm_evaluate_tester()
+print("--------------------------------")
 test_file_path()
+print("--------------------------------")
+test_linter()
 print("--------------------------------")
 test_cases = {
     "snippet_complete": {"https://context7.com/steamre/steamkit/llms.txt?tokens=18483": 2,
@@ -136,4 +153,4 @@ test_cases = {
 for test in test_cases:
     tester(test_cases[test], test)
     print("--------------------------------")
-# llm_evaluate_tester()
+

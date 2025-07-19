@@ -81,7 +81,7 @@ def score_file(url, snippet_url):
     installs = evaluator.installs()
     print(f"📊 Snippets contain installations: {installs}")
 
-    print(f"✅ Total quality score: {(llm_total + snippet_complete + code_snippet_length + multiple_code_snippets + language_checker + contains_list + bibtex_citations + license_info + directory_structure + imports + installs) / 90} ✅")
+    print(f"✅ Total quality score: {(llm_total + snippet_complete + code_snippet_length + multiple_code_snippets + language_checker + contains_list + bibtex_citations + license_info + directory_structure + imports + installs) / 190} ✅")
 
 
 

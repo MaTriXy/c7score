@@ -23,15 +23,15 @@ const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
 const auth = new Octokit({ auth: envConfig.GITHUB_TOKEN });
 
 // Web search tools
-const groundingTool = {
-  functionDeclarations: [{ name: 'googleSearch', description: 'Search Google for relevant information' }],
-};
+// const groundingTool = {
+//   functionDeclarations: [{ name: 'googleSearch', description: 'Search Google for relevant information' }],
+// };
 const urlContextTool = {
   functionDeclarations: [{ name: 'urlContext', description: 'Retrieve context from a URL' }],
 };
 
 const modelConfig: GenerateContentConfig = {
-  tools: [groundingTool, urlContextTool],
+  tools: [urlContextTool],
 };
 
 
@@ -114,7 +114,7 @@ async function scoreFile(url: string, snippetUrl: string): Promise<void> {
 
   const totalScore = (parseFloat(llmResult.total) + snippetComplete + codeSnippetLength + multipleCodeSnippets + 
     languageChecker + containsList + bibtexCitations + licenseInfo + directoryStructure + 
-    imports + installs) / 90;
+    imports + installs) / 190;
   console.log(`✅ Total quality score: ${totalScore} ✅`);
 }
 
