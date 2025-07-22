@@ -22,10 +22,7 @@ const envConfig: EnvConfig = {
 const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
 const auth = new Octokit({ auth: envConfig.GITHUB_TOKEN });
 
-// Web search tools
-// const groundingTool = {
-//   functionDeclarations: [{ name: 'googleSearch', description: 'Search Google for relevant information' }],
-// };
+// Tools
 const urlContextTool = {
   functionDeclarations: [{ name: 'urlContext', description: 'Retrieve context from a URL' }],
 };
@@ -34,21 +31,30 @@ const modelConfig: GenerateContentConfig = {
   tools: [urlContextTool],
 };
 
-
 export async function createFile(url: string): Promise<void> {
   const search = new Search(url, { generateContent: client.models.generateContent.bind(client.models) }, modelConfig);
-  let searchResponse = await search.googleSearch();
-  
-  // Gemini has bug where it sometimes returns None
-  // https://github.com/googleapis/python-genai/issues/1039
-  
-  if (searchResponse == null) {
-    // Retry generation
-    searchResponse = await search.googleSearch();
-  }
-
   const filePath = url.replace(/\//g, '\\');
-  await fs.writeFile(`src/important_info/${filePath}.txt`, `Google search results: ${searchResponse.text}`);
+
+  // Problem with Gemini SDK for Node causing undefined to be returned occasionally
+  try {
+    let searchResponse = await search.googleSearch();
+    if (searchResponse.text == undefined) {
+      console.log('Generation returned undefined. Using Python instead...');
+      const nodecallspython = require("node-calls-python");
+      const py = nodecallspython.interpreter;
+      py.import("../py/search.py").then(async function(pymodule: any) {
+        const pyobj = await py.create(pymodule, "Search", [url, client.models.generateContent.bind(client.models), modelConfig]);
+        const searchResponse = await py.call(pyobj, "google_search");
+    });
+      // Retry generation
+      console.log('Generation returned undefined. Retrying generation...');
+      searchResponse = await search.googleSearch();
+    }
+    await fs.writeFile(`src/important_info/${filePath}.txt`, `Google search results: ${searchResponse.text}`, 'utf-8');
+  } catch (error) {
+    console.error(`Error generating search results for ${url}:`, error);
+    await fs.writeFile(`src/important_info/${filePath}.txt`, `Google search results: Error generating search results`, 'utf-8');
+  }
 }
 
 async function scoreFile(url: string, snippetUrl: string): Promise<void> {
@@ -65,14 +71,7 @@ async function scoreFile(url: string, snippetUrl: string): Promise<void> {
 
   const snippets = await scrapeContext7Snippets(snippetUrl);
   const evaluator = new Evaluator(
-    {
-      models: {
-        generateContent: async (params: GenerateContentParameters) => {
-          const response = await client.models.generateContent(params);
-          return { text: response.text };
-        },
-      },
-    },
+    { models: client.models },
     snippets
   );
 
@@ -112,12 +111,13 @@ async function scoreFile(url: string, snippetUrl: string): Promise<void> {
   const installs = evaluator.installs();
   console.log(`📊 Snippets contain installations: ${installs}`);
 
-  const totalScore = (parseFloat(llmResult.total) + snippetComplete + codeSnippetLength + multipleCodeSnippets + 
+  const totalScore = (llmResult.total + snippetComplete + codeSnippetLength + multipleCodeSnippets + 
     languageChecker + containsList + bibtexCitations + licenseInfo + directoryStructure + 
     imports + installs) / 190;
   console.log(`✅ Total quality score: ${totalScore} ✅`);
 }
 
+if (require.main === module) {
 program
   .requiredOption('--url <url>', 'URL of source (Github repo, docs, llms.txt, etc.)')
   .requiredOption('--snippet <snippetUrl>', 'URL of context7 snippets')
@@ -127,3 +127,4 @@ program
   });
 
 program.parse(process.argv);
+}

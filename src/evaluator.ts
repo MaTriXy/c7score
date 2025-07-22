@@ -1,14 +1,14 @@
-import { GenerateContentConfig } from '@google/genai';
+import { GenerateContentParameters, GenerateContentResponse } from '@google/genai';
 
-interface Client {
+type Client = {
   models: {
-    generateContent: (params: { model: string; contents: string; config?: GenerateContentConfig }) => Promise<{ text: string | undefined }>;
+    generateContent(params: GenerateContentParameters): Promise<GenerateContentResponse>;
   };
-}
+};
 
 interface EvaluationResult {
-  scores: string;
-  total: string;
+  scores: number[];
+  total: number;
 }
 
 export class Evaluator {
@@ -51,7 +51,7 @@ export class Evaluator {
     Your scores should represent a ratio of how many
     snippets meet the criterion out of the total number of snippets.
     The maximum possible total score is 80 and the minimum is 0.
-    Refrain from giving a score of 0 for any criterion unless there is an extreme case.
+    Refrain from giving a score between 0-5 for any criterion unless there is an extreme or frequent case.
 
     Criteria:
       1. The snippets include some variation of all the required information. It does not need to be exact, but should
@@ -65,6 +65,16 @@ export class Evaluator {
       visualizing data).
       7. The programming language of the code snippet is correct.
       8. All the text, even in the code snippets, are in English.
+
+    Here is an example thought process:
+      Criterion 1: 3 of the 10 required pieces of information were missing. -> 7
+      Criterion 2: 2 of the 50 snippets shared identical information. -> 9.6
+      Criterion 3: 1 of the 50 snippets was a bit confusing to understand. The grammar was a bit off and adding a few words would resolve ambiguity. -> 9.8
+      Criterion 4: 3 of the 50 snippets had obvious syntax errors. The Typescript code in one snippet was missing a bracket. The other two used colons instead of equal signs to assign values. -> 9.4
+      Criterion 5: 0 of the 50 snippets were improperly formatted. They had correct indentation and no placeholders or ellipses. -> 10
+      Criterion 6: 1 of the 50 snippets had a mismatch between the title and code. The title suggested that the code was about requests, whereas the code was actually about visualizations. -> 9.4
+      Criterion 7: 5 of the 50 snippets had the wrong language. The languages were defined as being HTML, but the code was actually in Python. -> 9
+      Criterion 8: 10 of the 50 snippets had comments in Chinese instead of English  -> 8
 
     Required information: ${importantInfo}
     Snippets: ${this.snippets}

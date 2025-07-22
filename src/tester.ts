@@ -7,6 +7,8 @@ import { scrapeContext7Snippets } from './utils';
 import fs from 'fs/promises';
 import { createFile } from './main';
 
+// Note: test URL information may change when snippets are refreshed on website
+
 interface EnvConfig {
   GEMINI_API_TOKEN?: string;
   GITHUB_TOKEN?: string;
@@ -21,6 +23,7 @@ const envConfig: EnvConfig = {
 
 const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
 const auth = new Octokit({ auth: envConfig.GITHUB_TOKEN });
+
 
 async function testFilePath(): Promise<void> {
   console.log('📊 Testing file_path...');
@@ -76,11 +79,13 @@ async function tester(urls: TestCase, funcToTest: string): Promise<void> {
 // Expects the file to already exist under important_info/
 async function llmEvaluateTester(): Promise<void> {
   console.log('📊 Testing LLM evaluate...');
-  const urls = {"https://github.com/climblee/uv-ui": [2, 10, 10, 10, 10, 10, 7.5, 7.5],
-                "https://github.com/long2ice/asynch": [10, 10, 9.2, 10, 10, 10, 10, 10]};
+  const urls = {"https://github.com/long2ice/asynch": [10, 10, 9.2, 10, 10, 10, 10, 10],
+                "https://github.com/climblee/uv-ui": [2, 10, 10, 10, 10, 10, 7.5, 7.5]};
 
   for (const [url, scoreBreakdown] of Object.entries(urls)) {
     const scoreBreakdownTotal = scoreBreakdown.reduce((a, b) => a + b, 0);
+    await createFile(url);
+    
     const path = url.replace(/\//g, '\\');
     const importantInfo = await fs.readFile(`src/important_info/${path}.txt`, 'utf8');
     const snippets = await scrapeContext7Snippets(url);
@@ -91,16 +96,16 @@ async function llmEvaluateTester(): Promise<void> {
       console.log(`✅ LLM score matches human score of: ${llmResult.total}`);
     } else {
       console.log(`❌ LLM Score: ${llmResult.total} (expected: ${scoreBreakdownTotal})`);
-      // TODO: Fix this line
-      // console.log(`Difference per criterion: ${llmResult.scores.map((s, i) => Math.abs(Number(s) - scoreBreakdown[i])).join(', ')}`);
+      console.log(`Difference per criterion: [${llmResult.scores.map((val1, i) => val1 - scoreBreakdown[i]).join(', ')}]`);
     }
   }
 }
 
-llmEvaluateTester();
-console.log('--------------------------------');
 testFilePath();
 console.log('--------------------------------');
+llmEvaluateTester();
+console.log('--------------------------------');
+
 const testCases: { [key: string]: TestCase } = {
   snippetComplete: {
     'https://context7.com/steamre/steamkit/llms.txt?tokens=18483': 2, // Num of snippets with what we don't want
@@ -127,7 +132,6 @@ const testCases: { [key: string]: TestCase } = {
     'https://context7.com/directus/directus/llms.txt?topic=1.&tokens=100000': 1,
     'https://context7.com/context7/ctrl-plex_vercel_app/llms.txt': 1,
     'https://context7.com/mhsanaei/3x-ui/llms.txt': 0,
-    'https://context7.com/huntabyte/shadcn-svelte/llms.txt': 1,
   },
   bibtexCitations: {
     'https://context7.com/cleardusk/3ddfa_v2/llms.txt': 2,
@@ -139,10 +143,10 @@ const testCases: { [key: string]: TestCase } = {
     'https://context7.com/n8n-io/n8n-docs/llms.txt': 0,
   },
   directoryStructure: {
+    'https://context7.com/shadcn-ui/ui/llms.txt': 1,
     'https://context7.com/context7/cuelang/llms.txt': 1,
     'https://context7.com/jpressprojects/jpress/llms.txt': 1,
     'https://context7.com/czelabueno/jai-workflow/llms.txt': 2,
-    'https://context7.com/shadcn-ui/ui/llms.txt': 4,
   },
   imports: {
     'https://context7.com/shuvijs/shuvi/llms.txt': 0,

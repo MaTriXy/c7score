@@ -39,7 +39,7 @@ class Evaluator:
         Your scores should represent a ratio of how many
         snippets meet the criterion out of the total number of snippets.
         The maximum possible total score is 80 and the minimum is 0.
-        Refrain from giving a score of 0 for any criterion unless there is an extreme case.
+        Refrain from giving a score between 0-5 for any criterion unless there is an extreme or frequent case.
         
         Criteria:
         1. The snippets include some variation of all the required information. It does not need to be exact, but should
@@ -77,8 +77,7 @@ class Evaluator:
     # Checks if code snippets exist
     def snippet_complete(self):
         comp = ["TITLE: ", "DESCRIPTION: ", "LANGUAGE: ", "SOURCE: ", "CODE:"]
-        snippet_del = "\-" * 40
-        snippets_list = self.snippets.split(snippet_del)
+        snippets_list = self.split_snippets()
         comps_complete = 0
         for snippet in snippets_list:
             if all(c in snippet for c in comp):
@@ -126,8 +125,6 @@ class Evaluator:
         apidoc_list = 0
         for snippet in snippets_list:
             codes = self.access_category(snippet, "code")
-            for code in codes:
-                print(code.split("code:")[-1].strip().strip("`"))
             if (
                 # Check for both 1. and 2. to make sure its a numbered list and not something else
                 any("◯" in code.split("code:")[-1].strip().strip("`") for code in codes)
@@ -210,7 +207,6 @@ class Evaluator:
         snippet_num = 0
         for snippet in snippets_list:
             snippet_num += 1
-            print(snippet_num)
             lang = self.access_category(snippet, "language")
             to_ignore = ["console", "none", "configuration", "text", "makefile"]
             # If theres multiple code blocks/languages
@@ -233,5 +229,3 @@ class Evaluator:
         return (syntax_eval / lang_code_block)
 
     
-
-

@@ -1,9 +1,5 @@
 import { GenerateContentParameters, GenerateContentResponse, GenerateContentConfig } from '@google/genai';
 
-interface SearchResponse {
-  text: string | undefined;
-}
-
 interface SearchClient {
   generateContent(params: GenerateContentParameters): Promise<GenerateContentResponse>;
 }
@@ -19,7 +15,7 @@ export class Search {
     this.modelConfig = modelConfig;
   }
 
-  async googleSearch(): Promise<SearchResponse> {
+  async googleSearch(): Promise<GenerateContentResponse> {
     const prompt = `
       Determine the most crucial technical information from the URL, ${this.url}, 
       that would help you use it when coding. Some examples of technical information 
@@ -34,20 +30,21 @@ export class Search {
       item must have a clear heading with between 1-5 sentences and no more than one code 
       snippet. The code snippet should be formatted as a code block.
 
-      You may search for the library name using search tools and access the content using 
-      the url context tool if needed. You may also use the url context tool to access the 
-      content of the provided URL. You are NOT limited to the link provided and may search 
-      for more information if needed, however, code MUST ONLY come from ${this.url}, or one 
+      You may use the url context tool to access the content of ${this.url}, or one 
       of the links from the provided URL. If the provided URL links to other websites, you 
       may use those sources to extract code snippets or additional information.
 
       Double check that the information is relevant to the library and not just general information about it.
     `;
-
-    return await this.client.generateContent({
+    try {
+    const content = await this.client.generateContent({
       model: 'gemini-2.5-pro',
-      contents: prompt,
-      config: this.modelConfig,
+      contents: [prompt],
     });
+    return content;
+    } catch (error) {
+      console.error(`Error generating search results for ${this.url}:`, error);
+      throw error;
+    }
   }
 }

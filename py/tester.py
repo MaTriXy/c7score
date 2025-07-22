@@ -17,11 +17,6 @@ client = genai.Client(api_key=env_config["GEMINI_API_TOKEN"])
 auth = Auth.Token(env_config["GITHUB_TOKEN"])
 g = Github(auth=auth)
 
-# Web search tool
-grounding_tool = types.Tool(google_search=types.GoogleSearch())
-url_context_tool = types.Tool(url_context=types.UrlContext())
-model_config = types.GenerateContentConfig(tools=[grounding_tool, url_context_tool],
-                                           response_modalities=["TEXT"])
 
 def test_file_path():
     print("📊 Testing file_path...")
@@ -70,7 +65,7 @@ def llm_evaluate_tester():
     
     for url, score_breakdown in urls.items():
         score_breakdown_total = sum(score_breakdown)
-        # create_file(url)
+        create_file(url)
         path = url.replace("/", "\\")
         with open(f"py/important_info/{path}.txt", "r") as f:
             important_info = f.read()
@@ -137,7 +132,7 @@ test_cases = {
     "directory_structure": {"https://context7.com/context7/cuelang/llms.txt": 1,
                             "https://context7.com/jpressprojects/jpress/llms.txt": 1,
                             "https://context7.com/czelabueno/jai-workflow/llms.txt": 2,
-                            "https://context7.com/shadcn-ui/ui/llms.txt": 4,
+                            "https://context7.com/shadcn-ui/ui/llms.txt": 1,
     },
     "imports": {"https://context7.com/shuvijs/shuvi/llms.txt": 0,
                 "https://context7.com/adn-devtech/3dsmax-python-howtos/llms.txt": 8,

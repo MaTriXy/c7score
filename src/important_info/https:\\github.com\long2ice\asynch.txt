@@ -1,1 +1,117 @@
-Google search results: undefined
+Google search results: Based on the provided URL for the `asynch` library, here is a list of the most crucial technical information for a developer to use it in their code.
+
+***
+
+1.  ### Establishing a Database Connection
+    The most fundamental operation is connecting to your ClickHouse database. This is accomplished using `asynch.connect()` within an `async with` statement, which ensures the connection is properly managed and closed. You must provide connection parameters such as `host`, `user`, `password`, and the target `database`.
+
+    ```python
+    import asynch
+
+    async def main():
+        async with asynch.connect(
+            host='127.0.0.1',
+            port=9000,
+            user='default',
+            password='',
+            database='default'
+        ) as conn:
+            # use the connection
+            ...
+    ```
+
+2.  ### Executing Raw SQL and Fetching Results
+    Once connected, you can execute SQL queries and fetch the results. Use `conn.fetch()` to execute a `SELECT` statement and retrieve all rows as a list of tuples. For statements that do not return rows, such as `CREATE TABLE` or `DROP TABLE`, you can use `conn.execute()`.
+
+    ```python
+    async with asynch.connect() as conn:
+        await conn.execute("CREATE TABLE test (x Int32, y String) ENGINE = Memory")
+        result = await conn.fetch("SELECT * FROM test")
+        print(result)
+    ```
+
+3.  ### Inserting Data in Batches
+    To insert data, you can use the `conn.execute()` method. It is highly efficient for inserting multiple rows at once by passing a list of tuples or a list of dictionaries as the second argument. This bulk insertion is significantly faster than inserting row by row.
+
+    ```python
+    async with asynch.connect() as conn:
+        data = [{"x": 1, "y": "hello"}, {"x": 2, "y": "world"}]
+        await conn.execute("INSERT INTO test VALUES", data)
+    ```
+
+4.  ### Managing Connections with a Pool
+    For applications that handle many concurrent database operations, using a connection pool is essential for performance and resource management. You create a pool with `asynch.create_pool()` and then acquire connections from it as needed. This avoids the overhead of establishing a new connection for every operation.
+
+    ```python
+    async def main():
+        pool = await asynch.create_pool() # pass connection args here
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute("SELECT 1")
+                result = await cursor.fetchone()
+                print(result)
+    ```
+
+5.  ### Defining an ORM Model
+    The library includes a powerful ORM for an object-oriented approach to database interactions. To define a table mapping, you create a class that inherits from `asynch.Model`. Table columns are defined as class attributes using standard Python type hints.
+
+    ```python
+    import asynch
+    from datetime import date
+
+    class User(asynch.Model):
+        id: int
+        name: str
+        birthday: date
+
+        class Meta:
+            table_name = "user"
+            db = "default"
+    ```
+
+6.  ### Creating a Table from a Model
+    After defining your ORM model, you can automatically create the corresponding table in the database. Simply call the `Model.create_table()` class method. This will generate and execute the appropriate `CREATE TABLE` SQL statement.
+
+    ```python
+    # Before using any ORM model, you must initialize the database connection
+    await asynch.connect(host="127.0.0.1", port=9000)
+
+    # Now you can create the table
+    await User.create_table()
+    ```
+
+7.  ### Inserting Data Using the ORM
+    To insert a new record with the ORM, you create an instance of your model class with the required data. Then, you call the asynchronous `.save()` method on the instance to persist it to the database.
+
+    ```python
+    user = User(id=1, name="long2ice", birthday=date(2022, 1, 1))
+    await user.save()
+    ```
+
+8.  ### Querying and Filtering Objects
+    The ORM provides a fluent interface for querying data. You use the `Model.objects` manager to build queries. The `.filter()` method is used to specify conditions, and a terminal method like `.all()` executes the query and retrieves a list of model instances.
+
+    ```python
+    users = await User.objects.filter(User.id == 1).all()
+    ```
+
+9.  ### Retrieving a Single Object
+    If you expect a query to return exactly one result, you can use the `.get()` method. This is a convenient way to fetch a single record, for example by its primary key. It will raise an exception if no object is found or if multiple objects are found.
+
+    ```python
+    user = await User.objects.get(id=1)
+    ```
+
+10. ### Updating and Deleting Objects
+    To update an existing record, you first retrieve the object, modify its attributes, and then call `.save()` again. To delete an object, you retrieve it and then call the `.delete()` method on the instance.
+
+    ```python
+    # Update an object
+    user = await User.objects.get(id=1)
+    user.name = "long"
+    await user.save()
+
+    # Delete an object
+    user = await User.objects.get(id=1)
+    await user.delete()
+    ```
