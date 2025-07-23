@@ -1,0 +1,27 @@
+library,overall_score,llm_score,llm_explanation,other_messages
+/upstash/context7,8.101503759398495,6.875,"The snippets cover most of the required information, but are missing the point about advanced Node.js troubleshooting and only partially cover Docker implementation and running locally.
+There is an extreme amount of snippet duplication. Many snippets providing JSON configurations for various editors are completely identical, as are several other snippets showing command-line usage or Docker configurations.
+Several snippets are unclear due to language issues. Two snippets use a Cyrillic 'C' in the JSON key ""Сontext7"", which is very confusing. Other snippets have titles and descriptions in Japanese and Turkish.
+Several snippets that are supposed to be JSON are not valid, complete JSON objects but are instead fragments (e.g., a single key-value pair without the surrounding curly braces).
+Multiple snippets contain placeholders that prevent the code from being isolated and run directly, such as `<CLIENT_NAME>`, `<YOUR_SMITHERY_KEY>`, and `/path/to/folder/`.
+Titles and descriptions are consistently sensible and accurately describe their corresponding code snippets.
+The programming language assigned to each snippet is correct and appropriate for the code's content.
+Several snippets contain non-English text. There are titles and descriptions in Turkish and Japanese, a file path in Spanish, and Cyrillic characters used in code.","Percentage of required components satisfied (represented as score out of 10): 10.0
+
+Percentage of code snippets with appropriate length: 9.821428571428571
+
+Percentage of code snippets that contain one language and code section: 9.642857142857142
+
+Percentage of code snippets that are not just descriptions or console outputs: 10.0
+
+Percentage of code snippets that are not just a list: 9.642857142857142
+
+Percentage of code snippets that do not contain bibtex citations: 10.0
+
+Percentage of code snippets that do not contain license information: 10.0
+
+Percentage of code snippets that do not contain directory structure: 10.0
+
+Percentage of code snippets that are not just imports: 10.0
+
+Percentage of code snippets that are not just installations: 9.821428571428571"

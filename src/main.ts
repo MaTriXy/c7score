@@ -113,7 +113,7 @@ async function scoreFile(url: string, snippetUrl: string): Promise<void> {
 
   const totalScore = (llmResult.total + snippetComplete + codeSnippetLength + multipleCodeSnippets + 
     languageChecker + containsList + bibtexCitations + licenseInfo + directoryStructure + 
-    imports + installs) / 190;
+    imports + installs) / 19;
   console.log(`✅ Total quality score: ${totalScore} ✅`);
 }
 
