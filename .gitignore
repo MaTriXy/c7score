@@ -26,3 +26,5 @@ out/
 # Cache
 .cache/
 .npm/
+
+py/important_info/*

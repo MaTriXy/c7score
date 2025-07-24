@@ -93,7 +93,7 @@ def score_file(url, snippet_url):
     average_score = (llm_score + snippet_complete + code_snippet_length + multiple_code_snippets + language_checker + contains_list + bibtex_citations + license_info + directory_structure + imports + installs) / 19
     print(f"✅ Total quality score: {average_score} ✅\n")
     llm_score_out_of_80 = (llm_score / 80) * 10
-    return average_score, llm_score_out_of_80, llm_explanation, other_messages
+    return average_score, llm_score_out_of_80, llm_score_breakdown, llm_explanation, other_messages
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -107,8 +107,8 @@ def parse_args():
 
 def run_evaluation(url, snippet_url):
     create_file(url)
-    average_score, llm_score, llm_explanation, other_messages = score_file(url, snippet_url)
-    return average_score, llm_score, llm_explanation, other_messages
+    average_score, llm_score, llm_score_breakdown, llm_explanation, other_messages = score_file(url, snippet_url)
+    return average_score, llm_score, llm_score_breakdown, llm_explanation, other_messages
 
 def main():
     url, snippet_url = parse_args()

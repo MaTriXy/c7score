@@ -2,31 +2,25 @@ import re
 from playwright.sync_api import Page, expect, sync_playwright
 import pandas as pd
 from main import run_evaluation
+import httpx
+import json
+import sys
 
 def get_pop_libraries() -> list[str]:
     """Gets the top 100 libraries from Context7"""
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        url = "https://context7.com/stats"
-        page.goto(url, wait_until="domcontentloaded")
-        page.click("text=All Time")
-        rows = page.locator("table tbody tr").evaluate_all("(rows) => rows.map(r => r.innerText.trim())")
-        libraries = [row.split('\t')[0] for row in rows]
-        browser.close()
-        return libraries
+    with open("py/context7_api_stats.json", "r") as f:
+        json_data = json.load(f)
+    libraries = json_data["data"]
+    libraries_by_pop = {key: sum(value.values()) for key, value in libraries.items()}
+    pop_libraries = dict(sorted(libraries_by_pop.items(), key=lambda x: x[1], reverse=True))
+    top_pop_libraries = [tup[0] for tup in list(pop_libraries.items())[:100]]
+    return top_pop_libraries
 
-def get_library_urls(libraries: list[str]) -> dict[str, str]:
+def get_library_urls(top_pop_libraries: list[str]) -> dict[str, str]:
     """Gets the source and snippet URLs for each library"""
-    library_urls = {}
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        for library in libraries:
-            url = f"https://context7.com{library}"
-            page.goto(url, wait_until="domcontentloaded")
-            source_url = page.locator("a[href^='https://']").nth(1).get_attribute("href")  # Second link on webpage
-            library_urls[library] = (source_url, f"{url}/llms.txt")  # key is source URL, value is snippet URL
+    with open("py/context7_api_libraries.json", "r") as f:
+        json_data = json.load(f)
+    library_urls = {library["settings"]["project"]: (library["settings"]["docsRepoUrl"], f'https://context7.com{library["settings"]["project"]}/llms.txt') for library in json_data if library["settings"]["project"] in top_pop_libraries}
     return library_urls
 
 def main():
@@ -37,18 +31,33 @@ def main():
     - llm_explanation: the explanation of the LLM's score
     - other_messages: a breakdown of what each static analysis score means
     """
-    df = pd.DataFrame(columns=["library", "overall_score", "llm_score", "llm_explanation", "other_messages"])
+    df = pd.DataFrame(columns=["library", "overall_score", "llm_score", "llm_score_breakdown (score per criterion)", "llm_explanation", "other_messages"])
     print("Getting libraries from Context7...")
-    libraries = get_pop_libraries()
+    top_pop_libraries = get_pop_libraries()
     print("Getting library URLs...")
-    library_urls = get_library_urls(libraries)
+    library_urls = get_library_urls(top_pop_libraries)
     print("Running evaluation...")
     for library, (source_url, snippet_url) in library_urls.items():
-        print(f"Working on {library}...")
-        score, llm_score, llm_explanation, other_messages = run_evaluation(source_url, snippet_url)
-        other_messages_str = "\n\n".join(other_messages)
-        df.loc[len(df)] = [library, score, llm_score, llm_explanation, other_messages_str]
-    df.to_csv("py/library_scores.csv", index=False)
+        try:
+            print(f"Working on {library}...")
+            score, llm_score, llm_score_breakdown, llm_explanation, other_messages = run_evaluation(source_url, snippet_url)
+            other_messages_str = "\n\n".join(other_messages)
+            df.loc[len(df)] = [library, score, llm_score, llm_score_breakdown, llm_explanation, other_messages_str]
+
+        # Caused by error messages sent from server (e.g., rate limiting, internal server error)
+        except httpx.HTTPStatusError as e:
+            print(f"HTTPStatusError: {e}")
+            break
+
+        # All other possible errors
+        except Exception as e:
+            print(f"{library} error: {e}. Skipping...")
+            continue
+
+        # Regardless of errors, save what we have
+        finally:
+            df.to_csv("py/library_scores.csv", index=False)
+
 
 if __name__ == "__main__":
     main()
