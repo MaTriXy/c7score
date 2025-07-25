@@ -36,27 +36,25 @@ class Evaluator:
         and the code blocks are enclosed in ```.
         Your scores should represent a ratio of how many
         snippets meet the criterion out of the total number of snippets.
-        The maximum possible total score is 80 and the minimum is 0.
-        Refrain from giving a score between 0-5 for any criterion unless there is an extreme or frequent case.
+        The maximum possible total score is 30 and the minimum is 0.
         
         Criteria:
-        1. The snippets include some variation of all the required information. It does not need to be exact, but should
-        convery the same idea.
-        2. Snippets contain unique information that is not already included in another snippet. There can be some overlap, but
-        the snippets should not be identical.
-        3. There are no snippets that are confusingly worded or unclear. This could be grammatical or spelling errors.
-        4. No snippets contain any obvious syntax errors.
-        5. Snippets are formatted in such a way that you can easily isolate the code (e.g., no placeholders or ellipses).
-        6. Titles and descriptions are sensible (e.g., the description shouldn't be about requests when the code is about
-        visualizing data).
-        7. The programming language of the code snippet is correct.
-        8. All the text, even in the code snippets, are in English.
+        1. Required and Unique Information: The snippets include some variation of all the required information. 
+        It does not need to be exact, but should convery the same idea. Snippets contain unique information 
+        that is not already included in another snippet. 
+        There can be some overlap, but the snippets should not be identical.
+        2. Clarity: There are no snippets that are confusingly worded or unclear. This could be grammatical 
+        or spelling errors. Titles and descriptions are sensible (e.g., the description shouldn't be about requests 
+        when the code is about visualizing data) and all the text, even in the code snippets, are in English.
+        3. Correct Syntax: No snippets contain any obvious syntax errors. Snippets are formatted in such a way 
+        that you can easily isolate the code (e.g., no placeholders or ellipses). The programming language of 
+        the code snippet is correct.
 
         Return only the JSON object with this schema:
         {{
-            "scores": [int, ..., int],  # Has length of 8, each element is a score between 0 and 10
-            "total": int,  # Sum of scores, between 0 and 80
-            "explanation": str  # Explanation for EACH score, separated by newlines, 8 explanations in total.
+            "scores": [int, ..., int],  # Has length of 3, each element is a score between 0 and 10
+            "total": int,  # Sum of scores, between 0 and 30
+            "explanation": str  # Explanation for EACH score, separated by newlines, 3 explanations in total.
         }}
 
         Required information: {important_info}
@@ -89,208 +87,99 @@ class Evaluator:
             
             except Exception as e:
                 print(f"Error: {e}")
-                return [-1] * 8, -1, "There was an error during LLM evaluation: " + str(e)
+                return [-1] * 3, -1, "There was an error during LLM evaluation: " + str(e)
         else:
             print("Prompt is too long, skipping LLM evaluation")
-            return [-1] * 8, -1, "Prompt is too long, skipped LLM evaluation"
+            return [-1] * 3, -1, "Prompt is too long, skipped LLM evaluation"
 
-        
-    # Checks if code snippets exist
-    def snippet_complete(self):
+
+    def formatting(self):
+        """Check if the snippets are formatted correctly"""
         try:
             comp = ["TITLE: ", "DESCRIPTION: ", "LANGUAGE: ", "SOURCE: ", "CODE:"]
             snippets_list = self.split_snippets()
-            comps_complete = 0
-            for snippet in snippets_list:
-                if all(c in snippet for c in comp):
-                    comps_complete += 1
-            return (comps_complete / (len(snippets_list))) * 10, ""
-        except Exception as e:
-            print(f"Error in snippet_complete: {e}")
-            return -1, "Error in snippet_complete: " + str(e)
-    
-    # Checks code verbosity
-    def code_snippet_length(self):
-        try:
-            snippets_list = self.split_snippets()
-            code_snippets = 0
+            improper_formatting = 0
+
             for snippet in snippets_list:
                 codes = self.access_category(snippet, "CODE")
-                if any(len([token for token in code.split("CODE:")[-1].replace("```", "").strip().replace("\n", " ").split(" ") if token.strip()]) < 5 for code in codes):
-                    code_snippets += 1
-            return ((len(snippets_list) - code_snippets) / len(snippets_list)) * 10, ""
-        except Exception as e:
-            print(f"Error in code_snippet_length: {e}")
-            return -1, "Error in code_snippet_length: " + str(e)
-
-    # Checks if there are multiple code snippets in a snippet
-    def multiple_code_snippets(self):
-        try:
-            snippets_list = self.split_snippets()
-            multiple_code_snippets = 0
-            for snippet in snippets_list:
-                # CODE and LANGUAGE repeat for multiple code snippets
-                if len(snippet.split("CODE:")) > 2 or len(snippet.split("LANGUAGE:")) > 2:
-                    multiple_code_snippets += 1
-            return ((len(snippets_list) - multiple_code_snippets)) / len(snippets_list) * 10, ""
-        except Exception as e:
-            print(f"Error in multiple_code_snippets: {e}")
-            return -1, "Error in multiple_code_snippets: " + str(e)
-
-    # Checks if the languages are actually descriptions
-    def language_desc(self):
-        try:
-            snippets_list = self.split_snippets()
-            language_checker = 0
-            for snippet in snippets_list:
                 lang_snippet = self.access_category(snippet, "LANGUAGE")
 
-                if any(
+                # Tests
+                missing_info = not all(c in snippet for c in comp)
+                short_code = any(
+                    len([token for token in code.split("CODE:")[-1].replace("```", "").strip().replace("\n", " ").split(" ") 
+                    if token.strip()]) < 5 
+                    for code in codes)
+                multiple_code_snippets = len(snippet.split("CODE:")) > 2 or len(snippet.split("LANGUAGE:")) > 2
+                description_for_lang = any(
                     (("none" in l.split("\nCODE:")[0].strip().lower() or "console" in l.split("\nCODE:")[0].strip().lower()))
                     for l in lang_snippet
-                    if "code:\n```" in l
-                ):
-                    language_checker += 1
-            return ((len(snippets_list) - language_checker) / len(snippets_list)) * 10, ""
-        except Exception as e:
-            print(f"Error in language_desc: {e}")
-            return -1, "Error in language_desc: " + str(e)
-    
-    # Checks if the code contains a list
-    def contains_list(self):
-        try:
-            snippets_list = self.split_snippets()
-            apidoc_list = 0
-            for snippet in snippets_list:
-                codes = self.access_category(snippet, "CODE")
-                if (
+                    if "code:\n```" in l)
+                contains_list = (
                     # Check for both 1. and 2. to make sure its a numbered list and not something else
                     any("◯" in code.split("CODE:")[-1].strip().strip("`") for code in codes)
-                    or any(("1. " and "2. ") in code.split("CODE:")[-1].strip().strip("`") for code in codes)
-                ):
-                    apidoc_list += 1
-            return ((len(snippets_list) - apidoc_list) / len(snippets_list)) * 10, ""
-        except Exception as e:
-            print(f"Error in contains_list: {e}")
-            return -1, "Error in contains_list: " + str(e)
+                    or any(("1. " and "2. ") in code.split("CODE:")[-1].strip().strip("`") for code in codes))
+
+                if any([missing_info, short_code, multiple_code_snippets, description_for_lang, contains_list]):
+                    improper_formatting += 1
+            return ((len(snippets_list) - improper_formatting) / len(snippets_list)) * 10, ""
         
-    # Checks if there are bibtex citations
-    def bibtex_citations(self):
+        except Exception as e:
+            print(f"Error in formatting: {e}")
+            return -1, "Error in formatting: " + str(e)
+        
+    def project_metadata(self):
+        """Check if the snippets contain project metadata"""
         try:
             snippets_list = self.split_snippets()
-            bibtex_citations = 0
+            project_metadata = 0
+
             for snippet in snippets_list:
                 lang_snippet = self.access_category(snippet, "LANGUAGE")
-            if any(
-                ("bibtex" in l.split("\nCODE:")[0].strip().lower())
-                for l in lang_snippet
-                if "CODE:\n```" in l
-            ):
-                bibtex_citations += 1
-            return ((len(snippets_list) - bibtex_citations) / len(snippets_list)) * 10, ""
-        except Exception as e:
-            print(f"Error in bibtex_citations: {e}")
-            return -1, "Error in bibtex_citations: " + str(e)
-    
-    # Checks if there are any snippets about licensing
-    def license_info(self):
-        try:
-            snippets_list = self.split_snippets()
-            license_check = 0
-            for snippet in snippets_list:
-                source = self.access_category(snippet, "SOURCE")
-                if "license" in source.lower():
-                    license_check += 1
-            return ((len(snippets_list) - license_check) / len(snippets_list)) * 10, ""
-        except Exception as e:
-            print(f"Error in license_info: {e}")
-            return -1, "Error in license_info: " + str(e)
-    
-    # Checks if there are any snippets about the directory structure
-    def directory_structure(self):
-        try:
-            snippets_list = self.split_snippets()
-            directory_structure = 0
-            for snippet in snippets_list:
-                title = self.access_category(snippet, "TITLE")
+                source = self.access_category(snippet, "SOURCE:")
+                title = self.access_category(snippet, "TITLE:")
                 codes = self.access_category(snippet, "CODE")
-                if (
-                    any(t in title.lower() for t in ["directory", "structure", "workflow"])
-                    and any(shape in code.split("CODE:")[-1].strip().strip("`") for code in codes for shape in ["├─", "└─", "|-"])  # Code contains special directory symbols
-                ):
-                    directory_structure += 1
-            return ((len(snippets_list) - directory_structure) / len(snippets_list)) * 10, ""
+
+                # Tests
+                bibtex_citations = any(
+                    ("bibtex" in l.split("\nCODE:")[0].strip().lower())
+                    for l in lang_snippet
+                    if "CODE:\n```" in l
+                )
+                license_info = "license" in source.lower()
+                directory_structure = (any(t in title.lower() for t in ["directory", "structure", "workflow"])
+                    and any(shape in code.split("CODE:")[-1].strip().strip("`") for code in codes for shape in ["├─", "└─", "|-"]))
+
+                if any([bibtex_citations, license_info, directory_structure]):
+                    project_metadata += 1
+            return ((len(snippets_list) - project_metadata) / len(snippets_list)) * 10, ""
+
         except Exception as e:
-            print(f"Error in directory_structure: {e}")
-            return -1, "Error in directory_structure: " + str(e)
+            print(f"Error in project_metadata: {e}")
+            return -1, "Error in project_metadata: " + str(e)
+        
     
-    # Checks if there are any snippets about imports
-    def imports(self):
+    def initialization(self):
+        """Check if the snippets contain information about initialization"""
         try:
             snippets_list = self.split_snippets()
-            import_check = 0
+            initialization_check = 0
             for snippet in snippets_list:
-                title = self.access_category(snippet, "TITLE")
+                title = self.access_category(snippet, "TITLE:")
                 codes = self.access_category(snippet, "CODE")
-                if (
+                imports = (
                     any(t in title.lower() for t in ["import", "importing"])  # Title contains keywords
                     and any(code.split("CODE:")[-1].strip().strip("`").count("\n") == 2 for code in codes)  # Code is a single line
                     and any("/" not in code.split("CODE:")[-1].strip().strip("`") for code in codes)  # Code contains a path
-                ):
-                        import_check += 1
-            return ((len(snippets_list) - import_check) / len(snippets_list)) * 10, ""
-        except Exception as e:
-            print(f"Error in imports: {e}")
-            return -1, "Error in imports: " + str(e)
-    
-    # Checks if there are any snippets about installations
-    def installs(self):
-        try:
-            snippets_list = self.split_snippets()
-            installation_check = 0
-            for snippet in snippets_list:
-                title = self.access_category(snippet, "TITLE")
-                codes = self.access_category(snippet, "CODE")
-                if (
+                )
+                installs = (
                     any(t in title.lower() for t in ["install", "initialize", "initializing"])  # Title contains keywords
                     and any(code.split("CODE:")[-1].strip().strip("`").count("\n") == 2 for code in codes)  # Code is a single line
-                ):
-                    installation_check += 1
-            return ((len(snippets_list) - installation_check) / len(snippets_list)) * 10, ""  
+                )
+                if any([imports, installs]):
+                    initialization_check += 1
+            return ((len(snippets_list) - initialization_check) / len(snippets_list)) * 10, ""
         except Exception as e:
-            print(f"Error in installs: {e}")
-            return -1, "Error in installs: " + str(e)
-
-    def syntax_eval(self):
-        try:
-            snippets_list = self.split_snippets()
-            syntax_eval = 0
-            lang_code_block = 0
-            snippet_num = 0
-            for snippet in snippets_list:
-                snippet_num += 1
-                lang = self.access_category(snippet, "LANGUAGE")
-                to_ignore = ["console", "none", "configuration", "text", "makefile"]
-                # If theres multiple code blocks/languages
-                for l in lang:
-                    if not any(s in l for s in to_ignore):
-                        if "CODE:\n```" in l:
-                            lang_code_block += 1
-                            lang_desc = l.split("\nCODE:")[0].strip().replace("+", "").split("/")[0]
-                            if any(s in lang_desc for s in ["shell", "bash", "zsh", "terminal", "bsh", "sh"]):
-                                lang_desc = "shell"
-                            code = l.split("\nCODE:")[-1].replace("```", "").strip()
-
-                            linter_type = f"lint_{lang_desc}"
-                            temp = tempfile.NamedTemporaryFile()
-                            with open(temp.name, "w") as f:
-                                f.write(code)
-                            func = getattr(Linter(temp.name), linter_type)
-                            result = func()
-                            syntax_eval += result
-            return (syntax_eval / lang_code_block), ""
-        except Exception as e:
-            print(f"Error in syntax_eval: {e}")
-            return -1, "Error in syntax_eval: " + str(e)
-
-    
+            print(f"Error in initialization: {e}")
+            return -1, "Error in initialization: " + str(e)
+ 

@@ -5,21 +5,22 @@ class Search:
         self.model_config = model_config
 
     # Determines relevant information using Google search of library + provided URL
-    def google_search(self):
-        prompt = f"""Determine the most crucial technical information from 
-        the URL, {self.url}, that would help you 
-        use it when coding. Some examples of technical 
-        information include, but are not limited to example implementations 
-        and commonly used classes. The technical information 
-        should be helpful when implementing and using the library in code, and not 
-        just general information about it. For example, DO NOT include information 
-        about the library's license, development setup, file structure, installation, etc. 
-        You CAN include code chunks if they are important to the library, but only 
-        from {self.url}. 
+    def relevant_info(self):
+        prompt = f"""
+        Summarize the 10 most important code snippets from 
+        the URL, {self.url}, that would help you use the 
+        library while coding.
+        
+        Focus on techninal examples that demonstrate implementation. 
+        Prioritize the snippets in the following order of importance: 
 
-        Present your response as a numbered list of roughly 10 pieces of information. 
-        Each item must have a clear heading with between 1-5 sentences and no more than 
-        one code snippet. The code snippet should be formatted as a code block. 
+        1. Core Functionality: Examples of the primary functions or methods
+        that perform the library's main task.
+        2. Common Configuration: Examples of how to customize the library's 
+        default settings.
+
+        Do NOT include non-implementation details, such as the library's license, 
+        development setup, file structure, or installation procedures.
 
         You may use the url context tool to access the content of {self.url}, 
         or one of the links from the provided URL. 
@@ -28,10 +29,24 @@ class Search:
 
         Double check that the information is relevant to the library and not just general 
         information about it.
+
+        Summarize your findings as a numbered list of 10 well-formatted 
+        code blocks.
+
+        I have confirmed that the URL provided is valid and accessible.
         """
-        response = self.client.models.generate_content(
-            model="gemini-2.5-pro",
-            contents=prompt,
-            config=self.model_config
-        )
-        return response
+        # Add a check to see if the prompt is too long
+        total_tokens = self.client.models.count_tokens(
+            model="gemini-2.5-pro", contents=prompt
+        ).total_tokens
+        if total_tokens < 1048576:  # 1048576 is the max tokens for Gemini 2.5 Pro
+            response = self.client.models.generate_content(
+                model="gemini-2.5-pro",
+                contents=prompt,
+                config=self.model_config
+            )
+            return response.text
+        
+        else:
+            print("Prompt is too long, skipping LLM evaluation")
+            return "Prompt is too long, skipped search for information retrieval", "Prompt is too long, skipped search for information retrieval"

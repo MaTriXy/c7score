@@ -32,10 +32,14 @@ def main():
     - other_messages: a breakdown of what each static analysis score means
     """
     df = pd.DataFrame(columns=["library", "overall_score", "llm_score", "llm_score_breakdown (score per criterion)", "llm_explanation", "other_messages"])
-    print("Getting libraries from Context7...")
-    top_pop_libraries = get_pop_libraries()
-    print("Getting library URLs...")
-    library_urls = get_library_urls(top_pop_libraries)
+    # print("Getting libraries from Context7...")
+    # top_pop_libraries = get_pop_libraries()
+    # print("Getting library URLs...")
+    # library_urls = get_library_urls(top_pop_libraries)
+    library_urls = {
+        "/context7/tailwindcss": ("https://tailwindcss.com/docs/installation/using-vite", "https://context7.com/context7/tailwindcss/llms.txt"),
+        "/tailwindlabs/tailwindcss.com": ("https://github.com/tailwindlabs/tailwindcss.com", "https://context7.com/tailwindlabs/tailwindcss.com/llms.txt")
+    }
     print("Running evaluation...")
     for library, (source_url, snippet_url) in library_urls.items():
         try:

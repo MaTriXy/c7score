@@ -54,27 +54,23 @@ export class Evaluator {
     Refrain from giving a score between 0-5 for any criterion unless there is an extreme or frequent case.
 
     Criteria:
-      1. The snippets include some variation of all the required information. It does not need to be exact, but should
-      convery the same idea.
-      2. Snippets contain unique information that is not already included in another snippet. There can be some overlap, but
-      the snippets should not be identical.
-      3. There are no snippets that are confusingly worded or unclear. This could be grammatical or spelling errors.
-      4. No snippets contain any obvious syntax errors.
-      5. Snippets are formatted in such a way that you can easily isolate the code (e.g., no placeholders or ellipses).
-      6. Titles and descriptions are sensible (e.g., the description shouldn't be about requests when the code is about
-      visualizing data).
-      7. The programming language of the code snippet is correct.
-      8. All the text, even in the code snippets, are in English.
+    1. Required and Unique Information: The snippets include some variation of all the required information. 
+    It does not need to be exact, but should convery the same idea. Snippets contain unique information 
+    that is not already included in another snippet. 
+    There can be some overlap, but the snippets should not be identical.
+    2. Clarity: There are no snippets that are confusingly worded or unclear. This could be grammatical 
+    or spelling errors. Titles and descriptions are sensible (e.g., the description shouldn't be about requests 
+    when the code is about visualizing data) and all the text, even in the code snippets, are in English.
+    3. Correct Syntax: No snippets contain any obvious syntax errors. Snippets are formatted in such a way 
+    that you can easily isolate the code (e.g., no placeholders or ellipses). The programming language of 
+    the code snippet is correct.
 
-    Here is an example thought process:
-      Criterion 1: 3 of the 10 required pieces of information were missing. -> 7
-      Criterion 2: 2 of the 50 snippets shared identical information. -> 9.6
-      Criterion 3: 1 of the 50 snippets was a bit confusing to understand. The grammar was a bit off and adding a few words would resolve ambiguity. -> 9.8
-      Criterion 4: 3 of the 50 snippets had obvious syntax errors. The Typescript code in one snippet was missing a bracket. The other two used colons instead of equal signs to assign values. -> 9.4
-      Criterion 5: 0 of the 50 snippets were improperly formatted. They had correct indentation and no placeholders or ellipses. -> 10
-      Criterion 6: 1 of the 50 snippets had a mismatch between the title and code. The title suggested that the code was about requests, whereas the code was actually about visualizations. -> 9.4
-      Criterion 7: 5 of the 50 snippets had the wrong language. The languages were defined as being HTML, but the code was actually in Python. -> 9
-      Criterion 8: 10 of the 50 snippets had comments in Chinese instead of English  -> 8
+    Return only the JSON object with this schema:
+    {{
+        "scores": [int, ..., int],  # Has length of 3, each element is a score between 0 and 10
+        "total": int,  # Sum of scores, between 0 and 30
+        "explanation": str  # Explanation for EACH score, separated by newlines, 3 explanations in total.
+    }}
 
     Required information: ${importantInfo}
     Snippets: ${this.snippets}
@@ -90,6 +86,7 @@ export class Evaluator {
         properties: {
           scores: { type: 'array', items: { type: 'number' } },
           total: { type: 'number' },
+          explanation: { type: 'string' },
         },
       },
     },
