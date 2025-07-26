@@ -1,7 +1,7 @@
 import re
 from playwright.sync_api import Page, expect, sync_playwright
 import pandas as pd
-from main import run_evaluation
+from main import context_evaluation
 import httpx
 import json
 import sys
@@ -27,7 +27,12 @@ def main():
     """Runs the evaluation for each library and saves the results to a CSV file
     The CSV file has the following columns:
     - library: the name of the library
-    - score: the average score of the library across 19 tests
+    - context_scores: the scores of the context evaluation (on 15 questions)
+    - context_average_score: the average score of the context evaluation
+    - context_explanations: the explanations of the context evaluation (on 15 questions)
+    - average_score: the average score of the library across 19 tests
+    - llm_score: the score of the LLM's score
+    - llm_score_breakdown: the breakdown of the LLM's score
     - llm_explanation: the explanation of the LLM's score
     - other_messages: a breakdown of what each static analysis score means
     """
@@ -44,9 +49,9 @@ def main():
     for library, (source_url, snippet_url) in library_urls.items():
         try:
             print(f"Working on {library}...")
-            score, llm_score, llm_score_breakdown, llm_explanation, other_messages = run_evaluation(source_url, snippet_url)
+            average_score, context_scores, context_average_score, context_explanations, average_llm_score, llm_score_breakdown, llm_explanation, other_messages = context_evaluation(library, source_url, snippet_url)
             other_messages_str = "\n\n".join(other_messages)
-            df.loc[len(df)] = [library, score, llm_score, llm_score_breakdown, llm_explanation, other_messages_str]
+            df.loc[len(df)] = [library, context_scores, average_score, context_average_score, context_explanations, average_score, average_llm_score, llm_score_breakdown, llm_explanation, other_messages_str]
 
         # Caused by error messages sent from server (e.g., rate limiting, internal server error)
         except httpx.HTTPStatusError as e:

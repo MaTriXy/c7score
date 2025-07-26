@@ -6,14 +6,14 @@ import json
 class Evaluator:
     """Evaluates the quality of the snippets"""
     
-    def __init__(self, client, snippets):
+    def __init__(self, client: str, snippets: str):
         self.client = client
         self.snippets = snippets
 
     def split_snippets(self):
         return self.snippets.split("\n" + "-" * 40 + "\n")
     
-    def access_category(self, snippet, category):
+    def access_category(self, snippet: str, category):
         okay = ["TITLE:", "DESCRIPTION:", "SOURCE:"]
         if category in okay:
             for line in snippet.splitlines():
@@ -23,46 +23,41 @@ class Evaluator:
             return snippet.split(f"{category}:")
 
     # Evaluates relevancy and correctness of snippets
-    def llm_evaluate(self, important_info):
+    def llm_evaluate(self):
         snippet_del = "\n" + "-" * 40 + "\n"
         prompt = f"""For each criterion, provide
-        a score between 0 and 10, where 0 is the   
-        criterion was not met at all, 5 is the criterion 
-        was partially met, and 10 is the criterion was fully met
-        with no room for improvement. Each criterion
-        compares the required information with the snippets.
+        a score between 0 and 100, where 0 is the   
+        criterion was not met at all, 50 is the criterion 
+        was partially met, and 100 is the criterion was fully met
+        with no room for improvement.
         The snippets are separated by 
         {snippet_del}
         and the code blocks are enclosed in ```.
         Your scores should represent a ratio of how many
         snippets meet the criterion out of the total number of snippets.
-        The maximum possible total score is 30 and the minimum is 0.
+        The maximum possible total score is 300 and the minimum is 0.
         
         Criteria:
-        1. Required and Unique Information: The snippets include some variation of all the required information. 
-        It does not need to be exact, but should convery the same idea. Snippets contain unique information 
-        that is not already included in another snippet. 
-        There can be some overlap, but the snippets should not be identical.
-        2. Clarity: There are no snippets that are confusingly worded or unclear. This could be grammatical 
+        1. Unique Information (30%): Snippets contain unique information that is not already included in 
+        another snippet. There can be some overlap, but the snippets should not be identical.
+        2. Clarity (30%): There are no snippets that are confusingly worded or unclear. This could be grammatical 
         or spelling errors. Titles and descriptions are sensible (e.g., the description shouldn't be about requests 
         when the code is about visualizing data) and all the text, even in the code snippets, are in English.
-        3. Correct Syntax: No snippets contain any obvious syntax errors. Snippets are formatted in such a way 
+        3. Correct Syntax (40%): No snippets contain any obvious syntax errors. Snippets are formatted in such a way 
         that you can easily isolate the code (e.g., no placeholders or ellipses). The programming language of 
         the code snippet is correct.
 
         Return only the JSON object with this schema:
         {{
             "scores": [int, ..., int],  # Has length of 3, each element is a score between 0 and 10
-            "total": int,  # Sum of scores, between 0 and 30
+            "total_score": int,  # total of scores, between 0 and 300
             "explanation": str  # Explanation for EACH score, separated by newlines, 3 explanations in total.
         }}
-
-        Required information: {important_info}
         Snippets: {self.snippets}
         """
         class Scores(BaseModel):
             scores: list[int]
-            total: int
+            total_score: int
             explanation: str
 
         # Add a check to see if the prompt is too long
@@ -79,11 +74,11 @@ class Evaluator:
                 )
                 json_response = json.loads(response.text)
                 scores = json_response["scores"]
-                total = json_response["total"]
+                total_score = json_response["total_score"]
                 explanation = json_response["explanation"]
 
                 # Returns thorough breakdown of scores, sum of scores
-                return scores, total, explanation
+                return scores, total_score, explanation
             
             except Exception as e:
                 print(f"Error: {e}")
