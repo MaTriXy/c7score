@@ -9,7 +9,6 @@ class Search:
         self.library = library
         self.client = client
 
-    # Determines relevant information using Google search of library + provided URL
     def generate_questions(self) -> str:
         """Generates 15 questions based on the library"""
         prompt = f"""
@@ -49,8 +48,7 @@ class Search:
         return response
 
     def generate_search_topics(self, questions: str) -> list[list[str]]:
-        """Generates 4-5 search topics for each question"""
-
+        """Generates 5 search topics for each question"""
         prompt = f"""
         For each question about {self.library}, generate 5 relevant search topics 
         as comma-separated keywords/phrases. These topics should help find the most 
@@ -78,22 +76,23 @@ class Search:
 
         return json_response["topics"]
     
-    def fetch_context(self, topics, library) -> list[list[str]]:
+    def fetch_context(self, topics: list[list[str]], snippet_url: str) -> list[list[str]]:
         """Gets the context/code snippets per topic for the library"""
         contexts = []  # 15 x 5 = 75 contexts
-
+        
         for question_topics in topics:  # total of 15 questions
             question_contexts = []  # 5 contexts per question
             for topic in question_topics:  # total of 5 topics per question
                 topic_url = quote(topic, safe="")
-                url = f"https://context7.com{library}/llms.txt?tokens=10000&topic={topic_url}"
+                url = f"{snippet_url}?tokens=10000&topic={topic_url}"
                 headers = {"Accept-Encoding": "identity"}
                 response = requests.get(url, headers=headers)
                 question_contexts.append(response.text)
             contexts.append(question_contexts)
         return contexts
     
-    def evaluate_context(self, questions: str, context: list[list[str]]) -> tuple[list[int], list[str]]:
+    def evaluate_context(self, questions: str, context: list[list[str]]) -> tuple[list[int], int, list[str]]:
+        """Evaluates how well the snippets answer the questions based on 5 criteria"""
         prompt = f"""
         You are evaluating documentation context for its quality and relevance in helping an AI 
         coding assistant answer the following question:
@@ -121,8 +120,9 @@ class Search:
 
         class Score(BaseModel):
             scores: list[int]
+            average_score: int
             explanation: list[str]
-            average: int
+            
 
         response = self.client.models.generate_content(
             model="gemini-2.5-pro",
@@ -132,4 +132,4 @@ class Search:
         ).text
 
         json_response = json.loads(response)
-        return json_response["scores"], json_response["average"], json_response["explanation"]
+        return json_response["scores"], json_response["average_score"], json_response["explanation"]

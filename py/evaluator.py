@@ -1,5 +1,3 @@
-from linter import *
-import tempfile
 from pydantic import BaseModel
 import json
 
@@ -11,9 +9,11 @@ class Evaluator:
         self.snippets = snippets
 
     def split_snippets(self):
+        """Splits the entire snippet file into individual snippets"""
         return self.snippets.split("\n" + "-" * 40 + "\n")
     
-    def access_category(self, snippet: str, category):
+    def access_category(self, snippet: str, category: str):
+        """Accesses the specified category of the snippet"""
         okay = ["TITLE:", "DESCRIPTION:", "SOURCE:"]
         if category in okay:
             for line in snippet.splitlines():
@@ -24,18 +24,18 @@ class Evaluator:
 
     # Evaluates relevancy and correctness of snippets
     def llm_evaluate(self):
+        """Evaluates the quality of the snippets based on 3 criteria: unique information, clarity, and correct syntax"""
         snippet_del = "\n" + "-" * 40 + "\n"
-        prompt = f"""For each criterion, provide
-        a score between 0 and 100, where 0 is the   
-        criterion was not met at all, 50 is the criterion 
-        was partially met, and 100 is the criterion was fully met
-        with no room for improvement.
-        The snippets are separated by 
-        {snippet_del}
+        prompt = f"""
+        Rate the quality of the snippets using the criteria. 
+        Your total score for the snippets should be between 0 and 100, 
+        where 0 is the indicates that the snippets did not meet the criteria 
+        at all, 50 is the criteria was partially met, and 100 is the 
+        criteria was fully met with no room for improvement.
+        The snippets are separated by {snippet_del} 
         and the code blocks are enclosed in ```.
         Your scores should represent a ratio of how many
         snippets meet the criterion out of the total number of snippets.
-        The maximum possible total score is 300 and the minimum is 0.
         
         Criteria:
         1. Unique Information (30%): Snippets contain unique information that is not already included in 
@@ -49,15 +49,13 @@ class Evaluator:
 
         Return only the JSON object with this schema:
         {{
-            "scores": [int, ..., int],  # Has length of 3, each element is a score between 0 and 10
-            "total_score": int,  # total of scores, between 0 and 300
+            "average_score": int,  # average of scores, between 0 and 100
             "explanation": str  # Explanation for EACH score, separated by newlines, 3 explanations in total.
         }}
         Snippets: {self.snippets}
         """
         class Scores(BaseModel):
-            scores: list[int]
-            total_score: int
+            average_score: int
             explanation: str
 
         # Add a check to see if the prompt is too long
@@ -73,19 +71,18 @@ class Evaluator:
                     }
                 )
                 json_response = json.loads(response.text)
-                scores = json_response["scores"]
-                total_score = json_response["total_score"]
+                average_score = json_response["average_score"]
                 explanation = json_response["explanation"]
 
                 # Returns thorough breakdown of scores, sum of scores
-                return scores, total_score, explanation
+                return average_score, explanation
             
             except Exception as e:
                 print(f"Error: {e}")
-                return [-1] * 3, -1, "There was an error during LLM evaluation: " + str(e)
+                return -1, "There was an error during LLM evaluation: " + str(e)
         else:
             print("Prompt is too long, skipping LLM evaluation")
-            return [-1] * 3, -1, "Prompt is too long, skipped LLM evaluation"
+            return -1, "Prompt was too long, skipped LLM evaluation"
 
 
     def formatting(self):
@@ -109,15 +106,14 @@ class Evaluator:
                 description_for_lang = any(
                     (("none" in l.split("\nCODE:")[0].strip().lower() or "console" in l.split("\nCODE:")[0].strip().lower()))
                     for l in lang_snippet
-                    if "code:\n```" in l)
-                contains_list = (
-                    # Check for both 1. and 2. to make sure its a numbered list and not something else
-                    any("◯" in code.split("CODE:")[-1].strip().strip("`") for code in codes)
-                    or any(("1. " and "2. ") in code.split("CODE:")[-1].strip().strip("`") for code in codes))
-
+                    if "CODE:\n```" in l)
+                contains_list = any(
+                    "◯" in (body := code.split("CODE:")[-1].strip().strip("`"))
+                    or ("1. " in body and "2. " in body) 
+                    for code in codes)
                 if any([missing_info, short_code, multiple_code_snippets, description_for_lang, contains_list]):
                     improper_formatting += 1
-            return ((len(snippets_list) - improper_formatting) / len(snippets_list)) * 10, ""
+            return ((len(snippets_list) - improper_formatting) / len(snippets_list)) * 100, ""
         
         except Exception as e:
             print(f"Error in formatting: {e}")
@@ -147,7 +143,7 @@ class Evaluator:
 
                 if any([bibtex_citations, license_info, directory_structure]):
                     project_metadata += 1
-            return ((len(snippets_list) - project_metadata) / len(snippets_list)) * 10, ""
+            return ((len(snippets_list) - project_metadata) / len(snippets_list)) * 100, ""
 
         except Exception as e:
             print(f"Error in project_metadata: {e}")
@@ -173,7 +169,7 @@ class Evaluator:
                 )
                 if any([imports, installs]):
                     initialization_check += 1
-            return ((len(snippets_list) - initialization_check) / len(snippets_list)) * 10, ""
+            return ((len(snippets_list) - initialization_check) / len(snippets_list)) * 100, ""
         except Exception as e:
             print(f"Error in initialization: {e}")
             return -1, "Error in initialization: " + str(e)

@@ -1,42 +1,42 @@
-# Snippet Evaluator
+# Snippet Evaluator (Python version: Done, TS: WIP)
 
-1. Given a Github repo URL, prompt an LLM to find the top 10 most critical pieces of information. This information can be code snippets or examples. `search.ts`
-2. Search the parsed code snippets (found on the Context7 website), and make sure that the important information is contained in them. `evaluator.ts`
-
-## Search
-Uses Gemini model paired with tool-calling to determine the most important information about a library. The tools used are Google search and URL context (retrives the content from a link either provided in the prompt or found via Google Search). This effectively combines the scraping the provided url and retrieving contextual information outside of the link provided.
-
-## Evaluator
-Scrapes corresponding file snippets from context7.com and compares them to the important information found in `search.ts`.
-
-Ideas for tests:
-* Are the snippets relevant, sensible, and free of errors -> `llm_evaluate` 
-
-**llm_evaluate** uses an LLM to compare the context considered important in `search.ts`. TODO: replace with test-context-file.ts.
-
-* Are any of the categories in a snippet missing? -> `snippet_complete`
-* Are any code snippets very short? Too short or too long could indicate unhelpful docs or information such as directory structure or lists -> `code_snippet_length`
-* Are there multiple code snippets in a snippet? -> `multiple_code_snippets`
-* Are the languages actually descriptions (e.g., "FORTE Build System Configuration", "CLI Arguments")? Or none or console output? (e.g., pretty-printed tables, etc.) -> `language_checker`
-* check if code is just a list or a general description for an argument (would have - or numbered list). Shell and bash commands have these, which are acceptable. -> `contains_list`
-* check if there are bibtex citations (would have language tag Bibtex) -> `bibtex_citations`
-* Are any of the snippets about licensing -> `license_check`
-* Are any of the snippets just the directory structure -> `directory_structure`
-* Are any of the snippets just imports? (e.g. import, require, etc.) -> `imports`
-* Are any of the snippets just installations? (e.g. pip install, etc.) -> `installs`
+Before running any of the files, create an `.env` file with GITHUB_TOKEN and GEMINI_API_TOKEN. 
 
 
-## Running it
+## Search `search.ts` **DONE**
+Given a source URL, prompt an LLM to determine 15 common questions a developer might ask about a library. This information can be code snippets or examples. Uses Gemini model paired with Google Search tool-calling to determine the most important information about a library. Using the questions, an LLM generates topics which can be used to retrieve the relevant context7 code snippets. The retrieved snippets are rated based on how well they answer the questions.
 
-1. Create a `.env` file with GITHUB_TOKEN and GEMINI_API_TOKEN.
+## Evaluator `evaluator.ts` **WIP**
+Uses 4 evaluation metrics to rate the snippets. This is performed on snippets up to 1,000 tokens.  
 
-2. Use `npm install` to install all the dependencies.
+### Metrics
+* `llm_evaluate`
+    * Are the snippets relevant, sensible, and free of errors
+* `formatting`
+    * Are any of the categories in a snippet missing?
+    * Are any code snippets very short? Too short or too long could indicate unhelpful docs or information such as directory structure or lists
+    * Are there multiple code snippets in a snippet?
+    * Are the languages actually descriptions (e.g., "FORTE Build System Configuration", "CLI Arguments")? Or none or console output? (e.g., pretty-printed tables, etc.)
+    * check if code is just a list or a general description for an argument (indicated by a numbered or bulleted list)
+* `project_metadata`
+    * check if there are bibtex citations (would have language tag Bibtex)
+    * Are any of the snippets about licensing
+    * Are any of the snippets just the directory structure
+* `initializations`
+    * Are any of the snippets just imports? (e.g. import, require, etc.)
+    * Are any of the snippets just installations? (e.g. pip install, etc.)
 
-3. Use `npx ts-node main.ts --url URL --snippet SNIPPET_URL`. The `--url` expects the original source URL that is to be converted into snippets. The `--snippet` expects the context7 URL to the snippets.
+## Test `tester.ts` **WIP**
+
+To run the `tester.ts` file, use:
+    `npm run test -- test`
+
+## Running it on any file `main.ts` **WIP**
+
+1. Use `npm install` to install all the dependencies.
+
+2. Use `npx ts-node main.ts --url URL --snippet SNIPPET_URL`. The `--url` expects the original source URL that is to be converted into snippets. The `--snippet` expects the context7 URL to the snippets.
 
     An example of this is:
 
-    `npx ts-node src/main.ts --url https://biopython.org/wiki/Documentation --snippet https://context7.com/context7/biopython_org-wiki-documentation/llms.txt`
-
-4. To run the `tester.ts` file, use:
-    `npm run test -- test`
+    `npx ts-node src/main.ts --library /vercel/next.js --url https://github.com/vercel/next.js --snippet https://context7.com/vercel/next.js/llms.txt`

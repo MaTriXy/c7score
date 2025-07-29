@@ -1,38 +1,54 @@
 # Snippet Evaluator
 
-1. Given a Github repo URL, prompt an LLM to find the top 10 most critical pieces of information. This information can be code snippets or examples. `search.py`
-2. Search the parsed code snippets (found on the Context7 website), and make sure that the important information is contained in them. `evaluator.py`
+Before running any of the files, create an `.env` file with GITHUB_TOKEN and GEMINI_API_TOKEN. 
 
-## Search
-Uses Gemini model paired with tool-calling to determine the most important information about a library. The tools used are Google search and URL context (retrives the content from a link either provided in the prompt or found via Google Search). This effectively combines the scraping the provided url and retrieving contextual information outside of the link provided.
+## Search `search.py`
+Given a source URL, prompt an LLM to determine 15 common questions a developer might ask about a library. This information can be code snippets or examples. Uses Gemini model paired with Google Search tool-calling to determine the most important information about a library. Using the questions, an LLM generates topics which can be used to retrieve the relevant context7 code snippets. The retrieved snippets are rated based on how well they answer the questions.
 
-## Evaluator
-Scrapes corresponding file snippets from context7.com and compares them to the important information found in `search.py`.
+## Evaluator `evaluator.py`
+Uses 4 evaluation metrics to rate the snippets. This is performed on snippets up to 1,000 tokens.  
 
-Ideas for tests:
-* Are the snippets relevant, sensible, and free of errors -> `llm_evaluate`
-* Are any of the categories in a snippet missing? -> `snippet_complete`
-* Are any code snippets very short? Too short or too long could indicate unhelpful docs or information such as directory structure or lists -> `code_snippet_length`
-* Are there multiple code snippets in a snippet? -> `multiple_code_snippets`
-* Are the languages actually descriptions (e.g., "FORTE Build System Configuration", "CLI Arguments")? Or none or console output? (e.g., pretty-printed tables, etc.) -> `language_checker`
-* check if code is just a list or a general description for an argument (would have - or numbered list). Shell and bash commands have these, which are acceptable. -> `contains_list`
-* check if there are bibtex citations (would have language tag Bibtex) -> `bibtex_citations`
-* Are any of the snippets about licensing -> `license_check`
-* Are any of the snippets just the directory structure -> `directory_structure`
-* Are any of the snippets just imports? (e.g. import, require, etc.) -> `imports`
-* Are any of the snippets just installations? (e.g. pip install, etc.) -> `installs`
+### Metrics
+* `llm_evaluate`
+    * Are the snippets relevant, sensible, and free of errors
+* `formatting`
+    * Are any of the categories in a snippet missing?
+    * Are any code snippets very short? Too short or too long could indicate unhelpful docs or information such as directory structure or lists
+    * Are there multiple code snippets in a snippet?
+    * Are the languages actually descriptions (e.g., "FORTE Build System Configuration", "CLI Arguments")? Or none or console output? (e.g., pretty-printed tables, etc.)
+    * check if code is just a list or a general description for an argument (indicated by a numbered or bulleted list)
+* `project_metadata`
+    * check if there are bibtex citations (would have language tag Bibtex)
+    * Are any of the snippets about licensing
+    * Are any of the snippets just the directory structure
+* `initializations`
+    * Are any of the snippets just imports? (e.g. import, require, etc.)
+    * Are any of the snippets just installations? (e.g. pip install, etc.)
 
-The py version of `evaluator` includes linter tests.
+## Test `tester.py`
+To test the functionality of the evaluation procedue, you can use the following command:
 
-## Running it
+`USE_MANUAL=True python py/tester.py`
+* **USE_MANUAL=True** will only test on the libraries `/context7/tailwindcss` and `/tailwindlabs/tailwindcss.com`
+* **USE_MANUAL=False** will test on 100 most popular libraries from `https://context7.com/stats`
 
-Create a `.env` file with GITHUB_TOKEN and GEMINI_API_TOKEN. 
+It will output the search results in `py/context_evaluation` and the complete evaluation results (search + evaluator) to `py/library_scores.csv`.
 
-Use `main.py --url URL --snippet SNIPPET_URL`. The `--url` expects the original source url that is to be converted into snippets. The `--snippet` expects the context7 url to the snippets. 
+Columns in `py/library_scores.csv`:
+- library: the name of the library
+- average_score: the average score of the library across 5 tests
+- context_average_score: the average score of the context evaluation
+- context_explanations: the explanations of the context evaluation (on 15 questions)
+- llm_avg_score: the average score from llm_evaluate
+- llm_explanation: the explanation of the LLM's score
+- other_messages: a breakdown of what each static analysis score means
+
+## Running it on any file `main.py`
+
+Use `main.py --library LIBRARY --url URL --snippet SNIPPET_URL`.
 
 An example of this is:
 
-
-`python main.py --url https://biopython.org/wiki/Documentation --snippet https://context7.com/context7/biopython_org-wiki-documentation/llms.txt`
+`python main.py --library /vercel/next.js --url https://github.com/vercel/next.js --snippet https://context7.com/vercel/next.js/llms.txt`
 
 
