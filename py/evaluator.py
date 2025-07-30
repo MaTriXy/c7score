@@ -111,6 +111,7 @@ class Evaluator:
                     "◯" in (body := code.split("CODE:")[-1].strip().strip("`"))
                     or ("1. " in body and "2. " in body) 
                     for code in codes)
+
                 if any([missing_info, short_code, multiple_code_snippets, description_for_lang, contains_list]):
                     improper_formatting += 1
             return ((len(snippets_list) - improper_formatting) / len(snippets_list)) * 100, ""
@@ -158,6 +159,7 @@ class Evaluator:
             for snippet in snippets_list:
                 title = self.access_category(snippet, "TITLE:")
                 codes = self.access_category(snippet, "CODE")
+                
                 imports = (
                     any(t in title.lower() for t in ["import", "importing"])  # Title contains keywords
                     and any(code.split("CODE:")[-1].strip().strip("`").count("\n") == 2 for code in codes)  # Code is a single line

@@ -1,0 +1,218 @@
+Google search results: Based on the `uv-ui` library's documentation, here is a list of the most crucial technical details for implementation and coding.
+
+### 1. Automatic Component Recognition with `easycom`
+To use `uv-ui` components without manually importing them in every file, you must configure the `easycom` mode in your project's `pages.json` file. This allows the `uni-app` framework to automatically find and register any component matching the `uv-` prefix, greatly simplifying development. This is the recommended and standard way to use the library.
+
+```json
+// pages.json
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^uv-(.*)": "uv-ui/components/uv-$1/uv-$1.vue"
+		}
+	},
+	"pages": [
+		// ...
+	]
+}
+```
+
+### 2. Global Style and JavaScript Initialization
+For the library's styles and utility functions to work correctly, you need to import its main SCSS file and initialize the core JavaScript module in your `main.js` or `main.ts` file. This step ensures that themes, helper functions, and the `$uv` global object are available throughout your application.
+
+```javascript
+// main.js
+import App from './App'
+import uvUI from 'uv-ui'
+
+// #ifndef VUE3
+import Vue from 'vue'
+Vue.config.productionTip = false
+App.mpType = 'app'
+const app = new Vue({
+    ...App
+})
+app.$mount()
+// #endif
+
+// #ifdef VUE3
+import { createSSRApp } from 'vue'
+export function createApp() {
+  const app = createSSRApp(App)
+  return {
+    app
+  }
+}
+// #endif
+Vue.use(uvUI)
+```
+
+### 3. Using the `$uv` Global Object
+The library mounts a utility object named `$uv` onto the Vue prototype, making it accessible in any component via `this.$uv`. This object contains a rich set of helper functions for common tasks like validation, date formatting, and accessing global configurations. It is a central part of the library's non-component features.
+
+```html
+<template>
+	<view>
+		<view>Device Model: {{ model }}</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				model: ''
+			}
+		},
+		onLoad() {
+			// Example: Get device info from the $uv object
+			this.model = this.$uv.sys().model;
+		}
+	}
+</script>
+```
+
+### 4. Implementing Forms with Validation
+`uv-ui` provides a powerful form system with `uv-form` and `uv-form-item` components. You can define validation rules directly in your component's `data` and bind them to the form. To trigger validation, you call the `validate` method on the form component's `ref`.
+
+```html
+<template>
+	<uv-form labelPosition="left" :model="model1" :rules="rules" ref="form1">
+		<uv-form-item label="Name" prop="userInfo.name" borderBottom>
+			<uv-input v-model="model1.userInfo.name" border="none"></uv-input>
+		</uv-form-item>
+		<uv-button @click="submit" text="Submit"></uv-button>
+	</uv-form>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				model1: { userInfo: { name: '' } },
+				rules: {
+					'userInfo.name': {
+						type: 'string',
+						required: true,
+						message: 'Name is required',
+						trigger: ['blur', 'change']
+					}
+				}
+			}
+		},
+		methods: {
+			submit() {
+				this.$refs.form1.validate().then(res => {
+					this.$uv.toast('Validation successful');
+				})
+			}
+		}
+	}
+</script>
+```
+
+### 5. Customizing the Global Theme
+You can easily override the default theme colors, such as the primary color, font sizes, or spacing, by defining SCSS variables in your project's `uni.scss` file. These variables must be placed before the main `uv-ui` theme import. This allows for consistent branding across all components.
+
+```scss
+// uni.scss
+
+// Define custom theme variables before importing the main theme file
+$uv-primary: #2979ff;
+$uv-primary-light: #ecf5ff;
+$uv-primary-dark: #398ade;
+
+// Import the main theme file
+@import 'uv-ui/theme.scss';
+```
+
+### 6. Programmatic Toast Notifications
+Instead of placing a toast component in your template, `uv-ui` allows you to trigger toast notifications globally and programmatically. You can call `this.$uv.toast()` from anywhere in your component's logic to display a short message to the user, which is ideal for showing feedback after an action.
+
+```javascript
+// In a component's method
+methods: {
+  handleSave() {
+    // On success
+    this.$uv.toast('Data saved successfully!');
+    
+    // On error
+    // this.$uv.toast('Error saving data');
+  }
+}
+```
+
+### 7. Basic Button Component Usage
+The `uv-button` is a fundamental component with various customization options. You can control its appearance using props like `type` (primary, success, warning), `plain` (for an outline style), and `shape` (circle). Event handling is done via the standard `@click` event listener.
+
+```html
+<template>
+	<view class="container">
+		<!-- Primary filled button -->
+		<uv-button type="primary" text="Confirm"></uv-button>
+		
+		<!-- Success outlined button with a circular shape -->
+		<uv-button type="success" :plain="true" shape="circle" text="Success"></uv-button>
+	</view>
+</template>
+```
+
+### 8. Built-in HTTP Request Function
+The library includes a pre-configured HTTP request module accessible via `this.$uv.http`. It acts as a wrapper around `uni.request` and can be configured with a base URL, headers, and interceptors. This standardizes how you make API calls across your application.
+
+```javascript
+// Example of making a GET request in a component method
+methods: {
+  fetchUserData() {
+    this.$uv.http.get('/user/profile', {
+      params: { id: 123 }
+    }).then(res => {
+      console.log('User data:', res);
+    }).catch(err => {
+      console.error('Failed to fetch user data:', err);
+    });
+  }
+}
+```
+
+### 9. Using the Icon Component
+`uv-ui` comes with a large set of built-in icons that can be rendered using the `uv-icon` component. You simply provide the `name` of the icon you wish to display. Additional props like `color` and `size` allow for easy customization.
+
+```html
+<template>
+	<view>
+		<uv-icon name="weixin-fill" color="#2979ff" size="28"></uv-icon>
+		<uv-icon name="camera" color="#fa3534" size="28"></uv-icon>
+		<uv-icon name="setting" color="#19be6b" size="28"></uv-icon>
+	</view>
+</template>
+```
+
+### 10. Creating Grid Layouts
+For creating grid-based layouts, the library provides `uv-grid` and `uv-grid-item` components. You can specify the number of columns in the parent `uv-grid` component and then nest `uv-grid-item` components inside. This is useful for creating dashboards, category menus, and photo galleries.
+
+```html
+<template>
+	<uv-grid :col="3" :border="true">
+		<uv-grid-item v-for="(item, index) in list" :key="index">
+			<uv-icon :name="item.name" :size="20"></uv-icon>
+			<text class="grid-text">{{item.title}}</text>
+		</uv-grid-item>
+	</uv-grid>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				list: [
+					{ name: 'photo', title: 'Pictures' },
+					{ name: 'lock', title: 'Security' },
+					{ name: 'star', title: 'Favorites' }
+				]
+			}
+		}
+	}
+</script>
+```
