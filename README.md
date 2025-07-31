@@ -32,13 +32,14 @@ To run tests on individual evaluation:
 
     `USE_MANUAL=True npm run test-individual`
 
-* **USE_MANUAL=True** will only test on the libraries `/context7/tailwindcss` and `/tailwindlabs/tailwindcss.com`
+* **USE_MANUAL=True** will only test on the libraries `/context7/tailwindcss` and `/tailwindlabs/tailwindcss.com` (individually)
 * **USE_MANUAL=False** will test on 100 most popular libraries from `https://context7.com/stats`
 
-To run tests on comparison evaluation: (WIP)
+To run tests on comparison evaluation:
 
     `npm run test-compare`
 
+* Will only test on the libraries `/context7/tailwindcss` and `/tailwindlabs/tailwindcss.com` (together)
 
 It will output the search results in `app/context_evaluation` and the complete evaluation results (search + evaluator) to `app/library_scores.csv`.
 

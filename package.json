@@ -10,7 +10,8 @@
     "test-individual": "ts-node app/tests/individual_tester.ts",
     "test-compare": "ts-node app/tests/compare_tester.ts",
     "ctrace-worker": "ts-node app/main.ts worker",
-    "ctrace": "ts-node app/main.ts compare"
+    "ctrace": "ts-node app/main.ts compare",
+    "redis": "ts-node app/redis.ts"
   },
   "repository": {
     "type": "git",
@@ -28,10 +29,13 @@
     "@google/genai": "^1.9.0",
     "@octokit/core": "^6.1.2",
     "@types/turndown": "^5.0.5",
+    "@upstash/redis": "^1.35.2",
     "axios": "^1.7.2",
     "commander": "^12.1.0",
+    "danfojs-node": "^1.2.0",
     "dotenv": "^16.4.5",
     "html-to-markdown": "^1.0.0",
+    "lodash": "^4.17.21",
     "node-calls-python": "^1.11.1",
     "turndown": "^7.2.0"
   },
