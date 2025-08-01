@@ -47,8 +47,13 @@ It will output the search results in `app/context_evaluation` and the complete e
 
 1. Use `npm install` to install all the dependencies.
 
-2. Use `npx ts-node app/main.ts --library LIBRARY`.
+2. Use `npm run ctrace --l LIBRARY1 LIBRARY2` to compare two libraries with the same product.
 
-    An example of this is:
+Note: Must have two libraries
 
-        `npx ts-node app/main.ts --library /vercel/next.js`
+An example of this is:
+
+    `npm run ctrace --l /tailwindlabs/tailwindcss.com /context7/tailwindcss`
+
+3. Use `npm run ctrace-worker --l LIBRARY1 LIBRARY2 ...` to run the evaluation individually on any number of libraries (at least 1).
+

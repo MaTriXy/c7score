@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { LLMScores, LLMScoresCompare } from './types';
+import { runLLM } from './utils';
 
 export class LLMEvaluator {
   private client: GoogleGenAI;
@@ -18,7 +19,7 @@ export class LLMEvaluator {
    */
   async llmEvaluate(): Promise<LLMScores> {
     const snippetDelimiter = "\n" + "-".repeat(40) + "\n";
-    const prompt = `
+    let prompt = `
     Rate the quality of the snippets using the criteria. 
     Your total score for the snippets should be between 0 and 100, 
     where 0 is the indicates that the snippets did not meet the criteria 
@@ -43,37 +44,26 @@ export class LLMEvaluator {
 
     Snippets: ${this.snippets}
     `;
-    const countTokensResponse = await this.client.models.countTokens({
-      model: 'gemini-2.5-pro',
-      contents: prompt,
-    });
-    if (countTokensResponse.totalTokens !== undefined && countTokensResponse.totalTokens < 1048576) {
-      try {
-        const response = await this.client.models.generateContent({
-          model: 'gemini-2.5-pro',
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: 'object',
-              properties: {
-                average_score: { type: Type.NUMBER },
-                explanation: { type: Type.STRING },
-              }
-            }
-          },
-        });
-        const jsonResponse = JSON.parse(response.text ?? '{}');
-        const average_score = jsonResponse.average_score;
-        const explanation = jsonResponse.explanation;
-        return { average_score, explanation };
-      } catch (error) {
-        console.error('Error: ', error);
-        return { average_score: -1, explanation: "There was an error during LLM evaluation: " + error };
+
+    const config: object = {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: 'object',
+        properties: {
+          average_score: { type: Type.NUMBER },
+          explanation: { type: Type.STRING },
+        }
       }
-    } else {
-      console.error('Prompt is too long, skipping LLM evaluation');
-      return { average_score: -1, explanation: "Prompt is too long, skipped LLM evaluation" };
+    }
+    try {
+    const response = await runLLM(prompt, config, this.client);
+    const jsonResponse = JSON.parse(response ?? '');
+    const average_score = jsonResponse.average_score;
+      const explanation = jsonResponse.explanation;
+      return { average_score, explanation };
+    } catch (error) {
+      console.error('Error: ', error);
+      return { average_score: -1, explanation: "There was an error during LLM evaluation: " + error };
     }
   }
 
@@ -84,7 +74,7 @@ export class LLMEvaluator {
    */
   async llmEvaluateCompare(): Promise<LLMScoresCompare> {
     const snippetDelimiter = "\n" + "-".repeat(40) + "\n";
-    const prompt = `
+    let prompt = `
     Compare the quality of two different snippet sources using the criteria. 
     Your total score for the snippets should be between 0 and 100, 
     where 0 is the indicates that the snippets did not meet the criteria 
@@ -110,37 +100,26 @@ export class LLMEvaluator {
     Snippets 1: ${this.snippets}
     Snippets 2: ${this.snippets2}
     `;
-    const countTokensResponse = await this.client.models.countTokens({
-      model: 'gemini-2.5-pro',
-      contents: prompt,
-    });
-    if (countTokensResponse.totalTokens !== undefined && countTokensResponse.totalTokens < 1048576) {
-      try {
-        const response = await this.client.models.generateContent({
-          model: 'gemini-2.5-pro',
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: 'object',
-              properties: {
-                llm_average_score: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                llm_explanation: { type: Type.ARRAY, items: { type: Type.STRING } },
-              }
-            }
-          },
-        });
-        const jsonResponse = JSON.parse(response.text ?? '{}');
-        const llm_average_score = jsonResponse.llm_average_score;
-        const llm_explanation = jsonResponse.llm_explanation;
-        return { llm_average_score, llm_explanation };
-      } catch (error) {
-        console.error('Error: ', error);
-        return { llm_average_score: [-1], llm_explanation: ["There was an error during LLM evaluation: " + error] };
+
+    const config: object = {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: 'object',
+        properties: {
+          llm_average_score: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+          llm_explanation: { type: Type.ARRAY, items: { type: Type.STRING } },
+        }
       }
-    } else {
-      console.error('Prompt is too long, skipping LLM evaluation');
-      return { llm_average_score: [-1], llm_explanation: ["Prompt is too long, skipped LLM evaluation"] };
+    }
+    try {
+      const response = await runLLM(prompt, config, this.client);
+      const jsonResponse = JSON.parse(response ?? '');
+      const llm_average_score = jsonResponse.llm_average_score;
+      const llm_explanation = jsonResponse.llm_explanation;
+      return { llm_average_score, llm_explanation };
+    } catch (error) {
+      console.error('Error: ', error);
+      return { llm_average_score: [-1], llm_explanation: ["There was an error during LLM evaluation: " + error] };
     }
   }
 }

@@ -11,7 +11,7 @@
     "test-compare": "ts-node app/tests/compare_tester.ts",
     "ctrace-worker": "ts-node app/main.ts worker",
     "ctrace": "ts-node app/main.ts compare",
-    "redis": "ts-node app/redis.ts"
+    "product-parser": "ts-node app/library_parser.ts"
   },
   "repository": {
     "type": "git",
@@ -28,12 +28,14 @@
     "@anthropic-ai/sdk": "^0.57.0",
     "@google/genai": "^1.9.0",
     "@octokit/core": "^6.1.2",
+    "@stdlib/string-remove-words": "^0.2.2",
     "@types/turndown": "^5.0.5",
     "@upstash/redis": "^1.35.2",
     "axios": "^1.7.2",
     "commander": "^12.1.0",
     "danfojs-node": "^1.2.0",
     "dotenv": "^16.4.5",
+    "fast-fuzzy": "^1.12.0",
     "html-to-markdown": "^1.0.0",
     "lodash": "^4.17.21",
     "node-calls-python": "^1.11.1",
