@@ -1,12 +1,12 @@
 // Expected output for llmEvaluate
 export interface LLMScores {
-    average_score: number;
-    explanation: string;
+    llmAverageScore: number;
+    llmExplanation: string;
 }
 
 export interface LLMScoresCompare {
-    llm_average_score: number[];
-    llm_explanation: string[];
+    llmAverageScore: number[];
+    llmExplanation: string[];
 }
 
 export interface Metrics {
@@ -18,18 +18,17 @@ export interface Metrics {
 }
 
 export interface StaticEvaluatorOutput {
-    average_score: number;
-    explanation: string;
+    averageScore: number;
 }
 
 export interface ContextEvaluationOutput {
-    scores: number[];
-    average_score: number;
-    explanation: string[];
+    contextScores: number[];
+    contextAverageScore: number;
+    contextExplanation: string[];
 }
 
 export interface ContextEvaluationOutputPair {
-    context_scores: number[];
-    context_average_scores: number[];
-    context_explanations: string[];
+    contextScores: number[];
+    contextAverageScores: number[];
+    contextExplanations: string[];
 }

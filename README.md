@@ -1,6 +1,6 @@
 # Snippet Evaluator
 
-Before running any of the files, create an `.env` file with GITHUB_TOKEN and GEMINI_API_TOKEN. 
+Before running any of the files, create an `.env` file with CONTEXT7_API_TOKEN, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, and GEMINI_API_TOKEN. 
 
 
 ## Search `search.ts`
@@ -49,11 +49,14 @@ It will output the search results in `app/context_evaluation` and the complete e
 
 2. Use `npm run ctrace --l LIBRARY1 LIBRARY2` to compare two libraries with the same product.
 
-Note: Must have two libraries
+Note: Must have two libraries. Does not save questions or machine-readable results. Human-readable results can be found in `compare-out/`.
 
 An example of this is:
 
     `npm run ctrace --l /tailwindlabs/tailwindcss.com /context7/tailwindcss`
 
 3. Use `npm run ctrace-worker --l LIBRARY1 LIBRARY2 ...` to run the evaluation individually on any number of libraries (at least 1).
+
+Saves questions to `benchmark-questions/`, human-readable results to `out/`, and machine-readable results to `out/result.json`. Each human-readable file represents the results for an individual library,
+whereas the machine-readable results aggregate the scores from all libraries.
 

@@ -48,19 +48,11 @@ export class Search {
     // Google Search tool
     const searchTool = { googleSearch: {} };
 
-    const modelConfig = {
+    const config: object = {
       tools: [searchTool],
-    };
-
-    const response = await this.client.models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: [prompt],
-      config: modelConfig,
-    });
-
-    // Gets the number of citations for each question
-    // console.log("Questions metadata:", response.candidates?.[0]?.groundingMetadata?.groundingSupports);
-    return response.text ?? '';
+    }
+    const response = await runLLM(prompt, config, this.client);
+    return response;
   }
 
   /**
@@ -81,21 +73,18 @@ export class Search {
         each question, where each element is a list of 5 search topics. 
     `;
 
-    const response = await this.client.models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: [prompt],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            topics: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.STRING } } }
-          },
-          required: ["topics"],
-        }
-      },
-    });
-    const jsonResponse = JSON.parse(response.text ?? '');
+    const config: object = {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          topics: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.STRING } } }
+        },
+        required: ["topics"],
+      }
+    }
+    const response = await runLLM(prompt, config, this.client);
+    const jsonResponse = JSON.parse(response);
     return jsonResponse.topics;
   }
 
@@ -105,31 +94,35 @@ export class Search {
    * @param library - The library to fetch the context for
    * @returns The context/code snippets per topic
    */
-  async fetchContext(topics: string[][], library: string, header_config: object): Promise<string[][]> {
-    const contexts = []; // 15 x 5 = 75 contexts
-    for (const questionTopics of topics) {  // total of 15 questions
-      const questionContexts = [];  // 5 contexts per question
-      for (const topic of questionTopics) {  // total of 5 topics per question
-        let snippets = "";
-        const topicUrl = encodeURIComponent(topic);
-        const url = `https://context7.com/api/v1/${library}?tokens=10000&topic=${topicUrl}`;
-        const response = await axios.get(url, header_config);
-        snippets = String(response.data).split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet
+  async fetchContext(topics: string[][], library: string, headerConfig: object): Promise<string[][]> {
+    if (topics instanceof Error) {
+      return topics;
+    } else {
+      const contexts = []; // 15 x 5 = 75 contexts
+      for (const questionTopics of topics) {  // total of 15 questions
+        const questionContexts = [];  // 5 contexts per question
+        for (const topic of questionTopics) {  // total of 5 topics per question
+          let snippets = "";
+          const topicUrl = encodeURIComponent(topic);
+          const url = `https://context7.com/api/v1/${library}?tokens=10000&topic=${topicUrl}`;
+          const response = await axios.get(url, headerConfig);
+          snippets = String(response.data).split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet
 
-        // Redirects to another library
-        if (snippets.split("redirected to this library: ").length > 1) {
-          const getLibrary = snippets.split("redirected to this library: ")
-          const newLibrary = getLibrary[getLibrary.length - 1].split(".", 1)[0];
-          const newUrl = `https://context7.com/api/v1/${newLibrary}?tokens=10000&topic=${topicUrl}`;
-          const newResponse = await axios.get(newUrl, header_config);
-          const newContext = String(newResponse.data).split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet;
-          snippets = newContext;
+          // Redirects to another library
+          if (snippets.split("redirected to this library: ").length > 1) {
+            const getLibrary = snippets.split("redirected to this library: ")
+            const newLibrary = getLibrary[getLibrary.length - 1].split(".", 1)[0];
+            const newUrl = `https://context7.com/api/v1/${newLibrary}?tokens=10000&topic=${topicUrl}`;
+            const newResponse = await axios.get(newUrl, headerConfig);
+            const newContext = String(newResponse.data).split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet;
+            snippets = newContext;
+          }
+          questionContexts.push(snippets);
         }
-        questionContexts.push(snippets);
+        contexts.push(questionContexts);
       }
-      contexts.push(questionContexts);
+      return contexts;
     }
-    return contexts;
   }
 
   /**
@@ -168,17 +161,12 @@ export class Search {
         }
       }
     }
-    try {
-      const response = await runLLM(prompt, config, this.client);
-      const jsonResponse = JSON.parse(response);
-      return {
-        scores: jsonResponse.scores as number[],
-        average_score: jsonResponse.average_score as number,
-        explanation: jsonResponse.explanation as string[]
-      };
-    } catch (error) {
-      console.error('Error: ', error);
-      return { scores: [-1], average_score: -1, explanation: ["There was an error during context evaluation: " + error] };
+    const response = await runLLM(prompt, config, this.client);
+    const jsonResponse = JSON.parse(response);
+    return {
+      contextScores: jsonResponse.scores as number[],
+      contextAverageScore: jsonResponse.average_score as number,
+      contextExplanation: jsonResponse.explanation as string[]
     }
   }
 
@@ -221,17 +209,12 @@ export class Search {
         }
       }
     }
-    try {
-      const response = await runLLM(prompt, config, this.client);
-      const jsonResponse = JSON.parse(response ?? '');
-      return {
-        context_scores: jsonResponse.context_scores as number[],
-        context_average_scores: jsonResponse.context_average_scores as number[],
-        context_explanations: jsonResponse.context_explanations as string[]
-      };
-    } catch (error) {
-      console.error('Error: ', error);
-      return { context_scores: [-1], context_average_scores: [-1], context_explanations: ["There was an error during context evaluation: " + error] };
-    }
+    const response = await runLLM(prompt, config, this.client);
+    const jsonResponse = JSON.parse(response);
+    return {
+      contextScores: jsonResponse.context_scores as number[],
+      contextAverageScores: jsonResponse.context_average_scores as number[],
+      contextExplanations: jsonResponse.context_explanations as string[]
+    };
   }
 }

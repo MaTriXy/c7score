@@ -11,7 +11,7 @@ const envConfig = {
 
 const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
 
-const header_config = {
+const headerConfig = {
   headers: {
     "Authorization": "Bearer " + envConfig.CONTEXT7_API_TOKEN
   }
@@ -26,7 +26,7 @@ async function main() {
       
     ]
     
-    await snippetEvaluationCompare(libraries[0], libraries[1], client, header_config);
+    await snippetEvaluationCompare(libraries[0], libraries[1], client, headerConfig);
 }    
 
 if (require.main === module) {

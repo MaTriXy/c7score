@@ -1,8 +1,9 @@
 import axios from 'axios';
 import fs from "fs/promises";
 import { StaticEvaluator } from './static_eval';
-import { Metrics } from './types';
+import { Metrics, StaticEvaluatorOutput } from './types';
 import { GoogleGenAI } from '@google/genai';
+import { backOff } from 'exponential-backoff';
 
 /**
  * Creates a JSON file for the questions
@@ -10,18 +11,17 @@ import { GoogleGenAI } from '@google/genai';
  * @param questions - The questions to create the file for
  */
 export async function createQuestionFile(product: string, questions: string): Promise<void> {
-    const isolated_questions: Record<string, string> = {};
+    const isolatedQuestions: Record<string, string> = {};
     for (const num of Array.from(Array(15).keys())) {
-        const isolated_q = questions.split("\n")[num]
-        const q_num = String(num + 1) + "."
-        const cleaned_q = isolated_q.substring(isolated_q.indexOf(q_num) + q_num.length + 1);
-        isolated_questions["Question " + String(num + 1)] = cleaned_q;
+        const isolatedQ = questions.split("\n")[num]
+        const qNum = String(num + 1) + "."
+        const cleanedQ = isolatedQ.substring(isolatedQ.indexOf(qNum) + qNum.length + 1);
+        isolatedQuestions["Question " + String(num + 1)] = cleanedQ;
     }
-    const question_json = JSON.stringify(isolated_questions);
-    console.log("Question JSON:", question_json);
-    await fs.writeFile(__dirname + `/../benchmark-questions/${product.replace("/", "-").replace(".", "-").replace("_", "-").toLowerCase()}.json`, question_json)
+    const questionJson = JSON.stringify(isolatedQuestions, null, 2);
+    await fs.writeFile(__dirname + `/../benchmark-questions/${product.replace("/", "-").replace(".", "-").replace("_", "-").toLowerCase()}.json`, questionJson)
         .catch((err) => {
-        console.error("Error writing questions to JSON file:", err);
+            console.error("Error writing questions to JSON file:", err);
         });
 }
 /**
@@ -30,16 +30,16 @@ export async function createQuestionFile(product: string, questions: string): Pr
  * @param file - The file to read the snippets from
  * @returns The snippets
  */
-export async function scrapeContext7Snippets(library: string, header_config: object): Promise<string> {
+export async function scrapeContext7Snippets(library: string, headerConfig: object): Promise<string> {
     const context7Url = `https://context7.com/api/v1/${library}?tokens=10000`
-    const response = await axios.get(context7Url, header_config);
+    const response = await axios.get(context7Url, headerConfig);
     const snippets = response.data;
     const snippetsString = String(snippets);
     if (snippetsString.split("redirected to this library: ").length > 1) {
         const getLibrary = snippetsString.split("redirected to this library: ")
         const newLibrary = getLibrary[getLibrary.length - 1].split(".", 1)[0];
         const newUrl = `https://context7.com/api/v1/${newLibrary}?tokens=10000`;
-        const newResponse = await axios.get(newUrl, header_config);
+        const newResponse = await axios.get(newUrl, headerConfig);
         const finalSnippets = String(newResponse.data);
         return finalSnippets;
     } else {
@@ -58,20 +58,37 @@ export async function scrapeContext7Snippets(library: string, header_config: obj
 export async function runLLM(prompt: string, config: object, client: GoogleGenAI): Promise<string> {
     const countTokensResponse = await client.models.countTokens({
         model: 'gemini-2.5-pro',
-        contents: prompt,
-      });
-      if (countTokensResponse.totalTokens !== undefined && countTokensResponse.totalTokens > 1048576) {
+        contents: [prompt],
+    });
+    if (countTokensResponse.totalTokens !== undefined && countTokensResponse.totalTokens > 1048576) {
         console.error("Prompt is too long: ", countTokensResponse.totalTokens, " condensing prompt to 1048576 tokens");
         // 1 Gemini token = roughly 4 characters, using 2 to be safe
         prompt = prompt.slice(0, 1048576 * 2);
-      } 
+    }
+    const generate = async (): Promise<string> => {
         const response = await client.models.generateContent({
-          model: 'gemini-2.5-pro',
-          contents: [prompt],
-          config: config
+            model: 'gemini-2.5-pro',
+            contents: [prompt],
+            config: config
         });
-        return response.text ?? "{}";
+
+        if (response.text === undefined) {
+            throw new Error("Response is undefined");
+        }
+        return response.text;
+    }
+    try {
+        const retryResponse = await backOff(() => generate(), {
+            numOfAttempts: 5,
+            delayFirstAttempt: true,
+        });
+        return retryResponse;
+    } catch (error) {
+        throw new Error("Error in LLM call (context or llm evaluation): " + error);
+    }
 }
+
+
 
 /**
  * Runs all three static analysis metrics on the snippets
@@ -79,19 +96,15 @@ export async function runLLM(prompt: string, config: object, client: GoogleGenAI
  * @returns The average score and explanation for each metric
  */
 export async function runStaticAnalysis(snippets: string): Promise<{
-    formatting_avg_score: number,
-    formatting_explanation: string,
-    projectMetadata_avg_score: number,
-    projectMetadata_explanation: string,
-    initialization_avg_score: number,
-    initialization_explanation: string
+    formatting: StaticEvaluatorOutput,
+    projectMetadata: StaticEvaluatorOutput,
+    initialization: StaticEvaluatorOutput
 }> {
-
-    const static_evaluator = new StaticEvaluator(snippets);
-    const { average_score: formatting_avg_score, explanation: formatting_explanation } = await static_evaluator.formatting();
-    const { average_score: projectMetadata_avg_score, explanation: projectMetadata_explanation } = await static_evaluator.projectMetadata();
-    const { average_score: initialization_avg_score, explanation: initialization_explanation } = await static_evaluator.initialization();
-    return { formatting_avg_score, formatting_explanation, projectMetadata_avg_score, projectMetadata_explanation, initialization_avg_score, initialization_explanation };
+    const staticEvaluator = new StaticEvaluator(snippets);
+    const formatting = await staticEvaluator.formatting();
+    const projectMetadata = await staticEvaluator.projectMetadata();
+    const initialization = await staticEvaluator.initialization();
+    return { formatting, projectMetadata, initialization };
 }
 
 /**

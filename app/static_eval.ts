@@ -73,11 +73,10 @@ export class StaticEvaluator {
         }
       }
 
-      return { average_score: ((snippetsList.length - improperFormatting) / snippetsList.length) * 100, explanation: "" };
+      return { averageScore: ((snippetsList.length - improperFormatting) / snippetsList.length) * 100 };
 
     } catch (error) {
-      console.error('Error in formatting: ', error);
-      return { average_score: -1, explanation: "Error in formatting: " + error };
+      throw new Error("Error in formatting: " + error);
     }
   }
 
@@ -113,10 +112,9 @@ export class StaticEvaluator {
           projectMetadata++;
         }
       }
-      return { average_score: ((snippetsList.length - projectMetadata) / snippetsList.length) * 100, explanation: "" };
+      return { averageScore: ((snippetsList.length - projectMetadata) / snippetsList.length) * 100 };
     } catch (error) {
-      console.error('Error in project metadata: ', error);
-      return { average_score: -1, explanation: "Error in project metadata: " + error };
+      throw new Error("Error in project metadata: " + error);
     }
   }
 
@@ -151,10 +149,9 @@ export class StaticEvaluator {
           initializationCheck++;
         }
       }
-      return { average_score: ((snippetsList.length - initializationCheck) / snippetsList.length) * 100, explanation: "" };
+      return { averageScore: ((snippetsList.length - initializationCheck) / snippetsList.length) * 100 };
     } catch (error) {
-      console.error('Error in initialization: ', error);
-      return { average_score: -1, explanation: "Error in initialization: " + error };
+      throw new Error("Error in initialization: " + error);
     }
   }
 }

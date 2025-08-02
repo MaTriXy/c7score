@@ -10,7 +10,7 @@ const envConfig = {
     CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
 };
 
-const header_config = {
+const headerConfig = {
     headers: {
         "Authorization": "Bearer " + envConfig.CONTEXT7_API_TOKEN
     }
@@ -22,7 +22,7 @@ const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
  * @returns The top n libraries as an array of strings
  */
 async function getPopLibraries(top_num: number): Promise<string[]> {
-    const data = await fs.readFile("../context7_api_stats.json", "utf8");
+    const data = await fs.readFile(`${__dirname}/../context7_api_stats.json`, "utf8");
     const jsonData = JSON.parse(data);
     const libraries = jsonData["data"];
     const librariesByPop = Object.entries(libraries).reduce((acc, [key, value]) => {
@@ -55,13 +55,14 @@ async function main() {
     for (const library of libraries) {
         try {
             console.log(`Working on ${library}...`)
-            await snippetEvaluation(library, client, header_config);
+            await snippetEvaluation(library, client, headerConfig);
 
         } catch (error) {
             console.error(`${library} error: ${error}`);
         }
     }
 }
+
 
 if (require.main === module) {
     main();

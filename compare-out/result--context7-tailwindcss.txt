@@ -1,0 +1,38 @@
+== Average Score ==
+
+NaN
+
+== Context Scores ==
+
+95,50,55,10,90,65,0,95,100,100,85,90,100,70,10
+
+== Context Avg Score ==
+
+67.67
+
+== Context Explanations ==
+
+Provides two excellent, complete examples of card components (`VacationCard` and `Profile Card`). It also has specific snippets for `truncate` and `box-shadow`, covering all the requested features with high-quality, practical code.,Provides a basic navigation menu example but it lacks the crucial dropdown functionality and has minimal responsiveness. While snippets on breakpoints are included, the user would have to build the complex parts (dropdowns, mobile menu toggle) from scratch.,Explains how the `dark:` variant is compiled into CSS and shows how to configure PostCSS for Next.js, which is relevant context. However, it completely misses how to enable and implement a class-based dark mode toggle, which is central to the question.,The context is almost entirely unhelpful. The only related snippet is about styling the native `<dialog>` element's margin, which doesn't address accessibility, state management, or closing behavior.,This context is very strong here. It provides clear examples for styling both valid (`user-valid`) and invalid (`user-invalid`) states, and shows the `peer-invalid` pattern for displaying contextual error messages. This covers the validation aspect excellently.,Provides the building blocks by showing how to define custom animations and keyframes. However, it lacks a higher-level example (like a component-based transition manager) or a concrete example of combining transform/translate utilities with transitions for a slide-in effect, making it less practical.,The context contains no information about configuring `purge`, `content`, or the JIT engine. This is a critical omission, making the context useless for this question.,Provides excellent coverage using the modern `@theme` directive. It has clear, separate examples for adding custom colors and custom fonts, including advanced font feature settings. The examples are practical and easy to follow.,The `Responsive Grid Column Configuration` snippet is a direct and perfect answer, showing the exact `grid-cols-1 md:grid-cols-6` pattern. This is supplemented with documentation on breakpoints, making it a complete answer.,Provides two excellent, best-practice examples. The `Conditional Layout Styling` snippet shows the ternary operator approach, and the `Class Detection in JSX` snippet shows the recommended mapping object pattern. It fully answers the question.,Thoroughly covers how to create custom animations and keyframes using the `@theme` directive. The examples are clear and directly applicable. It's a strong answer.,This context provides a superior answer. It not only shows how to apply z-index but also demonstrates key strategies for managing it in large applications: using CSS variables for custom values (`z-(--my-z)`) and creating new stacking contexts with the `isolate` utility. This directly addresses the "best approach" part of the question.,The `Styling ::before and ::after Pseudo-elements` snippet is a perfect, self-contained example showing how to add a required field marker. It's extremely clear, practical, and covers the core use case. The other snippets on `content` provide good supplementary information.,The context has a good example of `sticky` positioning in a list, which is highly relevant and can be adapted. However, it doesn't show a `sticky` header specifically in a `<table>` element, which has its own complexities (like `border-collapse`), making it less direct and complete than Context 1.,This context completely fails to answer the question and instead provides answers to the inverse problem. The `group-hover` utility styles a *child* when a *parent* is hovered. The question asks how to style a *parent* when a *child* is hovered, which requires the `:has()` selector, and this context provides no examples of it.
+
+== LLM Avg Score ==
+
+
+
+== LLM Explanation ==
+
+
+
+== Formatting Avg Score ==
+
+56.52173913043478
+
+== Project Metadata Avg Score ==
+
+100
+
+== Initialization Avg Score ==
+
+82.6086956521739
+
+== Errors ==
+

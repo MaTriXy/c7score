@@ -1,0 +1,17 @@
+{
+  "Question 1": "Show me how to build a card component with shadow, hover effects, and truncated text in Next.js.",
+  "Question 2": "How do I create a responsive navigation bar with dropdown menus that is compatible with both client and server components in Next.js?",
+  "Question 3": "What's the best way to implement a modal component in Next.js that can be triggered from anywhere in the app and manages its own state?",
+  "Question 4": "Provide a step-by-step guide to building a multi-step form with client-side validation using React Hook Form in a Next.js application.",
+  "Question 5": "How can I implement a persistent dark mode toggle in a Next.js app using Tailwind CSS and localStorage?",
+  "Question 6": "What is the proper way to add and use custom fonts and global CSS styles across an entire Next.js 14 project?",
+  "Question 7": "How can I optimize the loading of a large number of images on a single page in Next.js to improve performance?",
+  "Question 8": "Can you demonstrate how to create smooth page transitions and shared layout animations between different routes in Next.js using Framer Motion?",
+  "Question 9": "Show me how to create a responsive two-column grid layout with a sticky sidebar using CSS Grid in a Next.js component.",
+  "Question 10": "How do I build a master-detail interface where selecting an item in a list on a page updates the content in a separate detail view on the same page, all within a client component?",
+  "Question 11": "How would I handle a dynamic routing scenario with multiple optional parameters in the URL, for example, `/shop/[...slug]`, where `slug` could be `/category/product` or just `/product`?",
+  "Question 12": "What is the best approach to server-side render a component that depends on a browser-only library, such as a charting library that needs access to the `window` object?",
+  "Question 13": "How can I apply an animation to a server component that triggers when it scrolls into the viewport?",
+  "Question 14": "What is the most performant way to render a very long, filterable list of data (e.g., thousands of rows) in a Next.js application without causing the UI to freeze?",
+  "Question 15": "How can I share a simple global state (e.g., a user's theme preference) between server and client components without relying on a third-party state management library like Redux or Zustand?"
+}
