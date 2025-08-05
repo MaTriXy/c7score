@@ -1,6 +1,5 @@
-import { Type, GoogleGenAI, GenerateContentConfig } from '@google/genai';
-import fs from "fs/promises";
-import { ContextEvaluationOutput, ContextEvaluationOutputPair } from './types';
+import { Type, GoogleGenAI } from '@google/genai';
+import { ContextEvaluationOutput } from './types';
 import axios from 'axios';
 import { runLLM } from './utils';
 
@@ -14,13 +13,13 @@ export class Search {
   }
 
   /**
-   * Generates 15 questions based on the library
+   * Generates 15 questions about a product one might ask an AI coding assistant.
    * @returns The 15 questions
    */
   async googleSearch(): Promise<string> {
     const prompt = `
       Generate 15 questions, 10 of which should be common and practical 
-      questions that developers frequently ask when using the library ${this.product}. 
+      questions that developers frequently ask when using the product ${this.product}. 
       These should represent real-world use cases and coding challenges. 
 
       Add 5 more questions that might not be very common but relevant to edge cases and 
@@ -42,7 +41,7 @@ export class Search {
       2. "How to create a responsive navigation bar with dropdown menus in ${this.product}"
 
       Do not include any headers in your response, only the list of questions. You may search 
-      google for the questions.
+      Google for the questions.
     `;
 
     // Google Search tool
@@ -52,15 +51,18 @@ export class Search {
       tools: [searchTool],
     }
     const response = await runLLM(prompt, config, this.client);
-    return response;
+    if (response == undefined) {
+      throw new Error("Response is undefined");
+    } else {
+      return response;
+    }
   }
 
   /**
-   * Generates 5 search topics for each question
+   * Generates 5 search topics for each question.
    * @param questions - The questions to generate search topics for
-   * @returns The search topics
+   * @returns 75 search topics
    */
-  // TODO: change the way that the project is specified (doesn't work for comparing libraries)
   async generateSearchTopics(questions: string): Promise<string[][]> {
     const prompt = `
       For each question about ${this.product}, generate 5 relevant search topics 
@@ -85,19 +87,22 @@ export class Search {
     }
     const response = await runLLM(prompt, config, this.client);
     const jsonResponse = JSON.parse(response);
-    return jsonResponse.topics;
+    if (jsonResponse.topics == undefined) {
+      throw new Error("Topics are undefined");
+    } else {
+      return jsonResponse.topics;
+    }
   }
 
   /**
-   * Fetches the context/code snippets per topic for the library
+   * Fetches 1 context/code snippet per topic for the library from Context7.
    * @param topics - The search topics
    * @param library - The library to fetch the context for
-   * @returns The context/code snippets per topic
+   * @param headerConfig - The header config to use for the Context7 API
+   * @returns 75 context/code snippets
    */
   async fetchContext(topics: string[][], library: string, headerConfig: object): Promise<string[][]> {
-    if (topics instanceof Error) {
-      return topics;
-    } else {
+    const snippet_title = "=".repeat(24) + "\nCODE SNIPPETS\n" + "=".repeat(24);
       const contexts = []; // 15 x 5 = 75 contexts
       for (const questionTopics of topics) {  // total of 15 questions
         const questionContexts = [];  // 5 contexts per question
@@ -105,116 +110,76 @@ export class Search {
           let snippets = "";
           const topicUrl = encodeURIComponent(topic);
           const url = `https://context7.com/api/v1/${library}?tokens=10000&topic=${topicUrl}`;
-          const response = await axios.get(url, headerConfig);
-          snippets = String(response.data).split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet
-
-          // Redirects to another library
-          if (snippets.split("redirected to this library: ").length > 1) {
-            const getLibrary = snippets.split("redirected to this library: ")
-            const newLibrary = getLibrary[getLibrary.length - 1].split(".", 1)[0];
-            const newUrl = `https://context7.com/api/v1/${newLibrary}?tokens=10000&topic=${topicUrl}`;
-            const newResponse = await axios.get(newUrl, headerConfig);
-            const newContext = String(newResponse.data).split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet;
-            snippets = newContext;
-          }
+          const response = await axios.get(url, headerConfig)
+          snippets = String(response.data).replace(snippet_title, "").split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet
           questionContexts.push(snippets);
         }
         contexts.push(questionContexts);
       }
       return contexts;
-    }
   }
 
   /**
-   * Evaluates how well the snippets answer the questions based on 5 criteria
-   * @param questions - The questions to evaluate
-   * @param context - The context/code snippets per topic
-   * @returns The scores, average score, and explanations
+   * Evaluates how well the snippets answer the questions based on 5 criteria.
+   * @param questions - The questions to evaluate. There may be two questions for comparing libraries
+   * @param contexts - The context/code snippets per topic. There may be two context collections for comparing libraries
+   * @returns The scores, average score, and explanations for the context collection(s)
    */
-  async evaluateContext(questions: string, context: string[][]): Promise<ContextEvaluationOutput> {
-    let prompt = `
-      You are evaluating documentation context for its quality and relevance in helping an AI 
-      coding assistant answer the following question:
-
-      Questions: "${questions}"
-
-      Contexts (${context}):
-
-      For each question, evaluate and score the context from 0-100 based on the following criteria:
-      1. Relevance to the specific question (40%)
-      2. Code example quality and completeness (25%)
-      3. Practical applicability (15%)
-      4. Coverage of requested features (15%)
-      5. Clarity and organization (5%)
-
-      Your response should contain 15 scores for each question, the average 
-      score of the context, and explanations for each score.
-    `;
-    const config: object = {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          scores: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-          average_score: { type: Type.NUMBER },
-          explanation: { type: Type.ARRAY, items: { type: Type.STRING } }
-        }
-      }
+  async evaluateContext(questions: string, contexts: string[][][]): Promise<ContextEvaluationOutput> {
+    let context = "";
+    if (contexts.length === 2) {
+      context = "Context Collection 1: " + contexts[0] + "\n" + "-".repeat(40) + "\n" + "Context Collection 2: " + contexts[1];
+    } else {
+      context = `Context Collection: ${contexts[0]}`;
     }
-    const response = await runLLM(prompt, config, this.client);
-    const jsonResponse = JSON.parse(response);
-    return {
-      contextScores: jsonResponse.scores as number[],
-      contextAverageScore: jsonResponse.average_score as number,
-      contextExplanation: jsonResponse.explanation as string[]
-    }
-  }
-
-  /**
-     * Evaluates how well the snippets answer the questions based on 5 criteria
-     * @param questions - The questions to evaluate
-     * @param context1 - The context/code snippets per topic for the first library
-     * @param context2 - The context/code snippets per topic for the second library
-     * @returns The scores, average score, and explanations
-     */
-  async evaluateContextPair(questions: string, context1: string[][], context2: string[][]): Promise<ContextEvaluationOutputPair> {
     let prompt = `
-    You are evaluating two different documentation contexts for their quality and relevance in helping an AI 
-    coding assistant answer the following question:
+    You are an expert in evaluating technical documentation. 
+    Your task is to assess the quality and relevance of the 
+    provided context(s) in helping an AI 
+    coding assistant answer a list of questions.
 
-    Questions: "${questions}"
+    Questions: ${questions}
 
-    Contexts (${context1} and ${context2}):
+    ${context}
 
-    For each question, evaluate and score the context from 0-100 based on the following criteria:
+    Evaluation Criteria:
+
+    For each question, evaluate and score the context from 0-100 
+    on the following 5 criteria:
+
     1. Relevance to the specific question (40%)
     2. Code example quality and completeness (25%)
     3. Practical applicability (15%)
     4. Coverage of requested features (15%)
     5. Clarity and organization (5%)
 
-    Your response should include 15 scores for each context, 
-    the average score of the context, and explanations for each score, all for
-    each context.
-  `;
+    Output Format:
 
+    For each context collection, provide the 15 scores, one for each context, 
+    the average score of the context collection, and a brief explanation 
+    of the average score.
+    `;
     const config: object = {
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          context_scores: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.NUMBER } } },
-          context_average_scores: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.NUMBER } } },
-          context_explanations: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.STRING } } }
+          contextScores: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.NUMBER } } },
+          contextAverageScores: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.NUMBER } } },
+          contextExplanations: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.STRING } } }
         }
       }
     }
     const response = await runLLM(prompt, config, this.client);
     const jsonResponse = JSON.parse(response);
-    return {
-      contextScores: jsonResponse.context_scores as number[],
-      contextAverageScores: jsonResponse.context_average_scores as number[],
-      contextExplanations: jsonResponse.context_explanations as string[]
-    };
+    if (jsonResponse.contextScores == undefined || jsonResponse.contextAverageScores == undefined || jsonResponse.contextExplanations == undefined) {
+      throw new Error("Context scores are undefined");
+    } else {
+      return {
+        contextScores: jsonResponse.contextScores as number[][],
+        contextAverageScores: jsonResponse.contextAverageScores as number[],
+        contextExplanations: jsonResponse.contextExplanations as string[][]
+      }
+    }
   }
 }

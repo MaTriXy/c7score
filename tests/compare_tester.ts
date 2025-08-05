@@ -1,4 +1,4 @@
-import { snippetEvaluationCompare } from "../app/main";
+import { snippetEvaluation } from "../app/main";
 import { GoogleGenAI } from "@google/genai";
 import { config } from 'dotenv';
 
@@ -26,7 +26,7 @@ async function main() {
       
     ]
     
-    await snippetEvaluationCompare(libraries[0], libraries[1], client, headerConfig);
+    await snippetEvaluation(libraries, client, headerConfig);
 }    
 
 if (require.main === module) {

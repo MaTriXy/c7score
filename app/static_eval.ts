@@ -37,7 +37,7 @@ export class StaticEvaluator {
 
   /**
    * Evaluates the formatting of the snippets
-   * @returns The average score and explanation
+   * @returns The average score
    */
   async formatting(): Promise<StaticEvaluatorOutput> {
     try {
@@ -82,7 +82,7 @@ export class StaticEvaluator {
 
   /**
    * Evaluates the frequency of project metadata in the snippets
-   * @returns The average score and explanation
+   * @returns The average score
    */
   async projectMetadata(): Promise<StaticEvaluatorOutput> {
     try {
@@ -120,7 +120,7 @@ export class StaticEvaluator {
 
   /**
    * Evaluates the frequency of initialization information in the snippets
-   * @returns The average score and explanation
+   * @returns The average score
    */
   async initialization(): Promise<StaticEvaluatorOutput> {
     try {

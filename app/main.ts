@@ -3,7 +3,7 @@ import { GoogleGenAI } from '@google/genai';
 import { program } from 'commander';
 import { Search } from './search';
 import { LLMEvaluator } from './llm_eval'
-import { scrapeContext7Snippets, runStaticAnalysis, calculateAverageScore, createQuestionFile } from './utils';
+import { scrapeContext7Snippets, runStaticAnalysis, calculateAverageScore, checkRedirects } from './utils';
 import fs from 'fs/promises';
 import { identifyProduct, identifyProductFile } from './library_parser';
 import { fuzzy } from "fast-fuzzy";
@@ -25,70 +25,69 @@ const headerConfig = {
 }
 
 /**
- * Evaluates the context of the library using 5 metrics
- * @param library - The name of the library
- * @returns The average score, scores for each metric, and explanations for each metric
+ * Evaluates the snippets of a library using 5 metrics
+ * @param libraryList - The list of libraries to evaluate (2 if comparing, 1 otherwise)
+ * @param client - The client to use for the LLM evaluation
+ * @param headerConfig - The header config to use for the Context7 API
  */
-export async function snippetEvaluationCompare(library1: string, library2: string, client: GoogleGenAI, headerConfig: object): Promise<void> {
-  const prod1 = identifyProduct(library1);
-  const prod2 = identifyProduct(library2);
-
-  // Check if the products are the same
-  const matchScore = fuzzy(prod1, prod2);
-  if (matchScore < 0.8) {
-    throw new Error(`${library1} and ${library2} are not the same library`);
+export async function snippetEvaluation(libraryList: string[], client: GoogleGenAI, headerConfig: object): Promise<void> {
+  let prods = [];
+  for (const library of libraryList) {
+    const prod = identifyProduct(library);
+    prods.push(prod);
   }
-  const search = new Search(prod1, client);
 
+  // For compare, check if the products are the same
+  if (prods.length === 2) {
+    const prod1 = prods[0];
+    const prod2 = prods[1];
+    const matchScore = fuzzy(prod1, prod2);
+    if (matchScore < 0.8) {
+      throw new Error(`${libraryList[0]} and ${libraryList[1]} do not have the same product`);
+    }
+  } 
   // Check if the product has an existing questions file
+  const search = new Search(prods[0], client);
+  const filePath = identifyProductFile(prods[0]);
   let questions = "";
-  const file = identifyProductFile(prod1);
-  if (file === null) {
-    console.log("No existing questions file found for", prod1);
+  if (filePath === null) {
+    console.log("❌ No existing questions file found for", prods[0]);
     questions = await search.googleSearch();
-
   } else {
-    console.log("Existing questions file found for", prod1);
-    questions = await fs.readFile(file, "utf8");
+    console.log("✅ Existing questions file found for", prods[0]);
+    questions = await fs.readFile(filePath, "utf8");
   }
 
   const searchTopics = await search.generateSearchTopics(questions);
 
-  const context1 = await search.fetchContext(searchTopics, library1, headerConfig);
-  const context2 = await search.fetchContext(searchTopics, library2!, headerConfig);
+  const contexts = await Promise.all(libraryList.map( library =>
+    search.fetchContext(searchTopics, library, headerConfig)
+  ));
 
-  const contextResponse = await search.evaluateContextPair(questions, context1, context2);
+  const contextResponse = await search.evaluateContext(questions, contexts);
 
-  const snippets1 = await scrapeContext7Snippets(library1, headerConfig);
-  const snippets2 = await scrapeContext7Snippets(library2!, headerConfig);
-  const llm_evaluator = new LLMEvaluator(client, snippets1, snippets2);
+  console.log("Context response: ", contextResponse);
 
-  const llmResponse = await llm_evaluator.llmEvaluateCompare();
+  const snippets = await Promise.all(libraryList.map( library =>
+    scrapeContext7Snippets(library, headerConfig)
+  ));
 
-  const snippets = [snippets1, snippets2];
-  const libraries = [library1, library2];
+  const llm_evaluator = new LLMEvaluator(client);
+  const llmResponse = await llm_evaluator.llmEvaluate(snippets);
+  
+  console.log("LLM response: ", llmResponse);
 
-  const library_outputs = snippets.map((snippet, i) => ({
-    snippet: snippet,
-    library: libraries[i],
-    contextScores: contextResponse.contextScores[i],
-    contextAverageScore: contextResponse.contextAverageScores[i],
-    contextExplanation: contextResponse.contextExplanations[i],
-    llmAverageScore: llmResponse.llmAverageScore[i],
-    llmExplanation: llmResponse.llmExplanation[i],
-  }));
-
-  for (const { snippet, library, contextScores, contextAverageScore, contextExplanation, llmAverageScore, llmExplanation } of library_outputs) {
+  for (let i = 0; i < libraryList.length; i++) {
 
     const {
       formatting,
       projectMetadata,
       initialization,
-    } = await runStaticAnalysis(snippet);
+    } = await runStaticAnalysis(snippets[i]);
 
     const scores = {
-      context: contextAverageScore,
-      llm: llmAverageScore,
+      context: contextResponse.contextAverageScores[i],
+      llm: llmResponse.llmAverageScores[i],
       formatting: formatting.averageScore,
       projectMetadata: projectMetadata.averageScore,
       initialization: initialization.averageScore,
@@ -98,83 +97,24 @@ export async function snippetEvaluationCompare(library1: string, library2: strin
 
     const fullResults = {
       averageScore: averageScore,
-      contextScores: contextScores,
-      contextAverageScore: contextAverageScore,
-      contextExplanation: contextExplanation,
-      llmAverageScore: llmAverageScore,
-      llmExplanation: llmExplanation,
+      contextScores: contextResponse.contextScores[i],
+      contextAverageScore: contextResponse.contextAverageScores[i],
+      contextExplanation: contextResponse.contextExplanations[i],
+      llmAverageScore: llmResponse.llmAverageScores[i],
+      llmExplanation: llmResponse.llmExplanations[i],
       formattingAvgScore: formatting.averageScore,
       projectMetadataAvgScore: projectMetadata.averageScore,
       initializationAvgScore: initialization.averageScore,
     }
-    await writeToProjectResults(library, fullResults, "compare-out");
+
+    if (libraryList.length === 2) {
+      await writeToProjectResults(libraryList[i], fullResults, "compare-out");
+    } else {
+      await writeToProjectResults(libraryList[i], fullResults, "out");
+      const scoresObject = convertScorestoObject(libraryList[i], scores, averageScore);
+      await writeToAllResults(scoresObject);
+    }
   }
-}
-
-export async function snippetEvaluation(library: string, client: GoogleGenAI, headerConfig: object): Promise<void> {
-  console.log("Not comparing libraries")
-  const prod = identifyProduct(library);
-  const search = new Search(prod, client);
-
-  // Check if the product has an existing questions file
-  let questions = "";
-  const file = identifyProductFile(prod);
-  if (file === null) {
-    console.log("No existing questions file found for", prod);
-    questions = await search.googleSearch();
-    await createQuestionFile(prod, questions);
-
-  } else {
-    console.log("Existing questions file found for", prod);
-    questions = await fs.readFile(file, "utf8");
-  }
-
-  const searchTopics = await search.generateSearchTopics(questions);
-
-  const context = await search.fetchContext(searchTopics, library, headerConfig);
-
-  const contextResponse = await search.evaluateContext(questions, context);
-
-
-  const snippets = await scrapeContext7Snippets(library, headerConfig);
-  const llm_evaluator = new LLMEvaluator(client, snippets);
-
-  const llmResponse = await llm_evaluator.llmEvaluate();
-
-  const {
-    formatting,
-    projectMetadata,
-    initialization,
-  } = await runStaticAnalysis(snippets);
-
-
-  const scores = {
-    context: contextResponse.contextAverageScore,
-    llm: llmResponse.llmAverageScore,
-    formatting: formatting.averageScore,
-    projectMetadata: projectMetadata.averageScore,
-    initialization: initialization.averageScore,
-  }
-
-  const averageScore = await calculateAverageScore(scores);
-
-  const fullResults = {
-    averageScore: averageScore,
-    contextScores: contextResponse.contextScores,
-    contextAverageScore: contextResponse.contextAverageScore,
-    contextExplanation: contextResponse.contextExplanation,
-    llmAverageScore: llmResponse.llmAverageScore,
-    llmExplanation: llmResponse.llmExplanation,
-    formattingAvgScore: formatting.averageScore,
-    projectMetadataAvgScore: projectMetadata.averageScore,
-    initializationAvgScore: initialization.averageScore,
-  }
-
-  await writeToProjectResults(library, fullResults, "out");
-
-  const scoresObject = convertScorestoObject(library, scores, averageScore);
-
-  await writeToAllResults(scoresObject);
 }
 
 if (require.main === module) {
@@ -183,10 +123,16 @@ if (require.main === module) {
     .command('worker')
     .option('--l, --library <items>', 'Library names', buildList, [])
     .action(async (options: { library: string[] }) => {
-      for (const library of options.library) {
+      const libraries = options.library;
+      if (libraries.length < 1) {
+        throw new Error("Please provide at least one library name")
+      }
+
+      for (const library of libraries) {
         console.log(`Working on ${library}...`)
         try {
-          await snippetEvaluation(library, client, headerConfig);
+          const libraryList = [library];
+          await snippetEvaluation(libraryList, client, headerConfig);
         } catch (error) {
           console.error(`Error in ${library}: ${error}`);
         }
@@ -205,7 +151,8 @@ if (require.main === module) {
       const [library1, library2] = libraries;
       console.log(`Working on ${library1} vs ${library2}...`);
       try {
-        await snippetEvaluationCompare(library1, library2, client, headerConfig);
+        const libraryList = [library1, library2];
+        await snippetEvaluation(libraryList, client, headerConfig);
       } catch (error) {
         console.error(`Error in ${library1} vs ${library2}: ${error}.`);
       }

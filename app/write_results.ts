@@ -11,6 +11,13 @@ interface ProjectData {
     averageScore: number;
 }
 
+/**
+ * Converts the scores and average score into an object.
+ * @param productName - The name of the product
+ * @param scores - The scores to convert
+ * @param averageScore - The average score to convert
+ * @returns The converted scores and average score
+ */
 export const convertScorestoObject = (productName: string, scores: ProjectData["scores"], averageScore: number): Record<string, ProjectData> => {
     return {
         [productName]: {
@@ -20,6 +27,10 @@ export const convertScorestoObject = (productName: string, scores: ProjectData["
     }
 }
 
+/**
+ * Writes the convertScoresToObject results to a machine-readable JSON file.
+ * @param input - The input to write to the file
+ */
 export const writeToAllResults = async (input: Record<string, ProjectData>): Promise<void> => {
     const filePath = `${__dirname}/../out/result.json`;
     let obj: Record<string, ProjectData> = {};
@@ -41,18 +52,22 @@ export const writeToAllResults = async (input: Record<string, ProjectData>): Pro
     await fs.writeFile(filePath, JSON.stringify(obj, null, 2));
 }
 
-
+/**
+ * Writes the full results to a human-readable text file.
+ * @param library - The name of the library
+ * @param fullResults - The full results to write
+ * @param directory - The directory to write the file to
+ */
 export const writeToProjectResults = async (library: string, fullResults: Record<string, any>, directory: string): Promise<void> => {
-  // Save answers to txt
     const toSave = [
         "== Average Score ==",
         fullResults.averageScore,
         "== Context Scores ==",
         fullResults.contextScores,
         "== Context Avg Score ==",
-        fullResults.contextAverageScore,
+        fullResults.contextAverageScores,
         "== Context Explanations ==",
-        fullResults.contextExplanation,
+        fullResults.contextExplanations,
         "== LLM Avg Score ==",
         fullResults.llmAverageScore,
         "== LLM Explanation ==",
@@ -63,8 +78,6 @@ export const writeToProjectResults = async (library: string, fullResults: Record
         fullResults.projectMetadataAvgScore,
         "== Initialization Avg Score ==",
         fullResults.initializationAvgScore,
-        "== Errors ==",
-        fullResults.errors,
     ]
   await fs.writeFile(`${__dirname}/../${directory}/result-${library.replace(/\//g, "-").replace(".", "-").replace("_", "-").toLowerCase()}.txt`, toSave.join("\n\n"));
 }

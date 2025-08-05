@@ -10,7 +10,8 @@
     "test-individual": "ts-node tests/individual_tester.ts",
     "test-compare": "ts-node tests/compare_tester.ts",
     "ctrace-worker": "ts-node app/main.ts worker",
-    "ctrace": "ts-node app/main.ts compare"
+    "ctrace": "ts-node app/main.ts compare",
+    "add-scores": "ts-node add_scores.ts"
   },
   "repository": {
     "type": "git",

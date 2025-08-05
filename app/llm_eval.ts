@@ -1,49 +1,58 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { LLMScores, LLMScoresCompare } from './types';
+import { LLMScores } from './types';
 import { runLLM } from './utils';
-import { backOff } from 'exponential-backoff';
 
 export class LLMEvaluator {
   private client: GoogleGenAI;
-  private snippets: string;
-  private snippets2?: string;
 
-  constructor(client: GoogleGenAI, snippets: string, snippets2?: string) {
+  constructor(client: GoogleGenAI) {
     this.client = client;
-    this.snippets = snippets;
-    this.snippets2 = snippets2 ?? "";
   }
 
   /**
    * Evaluates the quality of the snippets based on 3 criteria: unique information, clarity, and correct syntax
-   * @returns The average score and explanation
+   * @returns The average score(s) and explanation(s) for the snippet collection(s)
    */
-  async llmEvaluate(): Promise<LLMScores> {
+  async llmEvaluate(snippets: string[]): Promise<LLMScores> {
+    let snippetsCombined = "";
+    if (snippets.length === 2) {
+      snippetsCombined = "Snippet Collection 1: " + snippets[0] + "\n" + "-".repeat(40) + "\n" + "Snippet Collection 2: " + snippets[1];
+    } else {
+      snippetsCombined = "Snippet Collection: " + snippets[0];
+    }
     const snippetDelimiter = "\n" + "-".repeat(40) + "\n";
     let prompt = `
-    Rate the quality of the snippets using the criteria. 
-    Your total score for the snippets should be between 0 and 100, 
-    where 0 is the indicates that the snippets did not meet the criteria 
-    at all, 50 is the criteria was partially met, and 100 is the 
-    criteria was fully met with no room for improvement.
-    The snippets are separated by ${snippetDelimiter} 
-    and the code blocks are enclosed in \`\`\`.
-    Your scores should represent a ratio of how many
-    snippets meet the criterion out of the total number of snippets.
+    You are an expert code quality analyst. Your task 
+    is to rate a collection of code snippets based on 
+    the provided criteria and input. The snippets to be 
+    evaluated are separated by ${snippetDelimiter} and 
+    their code blocks are enclosed in \`\`\`.
     
-    Criteria:
-    1. Unique Information (30%): Snippets contain unique information that is not already included in 
-    another snippet. There can be some overlap, but the snippets should not be identical.
-    2. Clarity (30%): There are no snippets that are confusingly worded or unclear. This could be grammatical 
-    or spelling errors. Titles and descriptions are sensible (e.g., the description shouldn't be about requests 
-    when the code is about visualizing data) and all the text, even in the code snippets, are in English.
-    3. Correct Syntax (40%): No snippets contain any obvious syntax errors. Snippets are formatted in such a way 
-    that you can easily isolate the code (e.g., no placeholders or ellipses). The programming language of 
-    the code snippet is correct.
+    Evaluation Criteria:
 
-    In your response, include the average score and the explanation for each score.
+    Rate the snippets on a scale of 0-100 for each of the 
+    following criteria. A score of 50 indicates that the 
+    criteria was partially met across the snippets, while 
+    100 indicates it was fully met with no room for improvement.
 
-    Snippets: ${this.snippets}
+    1. **Unique Information (Weight: 30%)**: Snippets contain unique information 
+    and are not redundant. Minor overlap is acceptable, but identical 
+    snippets are penalized.
+    2. **Clarity (Weight: 30%)**: Snippets are not confusingly worded. Titles 
+    and descriptions are sensible and accurate. All text, including 
+    in code, is in English. There are no significant grammatical 
+    or spelling errors.
+    3. **Correct Syntax (Weight: 40%)**: Snippets are free from obvious 
+    syntax errors. The code is well-formatted and does not contain placeholders 
+    or ellipses (e.g., "..."). The programming language is correct for the 
+    snippet's purpose.
+
+    Output Format:
+
+    For each collection of snippets, provide the average score and a brief 
+    explanation of the average score.
+
+    ${snippetsCombined}
     `;
 
     const config: object = {
@@ -51,67 +60,19 @@ export class LLMEvaluator {
       responseSchema: {
         type: 'object',
         properties: {
-          averageScore: { type: Type.NUMBER },
-          explanation: { type: Type.STRING },
+          llmAverageScores: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+          llmExplanations: { type: Type.ARRAY, items: { type: Type.STRING } },
         }
       }
     }
     const response = await runLLM(prompt, config, this.client);
     const jsonResponse = JSON.parse(response);
-    const averageScore = jsonResponse.averageScore;
-    const explanation = jsonResponse.explanation;
-    return { llmAverageScore: averageScore, llmExplanation: explanation };
-
-  }
-
-  /**
-   * Evaluates the quality of the snippets in two different snippets
-   * @param context1 - The first snippets
-   * @param context2 - The second snippets
-   */
-  async llmEvaluateCompare(): Promise<LLMScoresCompare> {
-    const snippetDelimiter = "\n" + "-".repeat(40) + "\n";
-    let prompt = `
-    Compare the quality of two different snippet sources using the criteria. 
-    Your total score for the snippets should be between 0 and 100, 
-    where 0 is the indicates that the snippets did not meet the criteria 
-    at all, 50 is the criteria was partially met, and 100 is the 
-    criteria was fully met with no room for improvement.
-    The snippets are separated by ${snippetDelimiter} 
-    and the code blocks are enclosed in \`\`\`.
-    Your scores should represent a ratio of how many
-    snippets meet the criterion out of the total number of snippets.
-    
-    Criteria:
-    1. Unique Information (30%): Snippets contain unique information that is not already included in 
-    another snippet. There can be some overlap, but the snippets should not be identical.
-    2. Clarity (30%): There are no snippets that are confusingly worded or unclear. This could be grammatical 
-    or spelling errors. Titles and descriptions are sensible (e.g., the description shouldn't be about requests 
-    when the code is about visualizing data) and all the text, even in the code snippets, are in English.
-    3. Correct Syntax (40%): No snippets contain any obvious syntax errors. Snippets are formatted in such a way 
-    that you can easily isolate the code (e.g., no placeholders or ellipses). The programming language of 
-    the code snippet is correct.
-
-    In your response, include the average score and the explanation of the score for each snippet source.
-
-    Snippets 1: ${this.snippets}
-    Snippets 2: ${this.snippets2}
-    `;
-
-    const config: object = {
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'object',
-        properties: {
-          llmAverageScore: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-          llmExplanation: { type: Type.ARRAY, items: { type: Type.STRING } },
-        }
-      }
+    if (jsonResponse.llmAverageScores == undefined || jsonResponse.llmExplanations == undefined) {
+      throw new Error("LLM scores are undefined");
+    } else {
+      const llmAverageScores = jsonResponse.llmAverageScores;
+      const llmExplanations = jsonResponse.llmExplanations;
+      return { llmAverageScores, llmExplanations };
     }
-    const response = await runLLM(prompt, config, this.client);
-    const jsonResponse = JSON.parse(response);
-    const llmAverageScore = jsonResponse.llmAverageScore;
-    const llmExplanation = jsonResponse.llmExplanation;
-    return { llmAverageScore, llmExplanation };
   }
 }
