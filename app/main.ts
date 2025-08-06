@@ -2,12 +2,12 @@ import { config } from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { program } from 'commander';
 import { Search } from './search';
-import { LLMEvaluator } from './llm_eval'
+import { LLMEvaluator } from './llmEval'
 import { scrapeContext7Snippets, runStaticAnalysis, calculateAverageScore, checkRedirects } from './utils';
 import fs from 'fs/promises';
-import { identifyProduct, identifyProductFile } from './library_parser';
+import { identifyProduct, identifyProductFile } from './libraryParser';
 import { fuzzy } from "fast-fuzzy";
-import { writeToProjectResults, writeToAllResults, convertScorestoObject } from './write_results';
+import { writeToProjectResults, writeToAllResults, convertScorestoObject } from './writeResults';
 
 config();
 
@@ -32,9 +32,18 @@ const headerConfig = {
  */
 export async function snippetEvaluation(libraryList: string[], client: GoogleGenAI, headerConfig: object): Promise<void> {
   let prods = [];
+  let newLibraryList = [];
   for (const library of libraryList) {
     const prod = identifyProduct(library);
     prods.push(prod);
+
+    const redirect = await checkRedirects(library);
+    if (redirect) {
+      console.log("Redirect found for", library, redirect);
+      newLibraryList.push(redirect);
+    } else {
+      newLibraryList.push(library);
+    }
   }
 
   // For compare, check if the products are the same
@@ -43,7 +52,7 @@ export async function snippetEvaluation(libraryList: string[], client: GoogleGen
     const prod2 = prods[1];
     const matchScore = fuzzy(prod1, prod2);
     if (matchScore < 0.8) {
-      throw new Error(`${libraryList[0]} and ${libraryList[1]} do not have the same product`);
+      throw new Error(`${newLibraryList[0]} and ${newLibraryList[1]} do not have the same product`);
     }
   } 
   // Check if the product has an existing questions file
@@ -60,15 +69,13 @@ export async function snippetEvaluation(libraryList: string[], client: GoogleGen
 
   const searchTopics = await search.generateSearchTopics(questions);
 
-  const contexts = await Promise.all(libraryList.map( library =>
-    search.fetchContext(searchTopics, library, headerConfig)
+  const contexts = await Promise.all(newLibraryList.map( library =>
+    search.fetchRelevantContext(searchTopics, library, headerConfig)
   ));
 
   const contextResponse = await search.evaluateContext(questions, contexts);
 
-  console.log("Context response: ", contextResponse);
-
-  const snippets = await Promise.all(libraryList.map( library =>
+  const snippets = await Promise.all(newLibraryList.map( library =>
     scrapeContext7Snippets(library, headerConfig)
   ));
 
@@ -77,13 +84,13 @@ export async function snippetEvaluation(libraryList: string[], client: GoogleGen
   
   console.log("LLM response: ", llmResponse);
 
-  for (let i = 0; i < libraryList.length; i++) {
+  for (let i = 0; i < newLibraryList.length; i++) {
 
     const {
       formatting,
       projectMetadata,
       initialization,
-    } = await runStaticAnalysis(snippets[i]);
+    } = runStaticAnalysis(snippets[i]);
 
     const scores = {
       context: contextResponse.contextAverageScores[i],
@@ -93,7 +100,7 @@ export async function snippetEvaluation(libraryList: string[], client: GoogleGen
       initialization: initialization.averageScore,
     }
 
-    const averageScore = await calculateAverageScore(scores);
+    const averageScore = calculateAverageScore(scores);
 
     const fullResults = {
       averageScore: averageScore,
@@ -107,11 +114,11 @@ export async function snippetEvaluation(libraryList: string[], client: GoogleGen
       initializationAvgScore: initialization.averageScore,
     }
 
-    if (libraryList.length === 2) {
-      await writeToProjectResults(libraryList[i], fullResults, "compare-out");
+    if (newLibraryList.length === 2) {
+      await writeToProjectResults(newLibraryList[i], fullResults, "compare-out");
     } else {
-      await writeToProjectResults(libraryList[i], fullResults, "out");
-      const scoresObject = convertScorestoObject(libraryList[i], scores, averageScore);
+      await writeToProjectResults(newLibraryList[i], fullResults, "out");
+      const scoresObject = convertScorestoObject(newLibraryList[i], scores, averageScore);
       await writeToAllResults(scoresObject);
     }
   }

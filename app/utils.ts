@@ -1,38 +1,28 @@
 import axios from 'axios';
 import fs from "fs/promises";
-import { StaticEvaluator } from './static_eval';
+import { StaticEvaluator } from './staticEval';
 import { Metrics, StaticEvaluatorOutput } from './types';
 import { GoogleGenAI } from '@google/genai';
 import { backOff } from 'exponential-backoff';
 
 /**
- * Gets the top n libraries from Context7
- * @returns The top n libraries as an array of strings
+ * Checks if the library has any redirects
+ * @param library - The library to check
+ * @returns The redirect if it exists, otherwise an empty string
  */
-export async function getPopLibraries(top_num: number): Promise<string[]> {
-    const data = await fs.readFile(`${__dirname}/../context7_api_stats.json`, "utf8");
-    const jsonData = JSON.parse(data);
-    const libraries = jsonData["data"];
-    const librariesByPop = Object.entries(libraries).reduce((acc, [key, value]) => {
-        acc[key] = Object.values(value as Record<string, number>).reduce((sum: number, curr: number) => sum + curr, 0);
-        return acc;
-    }, {} as Record<string, number>);
-    const popLibraries = Object.fromEntries(Object.entries(librariesByPop).sort((a, b) => b[1] - a[1]));
-    const topPopLibraries = Object.keys(popLibraries).slice(0, top_num);
-    return topPopLibraries;
-}
-
-export async function checkRedirects(library: string): Promise<string> {
-    const libraryData = await fs.readFile(`${__dirname}/../libraries.json`, "utf8");
-    const libraryJson = JSON.parse(libraryData);
-    console.log(libraryJson[library]);
-        if (libraryJson.contains(library)) {
-            const libraryData = libraryJson[library];
-            if (libraryData.issues.contains("redirect")) {
-                return libraryData.issues.redirect;
-            }
+export async function checkRedirects(library: string): Promise<string | null> {
+    const context7Libraries = `https://context7.com/api/libraries`;
+    const libraryData = await axios.get(context7Libraries);
+    const libraryJson = JSON.parse(libraryData.data);
+    const libraryObj = libraryJson.find((p: any) => p.settings.project === library);
+    if (libraryObj) {
+        if ("redirect" in libraryObj.issues) {
+            return libraryObj.issues.redirect;
+        } else {
+            return null;
+        }
     }
-    return "";
+    return null;
 }
 
 /**
@@ -49,11 +39,9 @@ export async function createQuestionFile(product: string, questions: string): Pr
         isolatedQuestions["Question " + String(num + 1)] = cleanedQ;
     }
     const questionJson = JSON.stringify(isolatedQuestions, null, 2);
-    await fs.writeFile(__dirname + `/../benchmark-questions/${product.replace("/", "-").replace(".", "-").replace("_", "-").toLowerCase()}.json`, questionJson)
-        .catch((err) => {
-            console.error("Error writing questions to JSON file:", err);
-        });
+    fs.writeFile(__dirname + `/../benchmark-questions/${product.replace("/", "-").replace(".", "-").replace("_", "-").toLowerCase()}.json`, questionJson)
 }
+
 /**
  * Scrapes snippets from the Context7 API.
  * @param library - The library to scrape snippets from
@@ -113,15 +101,15 @@ export async function runLLM(prompt: string, config: Record<string, any>, client
  * @param snippets - The snippets to run static analysis on
  * @returns The average score for each metric
  */
-export async function runStaticAnalysis(snippets: string): Promise<{
+export function runStaticAnalysis(snippets: string): {
     formatting: StaticEvaluatorOutput,
     projectMetadata: StaticEvaluatorOutput,
     initialization: StaticEvaluatorOutput
-}> {
+} {
     const staticEvaluator = new StaticEvaluator(snippets);
-    const formatting = await staticEvaluator.formatting();
-    const projectMetadata = await staticEvaluator.projectMetadata();
-    const initialization = await staticEvaluator.initialization();
+    const formatting = staticEvaluator.formatting();
+    const projectMetadata = staticEvaluator.projectMetadata();
+    const initialization = staticEvaluator.initialization();
     return { formatting, projectMetadata, initialization };
 }
 
@@ -130,7 +118,7 @@ export async function runStaticAnalysis(snippets: string): Promise<{
  * @param scores - The scores used to calculate the weighted average
  * @returns The weighted average score
  */
-export async function calculateAverageScore(scores: Metrics): Promise<number> {
+export function calculateAverageScore(scores: Metrics): number {
     const weights: Record<string, number> = {
         context: 0.8,
         llm: 0.05,

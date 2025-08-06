@@ -1,14 +1,15 @@
-import { getPopLibraries, checkRedirects } from "../app/utils";
 import { snippetEvaluation } from "../app/main";
 import { GoogleGenAI } from "@google/genai";
 import { config } from 'dotenv';
+import fs from "fs/promises";
 
 config();
 
 const envConfig = {
-    GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
-    CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
+  GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
+  CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
 };
+
 
 const headerConfig = {
     headers: {
@@ -16,6 +17,24 @@ const headerConfig = {
     }
 }
 const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
+
+/**
+ * Gets the top n libraries from Context7
+ * @returns The top n libraries as an array of strings
+ */
+export async function getPopLibraries(top_num: number): Promise<string[]> {
+    const data = await fs.readFile(`${__dirname}/../context7_api_stats.json`, "utf8");
+    const jsonData = JSON.parse(data);
+    const libraries = jsonData["data"];
+    const librariesByPop = Object.entries(libraries).reduce((acc, [key, value]) => {
+        acc[key] = Object.values(value as Record<string, number>).reduce((sum: number, curr: number) => sum + curr, 0);
+        return acc;
+    }, {} as Record<string, number>);
+    const popLibraries = Object.fromEntries(Object.entries(librariesByPop).sort((a, b) => b[1] - a[1]));
+    const topPopLibraries = Object.keys(popLibraries).slice(0, top_num);
+    return topPopLibraries;
+}
+
 
 async function main() {
 

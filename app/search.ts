@@ -101,7 +101,7 @@ export class Search {
    * @param headerConfig - The header config to use for the Context7 API
    * @returns 75 context/code snippets
    */
-  async fetchContext(topics: string[][], library: string, headerConfig: object): Promise<string[][]> {
+  async fetchRelevantContext(topics: string[][], library: string, headerConfig: object): Promise<string[][]> {
     const snippet_title = "=".repeat(24) + "\nCODE SNIPPETS\n" + "=".repeat(24);
       const contexts = []; // 15 x 5 = 75 contexts
       for (const questionTopics of topics) {  // total of 15 questions

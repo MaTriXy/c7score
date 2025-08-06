@@ -7,11 +7,11 @@
     "start": "ts-node app/main.ts",
     "dev": "ts-node app/main.ts",
     "build": "tsc",
-    "test-individual": "ts-node tests/individual_tester.ts",
-    "test-compare": "ts-node tests/compare_tester.ts",
+    "test-individual": "ts-node tests/individualTester.ts",
+    "test-compare": "ts-node tests/compareTester.ts",
+    "test-static": "ts-node tests/staticTester.ts",
     "ctrace-worker": "ts-node app/main.ts worker",
-    "ctrace": "ts-node app/main.ts compare",
-    "add-scores": "ts-node add_scores.ts"
+    "ctrace": "ts-node app/main.ts compare"
   },
   "repository": {
     "type": "git",
