@@ -1,17 +1,13 @@
-
+import { Category } from "./types";
 /**
    * Accesses the specified category of the snippet
    * @param snippet - The snippet to access
    * @param category - The category to access. Must be one of the following: TITLE, DESCRIPTION, SOURCE, LANGUAGE, CODE (case-sensitive)
    * @returns The category, or if the category is language or code, then it is everything after that
    */
-function accessCategory(snippet: string, category: string): string | string[] {
-  const acceptableCategories = ["TITLE", "DESCRIPTION", "SOURCE", "LANGUAGE", "CODE"];
-  if (!acceptableCategories.includes(category)) {
-    throw new Error(`Invalid category: ${category}`);
-  }
-  if (!snippet || !category) {
-    throw new Error("Snippet and category must be non-empty strings");
+function accessCategory(snippet: string, category: Category): string | string[] {
+  if (!snippet) {
+    throw new Error("Snippet must be non-empty strings");
   }
   const snippetLines = snippet.split(/\r?\n/);
   if (category === "LANGUAGE" || category === "CODE") {
@@ -62,17 +58,17 @@ export function multipleCode(snippet: string): boolean {
  * @returns A boolean indicating if the language is a description of the code (e.g., "CLI Arguments") or not a proper language (e.g., "console")
  */
 export function languageDesc(snippet: string): boolean {
-  const langSnippets = accessCategory(snippet, 'LANGUAGE') as string[];
-  return langSnippets.some(langSnippet => {
-    const lang = langSnippet.split("CODE:")[0];
-    const langText = lang.trim().toLowerCase();
+  const langs = accessCategory(snippet, 'LANGUAGE') as string[];
+  return langs.some(lang => {
+    const langSnippet = lang.split("CODE:")[0];
+    const cleanLang = langSnippet.trim().toLowerCase();
 
     // Language contains multiple words
-    if (langText.split(" ").length > 1) {
+    if (cleanLang.split(" ").length > 1) {
       return true;
     }
     // Language contains keywords
-    if (langText.includes("none") || langText.includes("console")) {
+    if (cleanLang.includes("none") || cleanLang.includes("console")) {
       return true
     }
   })
@@ -80,7 +76,7 @@ export function languageDesc(snippet: string): boolean {
 
 /**
  * Checks if the code contains a list
- * @returns The score
+ * @returns A boolean indicating that code is actually a list
  */
 export function containsList(snippet: string): boolean {
   const codes = accessCategory(snippet, 'CODE') as string[];
@@ -93,9 +89,7 @@ export function containsList(snippet: string): boolean {
     const codeSnippet = code.split("CODE:")
     const cleanCode = codeSnippet[codeSnippet.length - 1].replace(/```/g, '').trim();
 
-    const containsUnordered = unorderedMarkers.some(marker => 
-      cleanCode.includes(marker)
-    );
+    const containsUnordered = unorderedMarkers.some(marker => cleanCode.includes(marker));
 
     const containsOrdered = cleanCode.includes('1. ') && cleanCode.includes('2. ')
     return containsUnordered || containsOrdered;
@@ -103,69 +97,79 @@ export function containsList(snippet: string): boolean {
 }
 
 /**
- * Checks if there are bibtex citations
- * @returns The score
+ * Checks if there are any common citation formats
+ * @returns A boolean indicating that code is actually a citation
  */
-export function bibtexCitations(snippet: string): boolean {
-  const langSnippet = accessCategory(snippet, 'LANGUAGE') as string[];
-  return langSnippet.some(l => {
-    if (l.includes("CODE:\n```")) {
-      return l.split("\nCODE:")[0].trim().toLowerCase().includes("bibtex")
-    }
+export function citations(snippet: string): boolean {
+  const citationFormats = ["bibtex", "biblatex", "ris", "mods", "marc", "csl json"]
+  const langs = accessCategory(snippet, "LANGUAGE") as string[];
+  return langs.some(lang => {
+    const langSnippet = lang.split("CODE:")[0];
+    const cleanLang = langSnippet.trim().replace(/\r?\n/g, "").toLowerCase();
+    return citationFormats.some(format => cleanLang.includes(format))
   })
 }
 
 /**
  * Checks if there are any snippets about licensing
- * @returns The score
+ * @returns A boolean indicating that code is about a license
  */
 export function licenseInfo(snippet: string): boolean {
-  const source = accessCategory(snippet, 'SOURCE') as string;
-  return source.toLowerCase().includes('license')
+  const source = (accessCategory(snippet, "SOURCE") as string).toLowerCase();
+  return source.includes('license')
 }
 
 /**
  * Checks if there are any snippets about the directory structure
- * @returns The score
+ * @returns A boolean indicating that code is about a directory structure
  */
 export function directoryStructure(snippet: string): boolean {
-  const title = accessCategory(snippet, 'TITLE') as string;
-  const codes = accessCategory(snippet, 'CODE') as string[];
-  return ['directory', 'structure', 'workflow', "filesystem"].some((t) => title.toLowerCase().includes(t)) &&
+  const directoryKeywords = ["directory", "structure", "workflow", "filesystem"];
+  const title = (accessCategory(snippet, "TITLE") as string).toLowerCase();
+  const codes = accessCategory(snippet, "CODE") as string[];
+  const titleContainsDirectory = directoryKeywords.some((keyword) => title.includes(keyword));
+
+  const treeSymbols = ["├", "└", "|-"];
+  return titleContainsDirectory &&
     codes.some(code => {
-      const codeSnippet = code.split('CODE:')
-      const cleanCode = codeSnippet[codeSnippet.length - 1].trim().replace(/`/g, '');
-      return ['├─', '└─', '|-'].some((shape) => cleanCode.includes(shape));  // Code contains special directory symbols
+      const codeSnippet = code.split("CODE:")
+      const cleanCode = codeSnippet[codeSnippet.length - 1].trim();
+      return treeSymbols.some(symbol => cleanCode.includes(symbol));
     })
 }
 
 /**
  * Checks if there are any snippets about imports
- * @returns The score
+ * @returns A boolean indicating that code is about imports
  */
 export function imports(snippet: string): boolean {
-  const title = accessCategory(snippet, 'TITLE') as string;
-  const codes = accessCategory(snippet, 'CODE') as string[];
-  return ['import', 'importing'].some((t) => title.toLowerCase().includes(t)) &&
+  const importKeywords = ["import", "importing"]
+  const title = (accessCategory(snippet, "TITLE") as string).toLowerCase();
+  const codes = accessCategory(snippet, "CODE") as string[];
+  return importKeywords.some((t) => title.includes(t)) &&
     codes.some(code => {
-      const codeSnippet = code.split('CODE:')
-      const singleLine = codeSnippet[codeSnippet.length - 1].trim().replace(/`/g, '').split('\n').filter(line => line.trim() !== '').length == 1;
-      const noPath = !codeSnippet[codeSnippet.length - 1].trim().replace(/`/g, '').includes('/');
+      const codeSnippet = code.split("CODE:")
+      const cleanedCode = codeSnippet[codeSnippet.length - 1].trim().replace(/```/g, "");
+      const singleLine = cleanedCode.split(/\r?\n/).filter(line => line.trim() !== "").length == 1;
+      // Not a descriptive import statement
+      const noPath = !cleanedCode.includes("/");
       return singleLine && noPath;
     })
 }
 
 /**
  * Checks if there are any snippets about installations
- * @returns The score
+ * @returns A boolean indicating that code is about installations
  */
 export function installs(snippet: string): boolean {
-  const title = accessCategory(snippet, 'TITLE') as string;
-  const codes = accessCategory(snippet, 'CODE') as string[];
-  return ['install', 'initialize', 'initializing'].some((t) => title.toLowerCase().includes(t)) &&
+  const installKeywords = ["install", "initialize", "initializing", "installation"];
+  const title = (accessCategory(snippet, "TITLE") as string).toLowerCase();
+  const codes = accessCategory(snippet, "CODE") as string[];
+  return installKeywords.some((t) => title.includes(t)) &&
     codes.some(code => {
-      const codeSnippet = code.split('CODE:')
-      const cleanCode = codeSnippet[codeSnippet.length - 1].trim().replace(/`/g, '');
-      return cleanCode.split('\n').filter(line => line.trim() !== '').length === 1;
+      const codeSnippet = code.split("CODE:")
+      const cleanCode = codeSnippet[codeSnippet.length - 1].trim().replace(/```/g, "");
+      const singleLine = cleanCode.split(/\r?\n/).filter(line => line.trim() !== "").length === 1;
+      return singleLine;
     })
 }

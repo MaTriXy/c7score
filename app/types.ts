@@ -20,3 +20,5 @@ export interface ContextEvaluationOutput {
     contextAverageScores: number[];
     contextExplanations: string[][];
 }
+
+export type Category = "TITLE" | "DESCRIPTION" | "SOURCE" | "LANGUAGE" | "CODE";

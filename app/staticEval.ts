@@ -55,7 +55,7 @@ export class StaticEvaluator {
 
       for (const snippet of snippetsList) {
 
-        const citations = staticMetrics.bibtexCitations(snippet);
+        const citations = staticMetrics.citations(snippet);
         const licenseInfo = staticMetrics.licenseInfo(snippet);
         const directoryStructure = staticMetrics.directoryStructure(snippet);
         if ([citations, licenseInfo, directoryStructure].some(test => test)) {

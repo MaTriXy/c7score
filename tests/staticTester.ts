@@ -58,7 +58,7 @@ const testCases: { [key: string]: Record<string, boolean> } = {
     '/context7/ctrl-plex_vercel_app': true,
     '/mhsanaei/3x-ui': false,
   },
-  bibtexCitations: {
+  citations: {
     '/cleardusk/3ddfa_v2': true,
     '/context7/zh_d2l_ai': false,
   },
