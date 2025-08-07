@@ -110,6 +110,7 @@ export class Search {
           let snippets = "";
           const topicUrl = encodeURIComponent(topic);
           const url = `https://context7.com/api/v1/${library}?tokens=10000&topic=${topicUrl}`;
+          console.log("Fetching context for", url);
           const response = await axios.get(url, headerConfig)
           snippets = String(response.data).replace(snippet_title, "").split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet
           questionContexts.push(snippets);

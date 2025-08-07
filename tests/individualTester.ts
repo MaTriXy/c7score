@@ -1,4 +1,4 @@
-import { snippetEvaluation } from "../app/main";
+import { getScore } from "../src/main";
 import { GoogleGenAI } from "@google/genai";
 import { config } from 'dotenv';
 import fs from "fs/promises";
@@ -10,13 +10,6 @@ const envConfig = {
   CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
 };
 
-
-const headerConfig = {
-    headers: {
-        "Authorization": "Bearer " + envConfig.CONTEXT7_API_TOKEN
-    }
-}
-const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
 
 /**
  * Gets the top n libraries from Context7
@@ -57,7 +50,13 @@ async function main() {
     for (const library of libraries) {
         try {
             console.log(`Working on ${library}...`)
-            await snippetEvaluation([library], client, headerConfig);
+            await getScore([library], { geminiToken: envConfig.GEMINI_API_TOKEN!, context7Token: envConfig.CONTEXT7_API_TOKEN, weights: {
+                context: 0.8,
+                llm: 0.05,
+                formatting: 0.05,
+                projectMetadata: 0.025,
+                initialization: 0.025,
+            } });
 
         } catch (error) {
             console.error(`${library} error: ${error}`);

@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import { program } from 'commander';
-import * as staticMetrics from '../app/staticMetrics';
-import { scrapeContext7Snippets } from '../app/utils';
+import * as staticMetrics from '../src/staticMetrics';
+import { scrapeContext7Snippets } from '../src/utils';
 
 // Note: test URL information may change when snippets are refreshed on website
 

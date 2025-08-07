@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import fs from "fs/promises";
 import { StaticEvaluator } from './staticEval';
 import { Metrics, StaticEvaluatorOutput } from './types';
@@ -10,19 +10,23 @@ import { backOff } from 'exponential-backoff';
  * @param library - The library to check
  * @returns The redirect if it exists, otherwise an empty string
  */
-export async function checkRedirects(library: string): Promise<string | null> {
-    const context7Libraries = `https://context7.com/api/libraries`;
-    const libraryData = await axios.get(context7Libraries);
-    const libraryJson = JSON.parse(libraryData.data);
-    const libraryObj = libraryJson.find((p: any) => p.settings.project === library);
-    if (libraryObj) {
-        if ("redirect" in libraryObj.issues) {
-            return libraryObj.issues.redirect;
-        } else {
-            return null;
+export async function checkRedirects(library: string): Promise<string> {
+    try {
+        const context7Libraries = `https://context7.com/api/v1/${library}?tokens=10000`;
+        await axios.get(context7Libraries);
+        return library;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.status === 404) {
+            const redirectKeyword = `Library ${library} has been redirected to this library: `
+            const errorMessage = error.response.data;
+            if (errorMessage.includes(redirectKeyword)) {
+                console.log("Redirect found for", library);
+                const newLibrary = errorMessage.split(redirectKeyword)[1].split(".").slice(0, -1).join(".").trim();
+                return newLibrary;
+            }
         }
+        throw error
     }
-    return null;
 }
 
 /**
@@ -49,7 +53,7 @@ export async function createQuestionFile(product: string, questions: string): Pr
  * @returns The scraped snippets
  */
 export async function scrapeContext7Snippets(library: string, headerConfig: object): Promise<string> {
-    const context7Url = `https://context7.com/api/v1/${library}?tokens=10000`
+    const context7Url = `https://context7.com/api/v1${library}?tokens=10000`
     const response = await axios.get(context7Url, headerConfig);
     const snippet_title = "=".repeat(24) + "\nCODE SNIPPETS\n" + "=".repeat(24);
     const snippets = String(response.data).replace(snippet_title, "");
@@ -116,16 +120,10 @@ export function runStaticAnalysis(snippets: string): {
 /**
  * Calculates the average score based on context, static analysis, and LLM metrics.
  * @param scores - The scores used to calculate the weighted average
+ * @param weights - The weights to use for the average score (optional)
  * @returns The weighted average score
  */
-export function calculateAverageScore(scores: Metrics): number {
-    const weights: Record<string, number> = {
-        context: 0.8,
-        llm: 0.05,
-        formatting: 0.05,
-        projectMetadata: 0.025,
-        initialization: 0.025,
-    }
+export function calculateAverageScore(scores: Metrics, weights: Record<string, number>): number {
     const averageScore = Object.entries(scores).reduce((total, [key, value]) => total + value * weights[key], 0);
     return averageScore;
 }

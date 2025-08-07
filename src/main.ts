@@ -1,6 +1,5 @@
 import { config } from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
-import { program } from 'commander';
 import { Search } from './search';
 import { LLMEvaluator } from './llmEval'
 import { scrapeContext7Snippets, runStaticAnalysis, calculateAverageScore, checkRedirects } from './utils';
@@ -8,21 +7,7 @@ import fs from 'fs/promises';
 import { identifyProduct, identifyProductFile } from './libraryParser';
 import { fuzzy } from "fast-fuzzy";
 import { writeToProjectResults, writeToAllResults, convertScorestoObject } from './writeResults';
-
-config();
-
-const envConfig = {
-  GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
-  CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
-};
-
-const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
-
-const headerConfig = {
-  headers: {
-    "Authorization": "Bearer " + envConfig.CONTEXT7_API_TOKEN
-  }
-}
+import { GetScoreOptions } from './types';
 
 /**
  * Evaluates the snippets of a library using 5 metrics
@@ -30,20 +15,28 @@ const headerConfig = {
  * @param client - The client to use for the LLM evaluation
  * @param headerConfig - The header config to use for the Context7 API
  */
-export async function snippetEvaluation(libraryList: string[], client: GoogleGenAI, headerConfig: object): Promise<void> {
+export async function getScore(libraryList: string[], options: GetScoreOptions): Promise<void> {
+
+  const client = new GoogleGenAI({ apiKey: options.geminiToken });
+
+  let headerConfig = {};
+  if (options.context7Token) {
+    headerConfig = {
+      headers: {
+        "Authorization": "Bearer " + options.context7Token
+      }
+    }
+  }
+
   let prods = [];
   let newLibraryList = [];
   for (const library of libraryList) {
-    const prod = identifyProduct(library);
+    const redirect = await checkRedirects(library);
+    newLibraryList.push(redirect);
+
+    const prod = identifyProduct(redirect);
     prods.push(prod);
 
-    const redirect = await checkRedirects(library);
-    if (redirect) {
-      console.log("Redirect found for", library, redirect);
-      newLibraryList.push(redirect);
-    } else {
-      newLibraryList.push(library);
-    }
   }
 
   // For compare, check if the products are the same
@@ -54,7 +47,7 @@ export async function snippetEvaluation(libraryList: string[], client: GoogleGen
     if (matchScore < 0.8) {
       throw new Error(`${newLibraryList[0]} and ${newLibraryList[1]} do not have the same product`);
     }
-  } 
+  }
   // Check if the product has an existing questions file
   const search = new Search(prods[0], client);
   const filePath = identifyProductFile(prods[0]);
@@ -69,20 +62,18 @@ export async function snippetEvaluation(libraryList: string[], client: GoogleGen
 
   const searchTopics = await search.generateSearchTopics(questions);
 
-  const contexts = await Promise.all(newLibraryList.map( library =>
-    search.fetchRelevantContext(searchTopics, library, headerConfig)
+  const contexts = await Promise.all(newLibraryList.map(newLibrary =>
+    search.fetchRelevantContext(searchTopics, newLibrary, headerConfig)
   ));
 
   const contextResponse = await search.evaluateContext(questions, contexts);
 
-  const snippets = await Promise.all(newLibraryList.map( library =>
-    scrapeContext7Snippets(library, headerConfig)
+  const snippets = await Promise.all(newLibraryList.map(newLibrary =>
+    scrapeContext7Snippets(newLibrary, headerConfig)
   ));
 
   const llm_evaluator = new LLMEvaluator(client);
   const llmResponse = await llm_evaluator.llmEvaluate(snippets);
-  
-  console.log("LLM response: ", llmResponse);
 
   for (let i = 0; i < newLibraryList.length; i++) {
 
@@ -100,7 +91,14 @@ export async function snippetEvaluation(libraryList: string[], client: GoogleGen
       initialization: initialization.averageScore,
     }
 
-    const averageScore = calculateAverageScore(scores);
+    const defaultWeights = {   
+      context: 0.8,
+      llm: 0.05,
+      formatting: 0.05,
+      projectMetadata: 0.025,
+      initialization: 0.025,
+  };
+    const averageScore = calculateAverageScore(scores, options.weights ?? defaultWeights);
 
     const fullResults = {
       averageScore: averageScore,
@@ -122,48 +120,4 @@ export async function snippetEvaluation(libraryList: string[], client: GoogleGen
       await writeToAllResults(scoresObject);
     }
   }
-}
-
-if (require.main === module) {
-  const buildList = (item: string, list: string[]) => [...(list ?? []), ...item.split(', ')];
-  program
-    .command('worker')
-    .option('--l, --library <items>', 'Library names', buildList, [])
-    .action(async (options: { library: string[] }) => {
-      const libraries = options.library;
-      if (libraries.length < 1) {
-        throw new Error("Please provide at least one library name")
-      }
-
-      for (const library of libraries) {
-        console.log(`Working on ${library}...`)
-        try {
-          const libraryList = [library];
-          await snippetEvaluation(libraryList, client, headerConfig);
-        } catch (error) {
-          console.error(`Error in ${library}: ${error}`);
-        }
-      }
-    });
-
-  program
-    .command('compare')
-    .option('--l, --library <items>', 'Library names', buildList, [])
-    .action(async (options: { library: string[] }) => {
-      console.log("Comparing...")
-      const libraries = options.library;
-      if (libraries.length !== 2) {
-        throw new Error("Please provide exactly 2 library names")
-      }
-      const [library1, library2] = libraries;
-      console.log(`Working on ${library1} vs ${library2}...`);
-      try {
-        const libraryList = [library1, library2];
-        await snippetEvaluation(libraryList, client, headerConfig);
-      } catch (error) {
-        console.error(`Error in ${library1} vs ${library2}: ${error}.`);
-      }
-    });
-
-  program.parse(process.argv);
 }

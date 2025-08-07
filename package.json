@@ -1,46 +1,44 @@
 {
-  "name": "contexttrace",
+  "name": "@shannonrumsey/context-trace",
   "version": "1.0.0",
-  "description": "1. Given a Github repo URL, prompt an LLM to find the top 10 most critical pieces of information. This information can be code snippets or examples. `search.py` 2. Search the parsed code snippets (found on the Context7 website), and make sure that the important information is contained in them. `evaluator.py`",
-  "main": "index.js",
+  "description": "Evaluates the quality of code snippets.",
+  "main": "dist/index.js",
+  "bin": {
+    "context-trace": "dist/bin/cli.js"
+  },
+  "types": "dist/index.d.ts",
   "scripts": {
-    "start": "ts-node app/main.ts",
-    "dev": "ts-node app/main.ts",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/main.ts",
     "build": "tsc",
+    "prepare": "npm run build",
+    "test": "npm run test-individual && npm run test-compare && npm run test-static",
     "test-individual": "ts-node tests/individualTester.ts",
     "test-compare": "ts-node tests/compareTester.ts",
     "test-static": "ts-node tests/staticTester.ts",
-    "ctrace-worker": "ts-node app/main.ts worker",
-    "ctrace": "ts-node app/main.ts compare"
+    "ctrace-worker": "node dist/bin/cli.js worker",
+    "ctrace": "node dist/bin/cli.js compare"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/upstash/ContextTrace.git"
+    "url": "git+https://github.com/upstash/ContextTrace#main"
   },
   "keywords": [],
-  "author": "",
+  "author": "Shannon Rumsey",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/upstash/ContextTrace/issues"
   },
-  "homepage": "https://github.com/upstash/ContextTrace#readme",
+  "homepage": "https://github.com/upstash/ContextTrace/tree/main" ,
   "dependencies": {
     "@anthropic-ai/sdk": "^0.57.0",
     "@google/genai": "^1.9.0",
-    "@octokit/core": "^6.1.2",
-    "@stdlib/string-remove-words": "^0.2.2",
-    "@types/turndown": "^5.0.5",
     "@upstash/redis": "^1.35.2",
     "axios": "^1.7.2",
     "commander": "^12.1.0",
-    "danfojs-node": "^1.2.0",
     "dotenv": "^16.4.5",
     "exponential-backoff": "^3.1.2",
-    "fast-fuzzy": "^1.12.0",
-    "html-to-markdown": "^1.0.0",
-    "lodash": "^4.17.21",
-    "node-calls-python": "^1.11.1",
-    "turndown": "^7.2.0"
+    "fast-fuzzy": "^1.12.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",

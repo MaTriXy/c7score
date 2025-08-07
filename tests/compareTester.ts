@@ -1,4 +1,4 @@
-import { snippetEvaluation } from "../app/main";
+import { getScore } from "../src/main";
 import { GoogleGenAI } from "@google/genai";
 import { config } from 'dotenv';
 
@@ -26,7 +26,7 @@ async function main() {
       
     ]
     
-    await snippetEvaluation(libraries, client, headerConfig);
+    await getScore(libraries, { geminiToken: envConfig.GEMINI_API_TOKEN!, context7Token: envConfig.CONTEXT7_API_TOKEN });
 }    
 
 if (require.main === module) {

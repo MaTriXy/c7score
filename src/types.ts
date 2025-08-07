@@ -22,3 +22,16 @@ export interface ContextEvaluationOutput {
 }
 
 export type Category = "TITLE" | "DESCRIPTION" | "SOURCE" | "LANGUAGE" | "CODE";
+
+export interface GetScoreOptions {
+    geminiToken: string;
+    context7Token?: string;
+    weights?: {
+        context: number;
+        llm: number;
+        formatting: number;
+        projectMetadata: number;
+        initialization: number;
+    };
+    
+}
