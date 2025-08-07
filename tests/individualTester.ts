@@ -1,5 +1,4 @@
-import { getScore } from "../src/main";
-import { GoogleGenAI } from "@google/genai";
+import { getScore } from "../src/getScore";
 import { config } from 'dotenv';
 import fs from "fs/promises";
 
@@ -50,13 +49,19 @@ async function main() {
     for (const library of libraries) {
         try {
             console.log(`Working on ${library}...`)
-            await getScore([library], { geminiToken: envConfig.GEMINI_API_TOKEN!, context7Token: envConfig.CONTEXT7_API_TOKEN, weights: {
-                context: 0.8,
+            await getScore(library, { geminiToken: envConfig.GEMINI_API_TOKEN!, context7Token: envConfig.CONTEXT7_API_TOKEN,
+                report: {
+                    console: true,
+                    folderPath: `${__dirname}/../individual-results`
+                },
+                weights: {
+                question: 0.8,
                 llm: 0.05,
                 formatting: 0.05,
-                projectMetadata: 0.025,
+                metadata: 0.025,
                 initialization: 0.025,
-            } });
+            }
+        });
 
         } catch (error) {
             console.error(`${library} error: ${error}`);

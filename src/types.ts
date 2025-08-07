@@ -3,11 +3,12 @@ export interface LLMScores {
     llmExplanations: string[];
 }
 
+
 export interface Metrics {
-    context: number;
+    question: number;
     llm: number;
     formatting: number;
-    projectMetadata: number;
+    metadata: number;
     initialization: number;
 }
 
@@ -15,10 +16,10 @@ export interface StaticEvaluatorOutput {
     averageScore: number;
 }
 
-export interface ContextEvaluationOutput {
-    contextScores: number[][];
-    contextAverageScores: number[];
-    contextExplanations: string[][];
+export interface QuestionEvaluationOutput {
+    questionScores: number[][];
+    questionAverageScores: number[];
+    questionExplanations: string[][];
 }
 
 export type Category = "TITLE" | "DESCRIPTION" | "SOURCE" | "LANGUAGE" | "CODE";
@@ -26,12 +27,27 @@ export type Category = "TITLE" | "DESCRIPTION" | "SOURCE" | "LANGUAGE" | "CODE";
 export interface GetScoreOptions {
     geminiToken: string;
     context7Token?: string;
+    report?: {
+        console?: boolean;
+        folderPath?: string;
+    };
     weights?: {
-        context: number;
+        question: number;
         llm: number;
         formatting: number;
-        projectMetadata: number;
+        metadata: number;
         initialization: number;
     };
     
+}
+
+export interface ProjectData {
+    scores: {
+        question: number;
+        llm: number;
+        formatting: number;
+        metadata: number;
+        initialization: number;
+    };
+    averageScore: number;
 }

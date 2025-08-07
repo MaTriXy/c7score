@@ -1,7 +1,8 @@
 import { Type, GoogleGenAI } from '@google/genai';
-import { ContextEvaluationOutput } from './types';
+import { QuestionEvaluationOutput } from './types';
 import axios from 'axios';
 import { runLLM } from './utils';
+import { questionEvaluationPrompt, questionEvaluationComparePrompt } from './prompts';
 
 export class Search {
   private product: string;
@@ -101,16 +102,15 @@ export class Search {
    * @param headerConfig - The header config to use for the Context7 API
    * @returns 75 context/code snippets
    */
-  async fetchRelevantContext(topics: string[][], library: string, headerConfig: object): Promise<string[][]> {
+  async fetchRelevantSnippets(topics: string[][], library: string, headerConfig: object): Promise<string[][]> {
     const snippet_title = "=".repeat(24) + "\nCODE SNIPPETS\n" + "=".repeat(24);
-      const contexts = []; // 15 x 5 = 75 contexts
+      const contexts = []; // 15 x 5 = 75 snippets
       for (const questionTopics of topics) {  // total of 15 questions
-        const questionContexts = [];  // 5 contexts per question
+        const questionContexts = [];  // 5 snippets per question
         for (const topic of questionTopics) {  // total of 5 topics per question
           let snippets = "";
           const topicUrl = encodeURIComponent(topic);
-          const url = `https://context7.com/api/v1/${library}?tokens=10000&topic=${topicUrl}`;
-          console.log("Fetching context for", url);
+          const url = `https://context7.com/api/v1${library}?tokens=10000&topic=${topicUrl}`;
           const response = await axios.get(url, headerConfig)
           snippets = String(response.data).replace(snippet_title, "").split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet
           questionContexts.push(snippets);
@@ -126,60 +126,39 @@ export class Search {
    * @param contexts - The context/code snippets per topic. There may be two context collections for comparing libraries
    * @returns The scores, average score, and explanations for the context collection(s)
    */
-  async evaluateContext(questions: string, contexts: string[][][]): Promise<ContextEvaluationOutput> {
-    let context = "";
+  async evaluateQuestions(questions: string, contexts: string[][][]): Promise<QuestionEvaluationOutput> {
+    console.log("context Length: ", contexts.length);
+    let prompt = "";
     if (contexts.length === 2) {
-      context = "Context Collection 1: " + contexts[0] + "\n" + "-".repeat(40) + "\n" + "Context Collection 2: " + contexts[1];
+      prompt = questionEvaluationComparePrompt(questions, contexts[0], contexts[1]);
     } else {
-      context = `Context Collection: ${contexts[0]}`;
+      prompt = questionEvaluationPrompt(questions, contexts[0]);
     }
-    let prompt = `
-    You are an expert in evaluating technical documentation. 
-    Your task is to assess the quality and relevance of the 
-    provided context(s) in helping an AI 
-    coding assistant answer a list of questions.
-
-    Questions: ${questions}
-
-    ${context}
-
-    Evaluation Criteria:
-
-    For each question, evaluate and score the context from 0-100 
-    on the following 5 criteria:
-
-    1. Relevance to the specific question (40%)
-    2. Code example quality and completeness (25%)
-    3. Practical applicability (15%)
-    4. Coverage of requested features (15%)
-    5. Clarity and organization (5%)
-
-    Output Format:
-
-    For each context collection, provide the 15 scores, one for each context, 
-    the average score of the context collection, and a brief explanation 
-    of the average score.
-    `;
     const config: object = {
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
+        
         properties: {
-          contextScores: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.NUMBER } } },
-          contextAverageScores: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.NUMBER } } },
-          contextExplanations: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.STRING } } }
-        }
+          questionScores: { 
+            type: Type.ARRAY,
+            minItems: contexts.length,
+            items: { type: Type.ARRAY, minItems: 15, items: { type: Type.NUMBER } } },
+          questionAverageScores: { type: Type.ARRAY, minItems: contexts.length, items: { type: Type.NUMBER } },
+          questionExplanations: { type: Type.ARRAY, minItems: contexts.length, items: { type: Type.STRING } }
+        },
+        required: ["questionScores", "questionAverageScores", "questionExplanations"],
       }
     }
     const response = await runLLM(prompt, config, this.client);
     const jsonResponse = JSON.parse(response);
-    if (jsonResponse.contextScores == undefined || jsonResponse.contextAverageScores == undefined || jsonResponse.contextExplanations == undefined) {
-      throw new Error("Context scores are undefined");
+    if (jsonResponse.questionScores == undefined || jsonResponse.questionAverageScores == undefined || jsonResponse.questionExplanations == undefined) {
+      throw new Error("Question scores are undefined");
     } else {
       return {
-        contextScores: jsonResponse.contextScores as number[][],
-        contextAverageScores: jsonResponse.contextAverageScores as number[],
-        contextExplanations: jsonResponse.contextExplanations as string[][]
+        questionScores: jsonResponse.questionScores as number[][],
+        questionAverageScores: jsonResponse.questionAverageScores as number[],
+        questionExplanations: jsonResponse.questionExplanations as string[][]
       }
     }
   }

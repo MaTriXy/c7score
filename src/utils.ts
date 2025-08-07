@@ -70,7 +70,7 @@ export async function scrapeContext7Snippets(library: string, headerConfig: obje
 export async function runLLM(prompt: string, config: Record<string, any>, client: GoogleGenAI): Promise<string> {
     const countTokensResponse = await client.models.countTokens({
         model: 'gemini-2.5-pro',
-        contents: [prompt],
+        contents: prompt,
     });
     if (countTokensResponse.totalTokens !== undefined && countTokensResponse.totalTokens > 1048576) {
         console.error("Prompt is too long: ", countTokensResponse.totalTokens, " condensing prompt to 1048576 tokens");
@@ -83,7 +83,6 @@ export async function runLLM(prompt: string, config: Record<string, any>, client
             contents: [prompt],
             config: config
         });
-
         if (response.text === undefined) {
             throw new Error("Response is undefined");
         }
@@ -107,14 +106,14 @@ export async function runLLM(prompt: string, config: Record<string, any>, client
  */
 export function runStaticAnalysis(snippets: string): {
     formatting: StaticEvaluatorOutput,
-    projectMetadata: StaticEvaluatorOutput,
+    metadata: StaticEvaluatorOutput,
     initialization: StaticEvaluatorOutput
 } {
     const staticEvaluator = new StaticEvaluator(snippets);
     const formatting = staticEvaluator.formatting();
-    const projectMetadata = staticEvaluator.projectMetadata();
+    const metadata = staticEvaluator.metadata();
     const initialization = staticEvaluator.initialization();
-    return { formatting, projectMetadata, initialization };
+    return { formatting, metadata, initialization };
 }
 
 /**

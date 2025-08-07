@@ -48,7 +48,7 @@ export class StaticEvaluator {
    * Evaluates the frequency of project metadata in the snippets
    * @returns The average score
    */
-  projectMetadata(): StaticEvaluatorOutput {
+  metadata(): StaticEvaluatorOutput {
     try {
       const snippetsList = this.splitSnippets();
       let projectMetadata = 0;

@@ -1,17 +1,10 @@
 #!/usr/bin/env node
 import { program } from 'commander';
-import { getScore } from '../main';
-import { GoogleGenAI } from '@google/genai';
+import { getScore } from '../getScore';
+import { compareLibraries } from '../compareLib';
 import { config } from 'dotenv';
 config();
 
-const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_TOKEN });
-
-const headerConfig = {
-  headers: {
-    "Authorization": "Bearer " + process.env.CONTEXT7_API_TOKEN
-  }
-}
 
 const buildList = (item: string, list: string[]) => [...(list ?? []), ...item.split(', ')];
 program
@@ -25,9 +18,8 @@ program
 
     for (const library of libraries) {
         console.log(`Working on ${library}...`)
-        try {
-        const libraryList = [library];
-        await getScore(libraryList, client, headerConfig);
+        try {;
+        await getScore(library, { geminiToken: process.env.GEMINI_API_TOKEN!});
         } catch (error) {
         console.error(`Error in ${library}: ${error}`);
         }
@@ -46,8 +38,7 @@ program
     const [library1, library2] = libraries;
     console.log(`Working on ${library1} vs ${library2}...`);
     try {
-        const libraryList = [library1, library2];
-        await getScore(libraryList, client, headerConfig);
+        await compareLibraries(library1, library2, { geminiToken: process.env.GEMINI_API_TOKEN! });
     } catch (error) {
         console.error(`Error in ${library1} vs ${library2}: ${error}.`);
     }

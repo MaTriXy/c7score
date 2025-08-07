@@ -1,0 +1,35 @@
+== Average Score ==
+
+56.22659139784947
+
+== Context Scores ==
+
+50,85,100,80,70,95,30,100,90,10,20,80,100,15,40
+
+== Context Avg Score ==
+
+57.67
+
+== Context Explanations ==
+
+This context excels at providing clear, practical examples for fundamental and component-based questions. It offers a perfect example for a product card (Q8), a complete solution for dark mode (Q3), and strong examples for modal backdrops (Q2), basic animations (Q9), and progress indicators (Q12). However, it falls significantly short on several key topics. It lacks information on creating multi-level dropdowns (Q7), CSS purging (Q10), and crucially, it completely misses the `@tailwindcss/typography` plugin (Q14), providing only generic text utilities instead. Its coverage of masonry layouts (Q15) is also weaker than the other context. The average score reflects this mix of excellent coverage on some topics and major gaps on others.
+
+== LLM Avg Score ==
+
+54.5
+
+== LLM Explanation ==
+
+This collection's score is severely impacted by extreme redundancy. A large portion of the snippets are duplicates (e.g., 'npm run dev') or highly repetitive variations of the same content (e.g., documentation outlines, installation commands for different frameworks). This provides very little unique information. While individual snippets are mostly clear, the overall collection is cluttered. Furthermore, numerous HTML examples contain placeholders ('...') or commented-out sections, which violates the syntax correctness criteria. There are also minor errors in language tagging (e.g., 'Ruby' for a shell command).
+
+== Formatting Avg Score ==
+
+56.98924731182796
+
+== Project Metadata Avg Score ==
+
+100
+
+== Initialization Avg Score ==
+
+80.64516129032258

@@ -1,16 +1,5 @@
 import fs from "fs/promises";
-
-interface ProjectData {
-    scores: {
-        context: number;
-        llm: number;
-        formatting: number;
-        projectMetadata: number;
-        initialization: number;
-    };
-    averageScore: number;
-}
-
+import { ProjectData } from "./types";
 /**
  * Converts the scores and average score into an object.
  * @param productName - The name of the product
@@ -31,25 +20,27 @@ export const convertScorestoObject = (productName: string, scores: ProjectData["
  * Writes the convertScoresToObject results to a machine-readable JSON file.
  * @param input - The input to write to the file
  */
-export const writeToAllResults = async (input: Record<string, ProjectData>): Promise<void> => {
-    const filePath = `${__dirname}/../out/result.json`;
-    let obj: Record<string, ProjectData> = {};
-    try {
-        const resultFile = await fs.readFile(filePath, "utf-8");
-        obj = JSON.parse(resultFile);
-    } catch (err) {
-        console.error(err);
-        obj = {};
+export const machineReadableReport = async (input: Record<string, ProjectData>, reportOptions: Record<string, any>): Promise<void> => {
+    if (reportOptions.folderPath) {
+        const filePath = `${reportOptions.folderPath}/result.json`;
+        let obj: Record<string, ProjectData> = {};
+        try {
+            const resultFile = await fs.readFile(filePath, "utf-8");
+            obj = JSON.parse(resultFile);
+        } catch (err) {
+            console.error(err);
+            obj = {};
+        }
+
+        // Assumes the data we add only has one project
+        const projectName = Object.keys(input)[0];
+        console.log("projectName", projectName);
+
+        // Adds in or updates the project data
+        obj[projectName] = input[projectName];
+
+        await fs.writeFile(filePath, JSON.stringify(obj, null, 2));
     }
-
-    // Assumes the data we add only has one project
-    const projectName = Object.keys(input)[0];
-    console.log("projectName", projectName);
-
-    // Adds in or updates the project data
-    obj[projectName] = input[projectName];
-
-    await fs.writeFile(filePath, JSON.stringify(obj, null, 2));
 }
 
 /**
@@ -58,16 +49,16 @@ export const writeToAllResults = async (input: Record<string, ProjectData>): Pro
  * @param fullResults - The full results to write
  * @param directory - The directory to write the file to
  */
-export const writeToProjectResults = async (library: string, fullResults: Record<string, any>, directory: string): Promise<void> => {
+export const humanReadableReport = async (library: string, fullResults: Record<string, any>, reportOptions: Record<string, any>): Promise<void> => {
     const toSave = [
         "== Average Score ==",
         fullResults.averageScore,
         "== Context Scores ==",
-        fullResults.contextScores,
+        fullResults.questionScore,
         "== Context Avg Score ==",
-        fullResults.contextAverageScores,
+        fullResults.questionAverageScore,
         "== Context Explanations ==",
-        fullResults.contextExplanations,
+        fullResults.questionExplanation,
         "== LLM Avg Score ==",
         fullResults.llmAverageScore,
         "== LLM Explanation ==",
@@ -75,9 +66,15 @@ export const writeToProjectResults = async (library: string, fullResults: Record
         "== Formatting Avg Score ==",
         fullResults.formattingAvgScore,
         "== Project Metadata Avg Score ==",
-        fullResults.projectMetadataAvgScore,
+        fullResults.metadataAvgScore,
         "== Initialization Avg Score ==",
         fullResults.initializationAvgScore,
     ]
-  await fs.writeFile(`${__dirname}/../${directory}/result-${library.replace(/\//g, "-").replace(".", "-").replace("_", "-").toLowerCase()}.txt`, toSave.join("\n\n"));
+    if (reportOptions.folderPath) {
+        const directory = reportOptions.folderPath;
+        await fs.writeFile(`${directory}/result-${library.replace(/\//g, "-").replace(".", "-").replace("_", "-").toLowerCase()}.txt`, toSave.join("\n\n"));
+    }
+    if (reportOptions.console) {
+        console.log(toSave.join("\n\n"));
+    }
 }
