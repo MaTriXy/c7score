@@ -2,10 +2,10 @@ import { GoogleGenAI } from '@google/genai';
 import { Search } from './search';
 import { LLMEvaluator } from './llmEval'
 import { scrapeContext7Snippets, runStaticAnalysis, calculateAverageScore, checkRedirects, createQuestionFile } from './utils';
-import fs from 'fs/promises';
 import { identifyProduct, identifyProductFile } from './libraryParser';
 import { humanReadableReport, machineReadableReport, convertScorestoObject } from './writeResults';
 import { GetScoreOptions } from './types';
+import { Octokit } from 'octokit';
 
 /**
  * Evaluates the snippets of a library using 5 metrics
@@ -30,7 +30,7 @@ export async function getScore(library: string, options: GetScoreOptions): Promi
 
     // Configurations
     const client = new GoogleGenAI({ apiKey: options.geminiToken });
-
+    const githubClient = new Octokit({ auth: options.githubToken });
     let headerConfig = {};
     if (options.context7Token) {
         headerConfig = {
@@ -39,26 +39,37 @@ export async function getScore(library: string, options: GetScoreOptions): Promi
             }
         }
     }
-
     const redirect = await checkRedirects(library);
     const prod = identifyProduct(redirect);
 
     // Check if the product has an existing questions file
     const search = new Search(prod, client);
-    const filePath = identifyProductFile(prod);
+    const filePath = await identifyProductFile(prod, githubClient);
     let questions = "";
     if (filePath === null) {
-        console.log("❌ No existing questions file found for", prod);
         questions = await search.googleSearch();
-        await createQuestionFile(prod, questions);
+        await createQuestionFile(prod, questions, githubClient);
 
     } else {
-        console.log("✅ Existing questions file found for", prod);
-        questions = await fs.readFile(filePath, "utf8");
+        const res = await githubClient.rest.repos.getContent({
+            owner: "upstash",
+            repo: "ContextTrace",
+            path: `benchmark-questions/${filePath}`,
+            ref: "main",
+            headers: {
+                'X-GitHub-Api-Version': '2022-11-28'
+            }
+        });
+        const contentFile = res.data
+        // Ensure that the contentFile is not a directory and content exists
+        if (!Array.isArray(contentFile) && contentFile.type === "file" && contentFile.content) {
+            const decodedContent = Buffer.from(contentFile.content, 'base64').toString('utf-8');
+            questions = JSON.parse(decodedContent);
+        } else {
+            throw new Error("Content file is a directory or does not contain content.");
+        }
     }
-
     const searchTopics = await search.generateSearchTopics(questions);
-
     const contexts = await search.fetchRelevantSnippets(searchTopics, redirect, headerConfig);
 
     const questionResponse = await search.evaluateQuestions(questions, [contexts]);
@@ -82,7 +93,6 @@ export async function getScore(library: string, options: GetScoreOptions): Promi
         initialization: initialization.averageScore,
     }
 
-
     const averageScore = calculateAverageScore(scores, options.weights ?? defaultWeights);
 
     const fullResults = {
@@ -98,5 +108,5 @@ export async function getScore(library: string, options: GetScoreOptions): Promi
     }
     await humanReadableReport(redirect, fullResults, options.report ?? defaultReport);
     const scoresObject = convertScorestoObject(redirect, scores, averageScore);
-    await machineReadableReport(scoresObject, options.report ?? defaultReport);
+    await machineReadableReport(scoresObject, githubClient);
 }

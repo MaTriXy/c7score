@@ -127,7 +127,6 @@ export class Search {
    * @returns The scores, average score, and explanations for the context collection(s)
    */
   async evaluateQuestions(questions: string, contexts: string[][][]): Promise<QuestionEvaluationOutput> {
-    console.log("context Length: ", contexts.length);
     let prompt = "";
     if (contexts.length === 2) {
       prompt = questionEvaluationComparePrompt(questions, contexts[0], contexts[1]);
@@ -140,10 +139,7 @@ export class Search {
         type: Type.OBJECT,
         
         properties: {
-          questionScores: { 
-            type: Type.ARRAY,
-            minItems: contexts.length,
-            items: { type: Type.ARRAY, minItems: 15, items: { type: Type.NUMBER } } },
+          questionScores: { type: Type.ARRAY, minItems: contexts.length, items: { type: Type.ARRAY, minItems: 15, items: { type: Type.NUMBER } } },
           questionAverageScores: { type: Type.ARRAY, minItems: contexts.length, items: { type: Type.NUMBER } },
           questionExplanations: { type: Type.ARRAY, minItems: contexts.length, items: { type: Type.STRING } }
         },

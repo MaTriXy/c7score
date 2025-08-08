@@ -1,26 +1,26 @@
 == Average Score ==
 
-72.23712121212122
+85.96112121212123
 
 == Context Scores ==
 
-20,85,100,90,100,95,95,60,90,80,0,80,100,100,90
+97.5,95,99.75,95.5,97.75,92.5,99.75,95,93.25,96,95.25,92,90,90.25,99.75
 
 == Context Avg Score ==
 
-79
+95.28
 
 == Context Explanations ==
 
-This context provides excellent, in-depth coverage for many of the questions, particularly those involving configuration and plugins. It gives complete solutions for dark mode (Q3), floating label forms (Q5), theme customization (Q6, Q13), multi-level dropdowns using Headless UI (Q7), the typography plugin (Q14), and CSS purging (Q10). Its main weaknesses are a lack of a complete example for a responsive hamburger menu (Q1) and no information on styling scrollbars (Q11). The examples are high-quality, often showing best practices (like using Headless UI) and both modern (`@theme`) and older (`tailwind.config.js`) approaches, making it a very comprehensive resource.
+Context 1 provides outstanding, in-depth coverage across a wide range of topics, sourced from official Tailwind Labs blog posts and documentation. It excels at explaining modern, advanced features like complex state variants (`:has`, `group-has`) and the v4 `@utility` API. While there is some snippet duplication, the overall quality, relevance, and practical applicability of the code examples are extremely high, making it an excellent resource for both common and advanced use cases.
 
 == LLM Avg Score ==
 
-56.5
+70.5
 
 == LLM Explanation ==
 
-The collection provides a decent variety of snippets covering installation, component examples, and utility class usage. However, its quality is diminished by several factors. There is noticeable redundancy, with a few duplicate or near-duplicate snippets for package installation and UI components. Clarity is generally good, but some snippets contain placeholders ('...') and one is an incomplete, syntactically broken code fragment, which causes confusion. The most significant issue is syntax correctness; the widespread use of placeholders and the presence of an invalid fragment violate the stated requirements and substantially lower the score.
+The first collection provides a good variety of snippets covering installation, component examples, and utility class usage for Tailwind CSS. The clarity of titles and descriptions is high. However, the score is brought down by two main factors. Firstly, there is noticeable redundancy in the installation commands, with several snippets for installing the same or similar packages. Secondly, the code quality is impacted by the use of placeholders or ellipses (e.g., '...') in multiple snippets and one instance of a syntactically incomplete code block, which violates the correctness criteria.
 
 == Formatting Avg Score ==
 

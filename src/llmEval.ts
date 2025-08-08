@@ -15,7 +15,6 @@ export class LLMEvaluator {
    * @returns The average score(s) and explanation(s) for the snippet collection(s)
    */
   async llmEvaluate(snippets: string[]): Promise<LLMScores> {
-    console.log("snippets Length: ", snippets.length);
     const snippetDelimiter = "\n" + "-".repeat(40) + "\n";
     let prompt = "";
     if (snippets.length === 2) {
@@ -34,6 +33,7 @@ export class LLMEvaluator {
         required: ["llmAverageScores", "llmExplanations"],
       }
     }
+    // const response = await runLLM(prompt, config, this.client);
     const response = await runLLM(prompt, config, this.client);
     const jsonResponse = JSON.parse(response);
     if (jsonResponse.llmAverageScores == undefined || jsonResponse.llmExplanations == undefined) {

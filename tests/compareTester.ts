@@ -6,6 +6,7 @@ config();
 const envConfig = {
   GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
   CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
+  GITHUB_TOKEN: process.env.GITHUB_TOKEN,
 };
 
 async function main() {
@@ -18,6 +19,7 @@ async function main() {
     
     await compareLibraries(libraries[0], libraries[1], { 
         geminiToken: envConfig.GEMINI_API_TOKEN!,
+        githubToken: envConfig.GITHUB_TOKEN!,
         context7Token: envConfig.CONTEXT7_API_TOKEN,
         report: {
             console: true,

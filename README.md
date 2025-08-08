@@ -18,16 +18,17 @@ The `context-trace` package is used to evaluate the quality of Upstash's Context
 var contextTrace = require("@shannonrumsey/context-trace) 
 
 contextTrace.getScore(
-        "/facebook/react", 
-        { 
-        geminiToken: envConfig.GEMINI_API_TOKEN!,
-        context7Token: envConfig.CONTEXT7_API_TOKEN,
-        report: 
+    "/facebook/react", 
+    { 
+    geminiToken: envConfig.GEMINI_API_TOKEN!,
+    githubToken: envConfig.GITHUB_TOKEN!,
+    context7Token: envConfig.CONTEXT7_API_TOKEN,
+    report: 
         {
             console: true,
             folderPath: `${__dirname}/../results`
         },
-        weights: 
+    weights: 
         {
             question: 0.8,
             llm: 0.05,
@@ -39,13 +40,28 @@ contextTrace.getScore(
 );
 
 
-contextTrace.compareLibraries(library1, library2, {Gemini API key, ...})
+contextTrace.compareLibraries(
+    "/tailwindlabs/tailwindcss.com",
+    "/context7/tailwindcss",
+    { 
+    geminiToken: envConfig.GEMINI_API_TOKEN!,
+    githubToken: envConfig.GITHUB_TOKEN!,
+    context7Token: envConfig.CONTEXT7_API_TOKEN,
+    report: 
+        {
+            console: true,
+            folderPath: `${__dirname}/../compare-results`
+        }
+    }
+);
 ```
 
 ### Configuration
-**Note:** Using Gemini is recommended for more grounded responses. The folderPath argument should be different between getScore and compareLibraries as they can overwrite the results files.
-
-getScore only takes in one library whereas compareLibraries must take only two libraries. Configuration options are the same for both. Only the Gemini API key and libraries are mandatory.
+**Notes:**
+* getScore only takes in one library whereas compareLibraries must take only two libraries.
+* Configuration options are the same for getScore and compareLibraries.
+* Only the libraries, Gemini API key, and Github key are mandatory.
+* Machine-readable results will always be uploaded to `https://github.com/upstash/ContextTrace/blob/main/result.json` (.getScore only). 
 
 All possible options:
 ```

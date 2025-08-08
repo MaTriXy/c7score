@@ -1,5 +1,6 @@
 import { fuzzy } from "fast-fuzzy";
 import fs from "fs";
+import { Octokit } from "octokit";
 
 /**
  * Identifies the product of a library
@@ -7,9 +8,10 @@ import fs from "fs";
  * @returns The name of the product for the library
  */
 export function identifyProduct(library: string): string {
-    const cleanLibrary = library.replace(".com", "").replace(".org", "").replace("docs", "").replace(".", "-").replace("/", "-").replace("_", "-").toLowerCase();
-    const prodSplit = cleanLibrary.split("/");
-    const finalProduct = prodSplit[prodSplit.length - 1].trim().toLowerCase();
+    const libraryExtensionsRemoved = library.replace(/(\.com|\.org|docs)/g, "")
+    const libraryNormalized = libraryExtensionsRemoved.replace(/(\.|\/\_)/g, "-").toLowerCase();
+    const prodSplit = libraryNormalized.split("/");
+    const finalProduct = prodSplit[prodSplit.length - 1].trim();
     return finalProduct;
 }
 
@@ -18,26 +20,28 @@ export function identifyProduct(library: string): string {
  * @param newProduct - The product to identify the file for
  * @returns The file path if a match is found, null otherwise
  */
-export function identifyProductFile(newProduct: string): string | null {
-    const folderName = `${__dirname}/../benchmark-questions/`;
-    const files = fs.readdirSync(folderName)
+export async function identifyProductFile(newProduct: string, githubClient: Octokit): Promise<string | null> {
+    try {
+        const questions = await githubClient.rest.repos.getContent({
+            owner: "upstash",
+            repo: "ContextTrace",
+            path: "benchmark-questions",
+            ref: "main"
+        });
+        const fileScores: Record<string, number> = {};
+        for (const file of Object.values(questions.data)) {
+            const fileName = file.name.replace(".json", "");
+            const score = fuzzy(newProduct, fileName);
+            fileScores[file.name] = score;
+        }
 
-    // No files in the folder
-    if (files.length === 0) {
+        const sortedScores = Object.entries(fileScores).sort((a, b) => b[1] - a[1]);
+        const bestScore = sortedScores[0];
+        if (bestScore[1] > 0.8) {
+            return bestScore[0];
+        }
         return null;
+    } catch (error) {
+        throw new Error("Unable to identify product file: " + error);
     }
-
-    const fileScores: Record<string, number> = {};
-    for (const file of files) {
-        const prodSplit = file.split("/");
-        const fileName = prodSplit[prodSplit.length - 1].split(".")[0].trim().toLowerCase();
-        const score = fuzzy(newProduct, fileName);
-        fileScores[fileName] = score;
-    }
-    const sortedScores = Object.entries(fileScores).sort((a, b) => b[1] - a[1]);
-    const bestScore = sortedScores[0];
-    if (bestScore[1] > 0.8) {
-        return folderName + bestScore[0] + ".json";
-    }
-    return null;
 }

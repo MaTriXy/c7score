@@ -7,6 +7,7 @@ config();
 const envConfig = {
   GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
   CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
+  GITHUB_API_TOKEN: process.env.GITHUB_API_TOKEN,
 };
 
 
@@ -36,6 +37,7 @@ async function main() {
     if (manualLibraries.toLowerCase() === "true") {
         console.log("🧪 Using default manual libraries...")
         libraries = [
+            "/vercel/next.js",
             "/facebook/react",
             "/context7/tailwindcss",
             "/tailwindlabs/tailwindcss.com"
@@ -49,7 +51,10 @@ async function main() {
     for (const library of libraries) {
         try {
             console.log(`Working on ${library}...`)
-            await getScore(library, { geminiToken: envConfig.GEMINI_API_TOKEN!, context7Token: envConfig.CONTEXT7_API_TOKEN,
+            await getScore(library, { 
+                geminiToken: envConfig.GEMINI_API_TOKEN!, 
+                githubToken: envConfig.GITHUB_API_TOKEN!, 
+                context7Token: envConfig.CONTEXT7_API_TOKEN,
                 report: {
                     console: true,
                     folderPath: `${__dirname}/../individual-results`

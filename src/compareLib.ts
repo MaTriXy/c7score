@@ -7,6 +7,7 @@ import { identifyProduct, identifyProductFile } from './libraryParser';
 import { fuzzy } from "fast-fuzzy";
 import { humanReadableReport, machineReadableReport, convertScorestoObject } from './writeResults';
 import { GetScoreOptions } from './types';
+import { Octokit } from 'octokit';
 
 /**
  * Evaluates the snippets of a library using 5 metrics
@@ -30,7 +31,7 @@ export async function compareLibraries(library1: string, library2: string, optio
 
     // Configurations
     const client = new GoogleGenAI({ apiKey: options.geminiToken });
-
+    const githubClient = new Octokit({ auth: options.githubToken });
     let headerConfig = {};
     if (options.context7Token) {
         headerConfig = {
@@ -47,12 +48,9 @@ export async function compareLibraries(library1: string, library2: string, optio
     for (const library of libraryList) {
         const redirect = await checkRedirects(library);
         newLibraryList.push(redirect);
-
         const prod = identifyProduct(redirect);
         prods.push(prod);
-
     }
-
     // For compare, check if the products are the same
     const prod1 = prods[0];
     const prod2 = prods[1];
@@ -63,15 +61,30 @@ export async function compareLibraries(library1: string, library2: string, optio
 
     // Check if the product has an existing questions file
     const search = new Search(prods[0], client);
-    const filePath = identifyProductFile(prods[0]);
+    const filePath = await identifyProductFile(prods[0], githubClient);
     let questions = "";
     if (filePath === null) {
         console.log("❌ No existing questions file found for", prods[0]);
         questions = await search.googleSearch();
-        await createQuestionFile(prods[0], questions);
+        await createQuestionFile(prods[0], questions, githubClient);
     } else {
-        console.log("✅ Existing questions file found for", prods[0]);
-        questions = await fs.readFile(filePath, "utf8");
+        const res = await githubClient.rest.repos.getContent({
+            owner: "upstash",
+            repo: "ContextTrace",
+            path: `benchmark-questions/${filePath}`,
+            ref: "main",
+            headers: {
+                'X-GitHub-Api-Version': '2022-11-28'
+            }
+        });
+        const contentFile = res.data
+        // Ensure that the contentFile is not a directory and content exists
+        if (!Array.isArray(contentFile) && contentFile.type === "file" && contentFile.content) {
+            const decodedContent = Buffer.from(contentFile.content, 'base64').toString('utf-8');
+            questions = JSON.parse(decodedContent);
+        } else {
+            throw new Error("Content file is a directory or does not contain content.");
+        }
     }
 
     const searchTopics = await search.generateSearchTopics(questions);
@@ -123,7 +136,5 @@ export async function compareLibraries(library1: string, library2: string, optio
         }
 
         await humanReadableReport(newLibraryList[i], fullResults, options.report ?? defaultReport);
-        const scoresObject = convertScorestoObject(newLibraryList[i], scores, averageScore);
-        await machineReadableReport(scoresObject, options.report ?? defaultReport);
     }
 }

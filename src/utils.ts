@@ -4,6 +4,7 @@ import { StaticEvaluator } from './staticEval';
 import { Metrics, StaticEvaluatorOutput } from './types';
 import { GoogleGenAI } from '@google/genai';
 import { backOff } from 'exponential-backoff';
+import { Octokit } from 'octokit';
 
 /**
  * Checks if the library has any redirects
@@ -34,7 +35,7 @@ export async function checkRedirects(library: string): Promise<string> {
  * @param product - The product to create the file for
  * @param questions - The questions to create the file for
  */
-export async function createQuestionFile(product: string, questions: string): Promise<void> {
+export async function createQuestionFile(product: string, questions: string, githubClient: Octokit): Promise<void> {
     const isolatedQuestions: Record<string, string> = {};
     for (const num of Array.from(Array(15).keys())) {
         const isolatedQ = questions.split("\n")[num]
@@ -43,7 +44,14 @@ export async function createQuestionFile(product: string, questions: string): Pr
         isolatedQuestions["Question " + String(num + 1)] = cleanedQ;
     }
     const questionJson = JSON.stringify(isolatedQuestions, null, 2);
-    fs.writeFile(__dirname + `/../benchmark-questions/${product.replace("/", "-").replace(".", "-").replace("_", "-").toLowerCase()}.json`, questionJson)
+    githubClient.rest.repos.createOrUpdateFileContents({
+        owner: "upstash",
+        repo: "ContextTrace",
+        path: `benchmark-questions/${product}.json`,
+        message: `Add questions file for ${product}`,
+        content: Buffer.from(questionJson).toString('base64'),
+        branch: "main"
+    });
 }
 
 /**
@@ -67,7 +75,9 @@ export async function scrapeContext7Snippets(library: string, headerConfig: obje
  * @param client - The client to use for the LLM evaluation
  * @returns The response from the LLM
  */
-export async function runLLM(prompt: string, config: Record<string, any>, client: GoogleGenAI): Promise<string> {
+//responseFormat?: Record<string, any>
+export async function runLLM(prompt: string, config: object, client: GoogleGenAI): Promise<string> {
+
     const countTokensResponse = await client.models.countTokens({
         model: 'gemini-2.5-pro',
         contents: prompt,

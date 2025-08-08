@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import { ProjectData } from "./types";
+import { Octokit } from "octokit";
 /**
  * Converts the scores and average score into an object.
  * @param productName - The name of the product
@@ -20,27 +21,49 @@ export const convertScorestoObject = (productName: string, scores: ProjectData["
  * Writes the convertScoresToObject results to a machine-readable JSON file.
  * @param input - The input to write to the file
  */
-export const machineReadableReport = async (input: Record<string, ProjectData>, reportOptions: Record<string, any>): Promise<void> => {
-    if (reportOptions.folderPath) {
-        const filePath = `${reportOptions.folderPath}/result.json`;
-        let obj: Record<string, ProjectData> = {};
-        try {
-            const resultFile = await fs.readFile(filePath, "utf-8");
-            obj = JSON.parse(resultFile);
-        } catch (err) {
-            console.error(err);
-            obj = {};
+export const machineReadableReport = async (input: Record<string, ProjectData>, githubClient: Octokit): Promise<void> => {
+    let obj: Record<string, ProjectData> = {};
+    let shaCode: string = "";
+    try {
+        const res = await githubClient.rest.repos.getContent({
+            owner: "upstash",
+            repo: "ContextTrace",
+            path: `result.json`,
+            ref: "main",
+            headers: {
+                'X-GitHub-Api-Version': '2022-11-28'
+            }
+        });
+        const contentFile = res.data
+        // Ensure that the contentFile is not a directory and content exists
+        if (!Array.isArray(contentFile) && contentFile.type === "file" && contentFile.content) {
+            shaCode = contentFile.sha;
+            const decodedContent = Buffer.from(contentFile.content, 'base64').toString('utf-8');
+            obj = JSON.parse(decodedContent);
+        } else {
+            throw new Error("Content file is a directory or does not contain content.");
         }
 
-        // Assumes the data we add only has one project
-        const projectName = Object.keys(input)[0];
-        console.log("projectName", projectName);
-
-        // Adds in or updates the project data
-        obj[projectName] = input[projectName];
-
-        await fs.writeFile(filePath, JSON.stringify(obj, null, 2));
+    } catch (error) {
+        console.error("Creating new result.json file" + error);
+        obj = {};
     }
+
+    // Assumes the data we add only has one project
+    const projectName = Object.keys(input)[0];
+
+    // Adds in or updates the project data
+    obj[projectName] = input[projectName];
+    const projectJSON = JSON.stringify(obj, null, 2);
+    await githubClient.rest.repos.createOrUpdateFileContents({
+        owner: "upstash",
+        repo: "ContextTrace",
+        path: `result.json`,
+        message: `Add machine-readable report for ${projectName}`,
+        content: Buffer.from(projectJSON).toString('base64'),
+        branch: "main",
+        sha: shaCode
+    });
 }
 
 /**

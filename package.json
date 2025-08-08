@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/upstash/ContextTrace#main"
+    "url": "git+https://github.com/upstash/ContextTrace"
   },
   "keywords": [],
   "author": "Shannon Rumsey",
@@ -29,7 +29,7 @@
   "bugs": {
     "url": "https://github.com/upstash/ContextTrace/issues"
   },
-  "homepage": "https://github.com/upstash/ContextTrace/tree/main" ,
+  "homepage": "https://github.com/upstash/ContextTrace",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.57.0",
     "@google/genai": "^1.9.0",
@@ -38,7 +38,9 @@
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "exponential-backoff": "^3.1.2",
-    "fast-fuzzy": "^1.12.0"
+    "fast-fuzzy": "^1.12.0",
+    "octokit": "^5.0.3",
+    "openai": "^5.12.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",

@@ -27,4 +27,6 @@ out/
 .cache/
 .npm/
 
-py/important_info/*
+compare-results/
+individual-results/
+
