@@ -20,7 +20,7 @@ async function main() {
     await compareLibraries(libraries[0], libraries[1], { 
         geminiToken: envConfig.GEMINI_API_TOKEN!,
         githubToken: envConfig.GITHUB_TOKEN!,
-        context7Token: envConfig.CONTEXT7_API_TOKEN,
+        context7Token: envConfig.CONTEXT7_API_TOKEN!,
         report: {
             console: true,
             folderPath: `${__dirname}/../compare-results`

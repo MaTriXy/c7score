@@ -27,7 +27,7 @@ export type Category = "TITLE" | "DESCRIPTION" | "SOURCE" | "LANGUAGE" | "CODE";
 export interface GetScoreOptions {
     geminiToken: string;
     githubToken: string;
-    context7Token?: string;
+    context7Token: string;
     report?: {
         console?: boolean;
         folderPath?: string;
@@ -39,7 +39,6 @@ export interface GetScoreOptions {
         metadata: number;
         initialization: number;
     };
-    
 }
 
 export interface ProjectData {

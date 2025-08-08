@@ -19,7 +19,7 @@ program
     for (const library of libraries) {
         console.log(`Working on ${library}...`)
         try {;
-        await getScore(library, { geminiToken: process.env.GEMINI_API_TOKEN!});
+        await getScore(library, { geminiToken: process.env.GEMINI_API_TOKEN!, context7Token: process.env.CONTEXT7_API_TOKEN!, githubToken: process.env.GITHUB_API_TOKEN!});
         } catch (error) {
         console.error(`Error in ${library}: ${error}`);
         }
@@ -38,7 +38,7 @@ program
     const [library1, library2] = libraries;
     console.log(`Working on ${library1} vs ${library2}...`);
     try {
-        await compareLibraries(library1, library2, { geminiToken: process.env.GEMINI_API_TOKEN! });
+        await compareLibraries(library1, library2, { geminiToken: process.env.GEMINI_API_TOKEN!, context7Token: process.env.CONTEXT7_API_TOKEN!, githubToken: process.env.GITHUB_API_TOKEN! });
     } catch (error) {
         console.error(`Error in ${library1} vs ${library2}: ${error}.`);
     }

@@ -54,7 +54,7 @@ async function main() {
             await getScore(library, { 
                 geminiToken: envConfig.GEMINI_API_TOKEN!, 
                 githubToken: envConfig.GITHUB_API_TOKEN!, 
-                context7Token: envConfig.CONTEXT7_API_TOKEN,
+                context7Token: envConfig.CONTEXT7_API_TOKEN!,
                 report: {
                     console: true,
                     folderPath: `${__dirname}/../individual-results`

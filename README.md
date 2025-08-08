@@ -22,7 +22,7 @@ contextTrace.getScore(
     { 
     geminiToken: envConfig.GEMINI_API_TOKEN!,
     githubToken: envConfig.GITHUB_TOKEN!,
-    context7Token: envConfig.CONTEXT7_API_TOKEN,
+    context7Token: envConfig.CONTEXT7_API_TOKEN!,
     report: 
         {
             console: true,
@@ -46,7 +46,7 @@ contextTrace.compareLibraries(
     { 
     geminiToken: envConfig.GEMINI_API_TOKEN!,
     githubToken: envConfig.GITHUB_TOKEN!,
-    context7Token: envConfig.CONTEXT7_API_TOKEN,
+    context7Token: envConfig.CONTEXT7_API_TOKEN!,
     report: 
         {
             console: true,
@@ -60,7 +60,7 @@ contextTrace.compareLibraries(
 **Notes:**
 * getScore only takes in one library whereas compareLibraries must take only two libraries.
 * Configuration options are the same for getScore and compareLibraries.
-* Only the libraries, Gemini API key, and Github key are mandatory.
+* Only the libraries, Gemini API key, Github key, and Context7 API key are mandatory.
 * Machine-readable results will always be uploaded to `https://github.com/upstash/ContextTrace/blob/main/result.json` (.getScore only). 
 
 All possible options:
