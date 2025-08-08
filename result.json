@@ -1,12 +1,12 @@
 {
   "/reactjs/react.dev": {
     "scores": {
-      "question": 92.57,
-      "llm": 93,
+      "question": 88.8,
+      "llm": 94.5,
       "formatting": 45.45454545454545,
       "metadata": 100,
       "initialization": 75.75757575757575
     },
-    "averageScore": 85.37266666666666
+    "averageScore": 82.43166666666666
   }
 }
