@@ -1,0 +1,17 @@
+{
+  "Question 1": " Show me how to build a card component with a shadow, hover effects, and truncated text in React.",
+  "Question 2": " How do I create a responsive navigation bar with dropdown menus in React?",
+  "Question 3": " Provide a step-by-step guide to implementing a modal dialog with form inputs and validation.",
+  "Question 4": " What is the best way to create a smooth transition effect when a new component enters or leaves the DOM?",
+  "Question 5": " How can I implement dark mode in my React application and allow users to toggle it?",
+  "Question 6": " Demonstrate how to apply custom styles to a third-party React component.",
+  "Question 7": " What are some effective strategies for optimizing the performance of a large list of items in React?",
+  "Question 8": " Show me an example of a common UI pattern, like a tabbed interface, built in React.",
+  "Question 9": " How can I build a multi-step form with progress indicators in React?",
+  "Question 10": "What's the most efficient way to fetch data from an API and display it in a component, complete with loading and error states?",
+  "Question 11": "How can I create a reusable HOC (Higher-Order Component) for handling authentication logic across different components?",
+  "Question 12": "Provide an example of using the `useReducer` hook for managing complex state in a form with multiple fields and validation rules.",
+  "Question 13": "How would you implement a \"virtualized\" or \"windowed\" list to efficiently render thousands of items without performance degradation?",
+  "Question 14": "Show me how to use Web Workers in a React application to offload a computationally expensive task from the main thread.",
+  "Question 15": "How can I create a component that animates its properties based on the user's scroll position, creating a parallax effect?"
+}
