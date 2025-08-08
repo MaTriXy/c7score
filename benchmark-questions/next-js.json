@@ -1,0 +1,17 @@
+{
+  "Question 1": "Show me how to build a card component in Next.js with Tailwind CSS that includes a hover effect, a shadow, and truncates long text with an ellipsis.",
+  "Question 2": "How do I create a responsive navigation bar in Next.js using Tailwind CSS, with a hamburger menu for mobile that slides in from the side?",
+  "Question 3": "What's the best practice for creating a contact form in Next.js with client-side validation using Zod and React Hook Form, and how do I handle the submission to a server action?",
+  "Question 4": "How can I implement a reusable modal component in Next.js that can be triggered from any page, managing its state with URL parameters instead of local state?",
+  "Question 5": "Provide a step-by-step guide on how to implement a dark mode toggle in a Next.js application using `next-themes` and Tailwind CSS, ensuring the user's preference is saved in local storage.",
+  "Question 6": "How can I optimize the loading performance of a Next.js page that has multiple images and custom fonts, using the built-in `next/image` and `next/font` components?",
+  "Question 7": "How do I analyze my Next.js application's bundle size, and what are the most effective strategies for reducing it, such as implementing dynamic imports and code splitting for large components?",
+  "Question 8": "Show me how to implement scroll-triggered animations in a Next.js application, where elements fade in as they enter the viewport, using a library like Framer Motion or GSAP.",
+  "Question 9": "How can I extend the default Tailwind CSS configuration in my Next.js project to add custom brand colors, typography, and spacing that can be used as utility classes throughout the application?",
+  "Question 10": "What is the best way to create a consistent layout across multiple pages in a Next.js app using the app router, including a shared header and footer, while also allowing for nested, page-specific layout adjustments?",
+  "Question 11": "How do I resolve conflicting dynamic routes in Next.js, such as between a catch-all route like `/docs/[...slug]` and a more specific route like `/docs/settings`, and how does Next.js determine precedence?",
+  "Question 12": "What is a robust strategy for handling potential data inconsistencies or race conditions when using Incremental Static Regeneration (ISR) in Next.js for a high-traffic page with frequently changing data?",
+  "Question 13": "How can I use Next.js Middleware to perform A/B testing by rewriting responses to serve different page variations based on a user's geolocation or a specific cookie, without negatively impacting SEO?",
+  "Question 14": "How can I pass a Server Component as a child or prop to a Client Component, for example, to render a data-intensive, server-fetched list inside a client-side controlled modal, and what are the performance implications of this pattern?",
+  "Question 15": "Demonstrate how to build a scroll-driven page transition in Next.js where scrolling to the end of one project page automatically triggers a route change to the next project, using a combination of the Intersection Observer API and dynamic routing."
+}
