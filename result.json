@@ -28,5 +28,15 @@
       "initialization": 63.63636363636363
     },
     "averageScore": 13.352121212121212
+  },
+  "/vercel/next.js": {
+    "scores": {
+      "question": 95.75,
+      "llm": 70.5,
+      "formatting": 26.41509433962264,
+      "metadata": 100,
+      "initialization": 94.33962264150944
+    },
+    "averageScore": 86.30424528301887
   }
 }
