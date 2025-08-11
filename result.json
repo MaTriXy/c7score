@@ -11,13 +11,13 @@
   },
   "/context7/tailwindcss": {
     "scores": {
-      "question": 73.47,
-      "llm": 74,
+      "question": 62.2,
+      "llm": 79,
       "formatting": 56.98924731182796,
       "metadata": 100,
       "initialization": 80.64516129032258
     },
-    "averageScore": 69.84159139784947
+    "averageScore": 61.07559139784947
   },
   "/tailwindlabs/tailwindcss.com": {
     "scores": {
