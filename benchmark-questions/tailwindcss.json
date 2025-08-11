@@ -1,0 +1,17 @@
+{
+  "Question 1": "How do I create a responsive navigation bar in Tailwind CSS that includes a hamburger menu for mobile and dropdowns for desktop?",
+  "Question 2": "Show me the best way to build a modal component that can be reused for different purposes like alerts, forms, or confirmations.",
+  "Question 3": "What is the most efficient way to style a form with custom-styled inputs, checkboxes, and radio buttons while ensuring consistent validation styling?",
+  "Question 4": "Provide a step-by-step guide to implementing a dark mode toggle that respects the user's system preferences but also allows for manual override.",
+  "Question 5": "How can I build a responsive card component with hover effects, an image, a title, and text that truncates if it's too long?",
+  "Question 6": "What are the best practices for optimizing Tailwind CSS for production to ensure the smallest possible file size?",
+  "Question 7": "How can I create a complex, responsive grid layout, similar to a magazine or dashboard, using Tailwind's grid utilities?",
+  "Question 8": "Show me how to add custom animations and transitions to elements, such as on-hover effects or when an element enters the viewport.",
+  "Question 9": "How do I properly configure my `tailwind.config.js` file to add custom colors, fonts, and spacing that extend the default theme?",
+  "Question 10": "What is the best approach for creating a sticky footer that stays at the bottom of the page, even on short content pages?",
+  "Question 11": "How can I use Tailwind CSS to create a \"curved\" or \"wavy\" section divider between two background colors or images?",
+  "Question 12": "How do I apply styles to a dynamically generated list of elements where every third element needs a different style, using Tailwind CSS?",
+  "Question 13": "Show me how to build a multi-step form or wizard with progress indicators using Tailwind CSS and a bit of JavaScript.",
+  "Question 14": "How can I style third-party components that I've imported into my project without breaking their existing styles or creating specificity issues?",
+  "Question 15": "What is the most effective way to handle state-based styling, for example, changing the appearance of a button when it's in a \"loading\" state after being clicked, using only Tailwind classes?"
+}
