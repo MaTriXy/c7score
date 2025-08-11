@@ -21,13 +21,13 @@
   },
   "/tailwindlabs/tailwindcss.com": {
     "scores": {
-      "question": 6.05,
-      "llm": 46,
+      "question": 92.51,
+      "llm": 61,
       "formatting": 42.42424242424242,
       "metadata": 100,
       "initialization": 63.63636363636363
     },
-    "averageScore": 13.352121212121212
+    "averageScore": 83.27012121212123
   },
   "/vercel/next.js": {
     "scores": {
