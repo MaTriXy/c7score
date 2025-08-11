@@ -1,0 +1,17 @@
+{
+  "Question 1": "How do I define the state schema in `langgraph` to manage a list of chat messages and a separate scratchpad field for an agent's internal thoughts?",
+  "Question 2": "Show me how to create a conditional edge in `langgraph` that routes to a tool-calling node if the last message contains a function call, and to a final response node otherwise.",
+  "Question 3": "How can I build a basic ReAct agent loop where the graph cycles between a \"think\" node that chooses a tool and an \"act\" node that executes it, until the final answer is found?",
+  "Question 4": "What is the correct way to add a human-in-the-loop checkpoint, pausing the graph execution to ask for user confirmation before proceeding with a critical tool call?",
+  "Question 5": "How do I stream the intermediate steps from a `langgraph` execution, so I can show the user which node is currently running and what the partial state looks like?",
+  "Question 6": "Provide an example of how to properly handle a tool execution error within a node, updating the graph's state with an error message instead of crashing the entire run.",
+  "Question 7": "How can I integrate a custom Python function as a tool in my graph and ensure its output is correctly parsed and added back into the main state object?",
+  "Question 8": "Show me how to use `with_checkpoints` with a `SqliteSaver` to persist the state of my chat agent, so it can remember the conversation history across different sessions.",
+  "Question 9": "How do I structure a \"supervisor\" graph that delegates a task to one of several \"worker\" sub-graphs based on the user's initial query?",
+  "Question 10": "What's the method for visualizing my compiled `langgraph` instance as a diagram, so I can debug the flow and connections between my nodes and edges?",
+  "Question 11": "How would I implement a fallback mechanism where if a specific node fails three times in a row, the graph is conditionally routed to an alternative \"safe\" response node?",
+  "Question 12": "Show me a pattern for running two tool-calling nodes in parallel and then having a third node that only runs after both have completed to aggregate their results.",
+  "Question 13": "How can I dynamically modify the graph's structure at runtime, for example, adding a new temporary node and edge based on the output of a previous step?",
+  "Question 14": "What is the best practice for managing state in a graph that forks into multiple parallel branches, and then needs to merge the different state updates from each branch back into a single, coherent state?",
+  "Question 15": "How can I interrupt a running `langgraph` stream based on an external signal, such as a user clicking a \"stop\" button in a web interface?"
+}
