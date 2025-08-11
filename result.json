@@ -41,12 +41,12 @@
   },
   "/facebook/react": {
     "scores": {
-      "question": 83.05,
-      "llm": 75.5,
+      "question": 80.18,
+      "llm": 77,
       "formatting": 63.76811594202898,
       "metadata": 100,
       "initialization": 89.85507246376811
     },
-    "averageScore": 78.14978260869566
+    "averageScore": 75.92878260869566
   }
 }
