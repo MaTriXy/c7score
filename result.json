@@ -38,5 +38,15 @@
       "initialization": 94.33962264150944
     },
     "averageScore": 86.30424528301887
+  },
+  "/facebook/react": {
+    "scores": {
+      "question": 83.05,
+      "llm": 75.5,
+      "formatting": 63.76811594202898,
+      "metadata": 100,
+      "initialization": 89.85507246376811
+    },
+    "averageScore": 78.14978260869566
   }
 }
