@@ -1,0 +1,17 @@
+{
+  "Question 1": "Show me how to use the `pipeline` function in transformers to set up a zero-shot text classification model and use it to categorize a list of product reviews with custom labels.",
+  "Question 2": "How can I load a pre-trained BERT model and its tokenizer, and then fine-tune it on my own CSV dataset for a sentiment analysis task?",
+  "Question 3": "Provide a step-by-step guide to building a simple conversational chatbot using a generative model like GPT-2 from the transformers library.",
+  "Question 4": "What is the correct way to handle text inputs that are longer than the model's maximum sequence length? Demonstrate the sliding window or truncation strategy.",
+  "Question 5": "How can I save my fine-tuned transformer model to a local directory and then reload it later for inference?",
+  "Question 6": "Generate the code to optimize a standard transformer model for inference by converting it to the ONNX format.",
+  "Question 7": "How do I extract the hidden state embeddings for each token in a sentence using a pre-trained model like RoBERTa?",
+  "Question 8": "Show me how to implement a custom training loop for a transformer model in PyTorch without using the `Trainer` class to have more control over the training process.",
+  "Question 9": "What is the best way to batch-process a list of texts for inference to maximize throughput on a GPU?",
+  "Question 10": "How can I properly format a prompt for a text generation model to perform a few-shot learning task, providing examples within the prompt itself?",
+  "Question 11": "Demonstrate how to add a new, custom attention layer to a pre-existing transformer model architecture for experimental purposes.",
+  "Question 12": "How would I set up and train a multi-modal model, like Vision Transformer (ViT), to classify images based on associated text descriptions?",
+  "Question 13": "Provide a script to apply 8-bit quantization to a large language model to reduce its memory footprint and speed up inference on a resource-constrained device.",
+  "Question 14": "How can I implement retrieval-augmented generation (RAG) by combining a retriever model with a generator from the transformers library to answer questions based on a private document set?",
+  "Question 15": "Show me how to find and analyze the attention weights for a specific input sentence to understand which tokens the model is focusing on."
+}
