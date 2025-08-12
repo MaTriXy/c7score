@@ -2,43 +2,39 @@
 import { program } from 'commander';
 import { getScore } from '../getScore';
 import { compareLibraries } from '../compareLib';
-import { config } from 'dotenv';
-config();
-
-
-const buildList = (item: string, list: string[]) => [...(list ?? []), ...item.split(', ')];
+    
 program
-    .command('worker')
-    .option('--l, --library <items>', 'Library names', buildList, [])
-    .action(async (options: { library: string[] }) => {
-    const libraries = options.library;
-    if (libraries.length < 1) {
-        throw new Error("Please provide at least one library name")
-    }
-
-    for (const library of libraries) {
-        console.log(`Working on ${library}...`)
-        try {;
-        await getScore(library, { geminiToken: process.env.GEMINI_API_TOKEN!, context7Token: process.env.CONTEXT7_API_TOKEN!, githubToken: process.env.GITHUB_API_TOKEN!});
-        } catch (error) {
-        console.error(`Error in ${library}: ${error}`);
+    .command('getscore')
+    .argument("<library>", "Library name")
+    .option("-c, --config [json]", "Optional configs")
+    .action(async (library: string, options: { config: string }) => {
+    console.log(`Working on ${library}...`);
+    try {
+        if (options.config) {
+            const configOptions = JSON.parse(options.config);
+            await getScore(library, configOptions);
+        } else {
+            await getScore(library);
         }
+    } catch (error) {
+    console.error(`Error in ${library}: ${error}`);
     }
     });
 
 program
-    .command('compare')
-    .option('--l, --library <items>', 'Library names', buildList, [])
-    .action(async (options: { library: string[] }) => {
-    console.log("Comparing...")
-    const libraries = options.library;
-    if (libraries.length !== 2) {
-        throw new Error("Please provide exactly 2 library names")
-    }
-    const [library1, library2] = libraries;
+    .command('comparelibraries')
+    .argument("<library1>", "First library name")
+    .argument("<library2>", "Second library name")
+    .option("-c, --config [json]", "Optional configs")
+    .action(async (library1: string, library2: string, options: { config: string }) => {
     console.log(`Working on ${library1} vs ${library2}...`);
     try {
-        await compareLibraries(library1, library2, { geminiToken: process.env.GEMINI_API_TOKEN!, context7Token: process.env.CONTEXT7_API_TOKEN!, githubToken: process.env.GITHUB_API_TOKEN! });
+        if (options.config) {
+            const configOptions = JSON.parse(options.config);
+            await compareLibraries(library1, library2, configOptions);
+        } else {
+            await compareLibraries(library1, library2);
+        }
     } catch (error) {
         console.error(`Error in ${library1} vs ${library2}: ${error}.`);
     }

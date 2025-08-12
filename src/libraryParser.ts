@@ -1,5 +1,4 @@
 import { fuzzy } from "fast-fuzzy";
-import fs from "fs";
 import { Octokit } from "octokit";
 
 /**

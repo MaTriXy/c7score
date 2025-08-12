@@ -4,46 +4,63 @@ import { LLMEvaluator } from './llmEval'
 import { scrapeContext7Snippets, runStaticAnalysis, calculateAverageScore, checkRedirects, createQuestionFile } from './utils';
 import { identifyProduct, identifyProductFile } from './libraryParser';
 import { humanReadableReport, machineReadableReport, convertScorestoObject } from './writeResults';
-import { GetScoreOptions } from './types';
+import { evalOptions } from './types';
 import { Octokit } from 'octokit';
+import { config } from 'dotenv';
 
 /**
  * Evaluates the snippets of a library using 5 metrics
- * @param libraryList - The list of libraries to evaluate (2 if comparing, 1 otherwise)
- * @param client - The client to use for the LLM evaluation
- * @param headerConfig - The header config to use for the Context7 API
- * Note: 
+ * @param library - The library to evaluate
+ * @param configOptions - The options for the evaluation
  */
-export async function getScore(library: string, options: GetScoreOptions): Promise<void> {
-    // Defaults
-    const defaultWeights = {
-        question: 0.8,
-        llm: 0.05,
-        formatting: 0.05,
-        metadata: 0.025,
-        initialization: 0.025,
-    };
-
-    const defaultReport = {
-        console: true
-    };
-
+export async function getScore(
+    library: string,
+    configOptions?: evalOptions
+): Promise<void> {
+    
     // Configurations
-    const client = new GoogleGenAI({ apiKey: options.geminiToken });
-    const githubClient = new Octokit({ auth: options.githubToken });
+    config();
+    const envConfig = {
+        GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
+        CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
+        GITHUB_API_TOKEN: process.env.GITHUB_API_TOKEN,
+    };
+
+    const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
+    const githubClient = new Octokit({ auth: envConfig.GITHUB_API_TOKEN });
     let headerConfig = {};
-    if (options.context7Token) {
+    if (envConfig.CONTEXT7_API_TOKEN) {
         headerConfig = {
             headers: {
-                "Authorization": "Bearer " + options.context7Token
+                "Authorization": "Bearer " + envConfig.CONTEXT7_API_TOKEN
             }
         }
     }
+
+    // Defaults
+    const defaultConfigOptions = {
+        report: {
+            console: true
+        },
+        weights: {
+            question: 0.8,
+            llm: 0.05,
+            formatting: 0.05,
+            metadata: 0.025,
+            initialization: 0.025,
+        },
+        llm: {
+            temperature: 1.0,
+            topP: 0.95,
+            topK: 64
+        }
+    }
+
     const redirect = await checkRedirects(library);
     const prod = identifyProduct(redirect);
 
     // Check if the product has an existing questions file
-    const search = new Search(prod, client);
+    const search = new Search(prod, client, configOptions?.llm ?? defaultConfigOptions.llm);
     const filePath = await identifyProductFile(prod, githubClient);
     let questions = "";
     if (filePath === null) {
@@ -72,12 +89,12 @@ export async function getScore(library: string, options: GetScoreOptions): Promi
     const searchTopics = await search.generateSearchTopics(questions);
     const contexts = await search.fetchRelevantSnippets(searchTopics, redirect, headerConfig);
 
-    const questionResponse = await search.evaluateQuestions(questions, [contexts]);
+    const questionResponse = await search.evaluateQuestions(questions, contexts);
 
     const snippets = await scrapeContext7Snippets(redirect, headerConfig);
 
-    const llm_evaluator = new LLMEvaluator(client);
-    const llmResponse = await llm_evaluator.llmEvaluate([snippets]);
+    const llm_evaluator = new LLMEvaluator(client, configOptions?.llm ?? defaultConfigOptions.llm);
+    const llmResponse = await llm_evaluator.llmEvaluate(snippets);
 
     const {
         formatting,
@@ -86,27 +103,27 @@ export async function getScore(library: string, options: GetScoreOptions): Promi
     } = runStaticAnalysis(snippets);
 
     const scores = {
-        question: questionResponse.questionAverageScores[0],
-        llm: llmResponse.llmAverageScores[0],
+        question: questionResponse.questionAverageScore,
+        llm: llmResponse.llmAverageScore,
         formatting: formatting.averageScore,
         metadata: metadata.averageScore,
         initialization: initialization.averageScore,
     }
 
-    const averageScore = calculateAverageScore(scores, options.weights ?? defaultWeights);
+    const averageScore = calculateAverageScore(scores, configOptions?.weights ?? defaultConfigOptions.weights);
 
     const fullResults = {
         averageScore: averageScore,
-        questionScore: questionResponse.questionScores[0],
-        questionAverageScore: questionResponse.questionAverageScores[0],
-        questionExplanation: questionResponse.questionExplanations[0],
-        llmAverageScore: llmResponse.llmAverageScores[0],
-        llmExplanation: llmResponse.llmExplanations[0],
+        questionScore: questionResponse.questionScores,
+        questionAverageScore: questionResponse.questionAverageScore,
+        questionExplanation: questionResponse.questionExplanations,
+        llmAverageScore: llmResponse.llmAverageScore,
+        llmExplanation: llmResponse.llmExplanation,
         formattingAvgScore: formatting.averageScore,
         metadataAvgScore: metadata.averageScore,
         initializationAvgScore: initialization.averageScore,
     }
-    await humanReadableReport(redirect, fullResults, options.report ?? defaultReport);
+    await humanReadableReport(redirect, fullResults, configOptions?.report ?? defaultConfigOptions.report, false);
     const scoresObject = convertScorestoObject(redirect, scores, averageScore);
-    await machineReadableReport(scoresObject, githubClient);
+    await machineReadableReport(scoresObject, configOptions?.report ?? defaultConfigOptions.report, false);
 }

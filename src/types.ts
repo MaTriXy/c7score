@@ -1,8 +1,11 @@
-export interface LLMScores {
+export interface LLMScoresCompare {
     llmAverageScores: number[];
     llmExplanations: string[];
 }
-
+export interface LLMScores {
+    llmAverageScore: number;
+    llmExplanation: string;
+}
 
 export interface Metrics {
     question: number;
@@ -17,6 +20,13 @@ export interface StaticEvaluatorOutput {
 }
 
 export interface QuestionEvaluationOutput {
+    questionScores: number[];
+    questionAverageScore: number;
+    questionExplanations: string[];
+}
+
+
+export interface QuestionEvaluationPairOutput {
     questionScores: number[][];
     questionAverageScores: number[];
     questionExplanations: string[][];
@@ -24,10 +34,7 @@ export interface QuestionEvaluationOutput {
 
 export type Category = "TITLE" | "DESCRIPTION" | "SOURCE" | "LANGUAGE" | "CODE";
 
-export interface GetScoreOptions {
-    geminiToken: string;
-    githubToken: string;
-    context7Token: string;
+export interface evalOptions {
     report?: {
         console?: boolean;
         folderPath?: string;
@@ -38,6 +45,11 @@ export interface GetScoreOptions {
         formatting: number;
         metadata: number;
         initialization: number;
+    };
+    llm?: {
+        temperature: number;
+        topP: number;
+        topK: number;
     };
 }
 

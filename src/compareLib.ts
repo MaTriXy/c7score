@@ -2,42 +2,59 @@ import { GoogleGenAI } from '@google/genai';
 import { Search } from './search';
 import { LLMEvaluator } from './llmEval'
 import { scrapeContext7Snippets, runStaticAnalysis, calculateAverageScore, checkRedirects, createQuestionFile } from './utils';
-import fs from 'fs/promises';
 import { identifyProduct, identifyProductFile } from './libraryParser';
 import { fuzzy } from "fast-fuzzy";
-import { humanReadableReport, machineReadableReport, convertScorestoObject } from './writeResults';
-import { GetScoreOptions } from './types';
+import { convertScorestoObject, humanReadableReport, machineReadableReport } from './writeResults';
+import { evalOptions } from './types';
 import { Octokit } from 'octokit';
+import { config } from 'dotenv';
 
 /**
  * Evaluates the snippets of a library using 5 metrics
- * @param libraryList - The list of libraries to evaluate (2 if comparing, 1 otherwise)
- * @param client - The client to use for the LLM evaluation
- * @param headerConfig - The header config to use for the Context7 API
+ * @param library1 - The first library to evaluate
+ * @param library2 - The second library to evaluate
+ * @param configOptions - The options for the evaluation
  */
-export async function compareLibraries(library1: string, library2: string, options: GetScoreOptions): Promise<void> {
-    // Defaults
-    const defaultWeights = {
-        question: 0.8,
-        llm: 0.05,
-        formatting: 0.05,
-        metadata: 0.025,
-        initialization: 0.025,
-    };
-
-    const defaultReport = {
-        console: true
-    };
-
+export async function compareLibraries(
+    library1: string,
+    library2: string,
+    configOptions?: evalOptions
+): Promise<void> {
     // Configurations
-    const client = new GoogleGenAI({ apiKey: options.geminiToken });
-    const githubClient = new Octokit({ auth: options.githubToken });
+    config();
+    const envConfig = {
+        GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
+        CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
+        GITHUB_API_TOKEN: process.env.GITHUB_API_TOKEN,
+    };
+    const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
+    const githubClient = new Octokit({ auth: envConfig.GITHUB_API_TOKEN });
     let headerConfig = {};
-    if (options.context7Token) {
+    if (envConfig.CONTEXT7_API_TOKEN) {
         headerConfig = {
             headers: {
-                "Authorization": "Bearer " + options.context7Token
+                "Authorization": "Bearer " + envConfig.CONTEXT7_API_TOKEN
             }
+        }
+    }
+ 
+    // Defaults
+    const defaultConfigOptions = {
+        report: {
+            console: true
+        },
+        weights: {
+            question: 0.8,
+            llm: 0.05,
+            formatting: 0.05,
+            metadata: 0.025,
+            initialization: 0.025,
+        },
+        llm: {
+            model: "gemini-2.5-pro",
+            temperature: 1.0,
+            topP: 0.95,
+            topK: 64
         }
     }
 
@@ -60,7 +77,7 @@ export async function compareLibraries(library1: string, library2: string, optio
     }
 
     // Check if the product has an existing questions file
-    const search = new Search(prods[0], client);
+    const search = new Search(prods[0], client, configOptions?.llm ?? defaultConfigOptions.llm);
     const filePath = await identifyProductFile(prods[0], githubClient);
     let questions = "";
     if (filePath === null) {
@@ -93,15 +110,15 @@ export async function compareLibraries(library1: string, library2: string, optio
         search.fetchRelevantSnippets(searchTopics, newLibrary, headerConfig)
     ));
 
-    const questionResponse = await search.evaluateQuestions(questions, contexts);
+    const questionResponse = await search.evaluateQuestionsPair(questions, contexts);
     console.log("questionResponse: ", questionResponse);
 
     const snippets = await Promise.all(newLibraryList.map(newLibrary =>
         scrapeContext7Snippets(newLibrary, headerConfig)
     ));
 
-    const llm_evaluator = new LLMEvaluator(client);
-    const llmResponse = await llm_evaluator.llmEvaluate(snippets);
+    const llm_evaluator = new LLMEvaluator(client, configOptions?.llm ?? defaultConfigOptions.llm);
+    const llmResponse = await llm_evaluator.llmEvaluateCompare(snippets);
 
     console.log("llmResponse: ", llmResponse);
 
@@ -121,7 +138,7 @@ export async function compareLibraries(library1: string, library2: string, optio
             initialization: initialization.averageScore,
         }
 
-        const averageScore = calculateAverageScore(scores, options.weights ?? defaultWeights);
+        const averageScore = calculateAverageScore(scores, configOptions?.weights ?? defaultConfigOptions.weights);
 
         const fullResults = {
             averageScore: averageScore,
@@ -134,7 +151,8 @@ export async function compareLibraries(library1: string, library2: string, optio
             metadataAvgScore: metadata.averageScore,
             initializationAvgScore: initialization.averageScore,
         }
-
-        await humanReadableReport(newLibraryList[i], fullResults, options.report ?? defaultReport);
+        await humanReadableReport(newLibraryList[i], fullResults, configOptions?.report ?? defaultConfigOptions.report);
+        const scoresObject = convertScorestoObject(newLibraryList[i], scores, averageScore);
+        await machineReadableReport(scoresObject, configOptions?.report ?? defaultConfigOptions.report);
     }
 }

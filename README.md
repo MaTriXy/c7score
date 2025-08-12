@@ -13,16 +13,14 @@ The `context-trace` package is used to evaluate the quality of Upstash's Context
     * Metric 5 (Initialization): Looks for basic import and installation statements.
 
 ## Usage
+**Requirements:** .env file that contains a `GEMINI_API_TOKEN`, `GITHUB_API_TOKEN`, and `CONTEXT7_API_TOKEN`.
 
 ```
-var contextTrace = require("@shannonrumsey/context-trace) 
+var contextTrace = require("@shannonrumsey/context-trace") 
 
 contextTrace.getScore(
     "/facebook/react", 
     { 
-    geminiToken: envConfig.GEMINI_API_TOKEN!,
-    githubToken: envConfig.GITHUB_TOKEN!,
-    context7Token: envConfig.CONTEXT7_API_TOKEN!,
     report: 
         {
             console: true,
@@ -43,42 +41,101 @@ contextTrace.getScore(
 contextTrace.compareLibraries(
     "/tailwindlabs/tailwindcss.com",
     "/context7/tailwindcss",
-    { 
-    geminiToken: envConfig.GEMINI_API_TOKEN!,
-    githubToken: envConfig.GITHUB_TOKEN!,
-    context7Token: envConfig.CONTEXT7_API_TOKEN!,
-    report: 
+    {
+    llm:
         {
-            console: true,
-            folderPath: `${__dirname}/../compare-results`
+            temperature: 0.95,
+            topP: 0.8,
+            topK: 45
         }
     }
 );
 ```
 
 ### Configuration
-**Notes:**
-* getScore only takes in one library whereas compareLibraries must take only two libraries.
-* Configuration options are the same for getScore and compareLibraries.
-* Only the libraries, Gemini API key, Github key, and Context7 API key are mandatory.
-* Machine-readable results will always be uploaded to `https://github.com/upstash/ContextTrace/blob/main/result.json` (.getScore only). 
-
-All possible options:
 ```
 {
-    geminiToken: Gemini API key,
-    context7Token: Context7 API key,
-    report: {
-        console: boolean (print the results to the console)
-        folderPath: string (full path to directory for results. Folder must already exist.)
+    report: 
+    {
+        console: boolean
+        folderPath: string
     } 
-    weights: {
-        (weights must sum to 1)
-        "context": number,
-        "llm": number,
-        "formatting": number,
-        "metadata": number,
-        "initialization": number
+    weights: 
+    {
+        context: number,
+        llm: number,
+        formatting: number,
+        metadata: number,
+        initialization: number
     } 
+    llm:
+    {
+        temperature: number,
+        topP: number,
+        topK: number,
+    }
 }
+```
+
+**Notes**
+* `getScore` only takes in one library whereas `compareLibraries` only takes in two.
+* `console: true` prints results to the console, and `folderPath` specifies if and which folder the human-readable and machine-readable results are written to (the folder must already exist).
+    * `getScore` will output machine-readable results to `result.json` and human-readable results to `result-LIBRARY_NAME.txt` in the specified directory, and `compareLibraries` will output them to `result-compare.json` and `result-compare-LIBRARY_NAME.txt`
+    * The machine-readable file will add or update the libraries.
+
+**Defaults**
+
+    {
+    report: 
+        {
+            console: true
+        } 
+    weights: 
+        {
+            context: 0.8,
+            llm: 0.05,
+            formatting: 0.05,
+            metadata: 0.025,
+            initialization: 0.025
+        } 
+    llm:
+        {
+            temperature: 1.0,
+            topP: 0.95,
+            topK: 64,
+        }
+    }
+
+## CLI Usage
+
+```
+context-trace getscore "/facebook/react" -c '{
+    "report":
+        {
+            "console": true,
+            "folderPath": "./results"
+        },
+    "weights":
+        {
+            "question": 0.8,
+            "llm": 0.05,
+            "formatting": 0.05,
+            "metadata": 0.025,
+            "initialization": 0.025 
+        }
+}'
+
+
+context-trace comparelibraries "/tailwindlabs/tailwindcss.com" "/context7/tailwindcss" -c '{
+    "report": 
+        {
+            "console": true
+        },
+    "llm": 
+        {
+            "temperature": 0.0,
+            "topP": 0.95,
+            "topK": 40
+        }
+}'
 ```

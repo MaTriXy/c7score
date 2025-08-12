@@ -1,14 +1,5 @@
 import { getScore } from "../src/getScore";
-import { config } from 'dotenv';
 import fs from "fs/promises";
-
-config();
-
-const envConfig = {
-  GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
-  CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
-  GITHUB_API_TOKEN: process.env.GITHUB_API_TOKEN,
-};
 
 
 /**
@@ -37,10 +28,8 @@ async function main() {
     if (manualLibraries.toLowerCase() === "true") {
         console.log("🧪 Using default manual libraries...")
         libraries = [
-            "/vercel/next.js",
-            "/facebook/react",
-            "/context7/tailwindcss",
-            "/tailwindlabs/tailwindcss.com"
+            "shadcn-ui/ui",
+            "langchain-ai/langgraph",
         ]
     } else {
         console.log("🧪Getting libraries from Context7...")
@@ -51,13 +40,11 @@ async function main() {
     for (const library of libraries) {
         try {
             console.log(`Working on ${library}...`)
-            await getScore(library, { 
-                geminiToken: envConfig.GEMINI_API_TOKEN!, 
-                githubToken: envConfig.GITHUB_API_TOKEN!, 
-                context7Token: envConfig.CONTEXT7_API_TOKEN!,
+            await getScore(library, 
+                { 
                 report: {
                     console: true,
-                    folderPath: `${__dirname}/../individual-results`
+                    folderPath: `${__dirname}/../results`
                 },
                 weights: {
                 question: 0.8,
@@ -65,7 +52,12 @@ async function main() {
                 formatting: 0.05,
                 metadata: 0.025,
                 initialization: 0.025,
-            }
+                },
+                llm: {
+                    temperature: 0.9,
+                    topP: 0.85,
+                    topK: 45
+                }
         });
 
         } catch (error) {

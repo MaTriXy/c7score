@@ -1,13 +1,4 @@
 import { compareLibraries } from "../src/compareLib";
-import { config } from 'dotenv';
-
-config();
-
-const envConfig = {
-  GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
-  CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
-  GITHUB_TOKEN: process.env.GITHUB_TOKEN,
-};
 
 async function main() {
 
@@ -17,13 +8,14 @@ async function main() {
         "/context7/tailwindcss",
     ]
     
-    await compareLibraries(libraries[0], libraries[1], { 
-        geminiToken: envConfig.GEMINI_API_TOKEN!,
-        githubToken: envConfig.GITHUB_TOKEN!,
-        context7Token: envConfig.CONTEXT7_API_TOKEN!,
+    await compareLibraries(libraries[0], libraries[1], {
         report: {
-            console: true,
-            folderPath: `${__dirname}/../compare-results`
+            console: true
+        },
+        llm: {
+            temperature: 0.0,
+            topP: 0.95,
+            topK: 40
         }
      });
 }    

@@ -1,5 +1,4 @@
 import axios, { AxiosError } from 'axios';
-import fs from "fs/promises";
 import { StaticEvaluator } from './staticEval';
 import { Metrics, StaticEvaluatorOutput } from './types';
 import { GoogleGenAI } from '@google/genai';
@@ -44,7 +43,7 @@ export async function createQuestionFile(product: string, questions: string, git
         isolatedQuestions["Question " + String(num + 1)] = cleanedQ;
     }
     const questionJson = JSON.stringify(isolatedQuestions, null, 2);
-    githubClient.rest.repos.createOrUpdateFileContents({
+    await githubClient.rest.repos.createOrUpdateFileContents({
         owner: "upstash",
         repo: "ContextTrace",
         path: `benchmark-questions/${product}.json`,
@@ -75,11 +74,9 @@ export async function scrapeContext7Snippets(library: string, headerConfig: obje
  * @param client - The client to use for the LLM evaluation
  * @returns The response from the LLM
  */
-//responseFormat?: Record<string, any>
-export async function runLLM(prompt: string, config: object, client: GoogleGenAI): Promise<string> {
-
+export async function runLLM(prompt: string, config: Record<string, any>, client: GoogleGenAI): Promise<any> {
     const countTokensResponse = await client.models.countTokens({
-        model: 'gemini-2.5-pro',
+        model: "gemini-2.5-pro",
         contents: prompt,
     });
     if (countTokensResponse.totalTokens !== undefined && countTokensResponse.totalTokens > 1048576) {
@@ -87,11 +84,13 @@ export async function runLLM(prompt: string, config: object, client: GoogleGenAI
         // 1 Gemini token = roughly 4 characters, using 3 to not go over limit
         prompt = prompt.slice(0, 1048576 * 3);
     }
-    const generate = async (): Promise<string> => {
+    const generate = async (): Promise<any> => {
         const response = await client.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: "gemini-2.5-pro",
             contents: [prompt],
-            config: config
+            config: {
+                ...config
+            }
         });
         if (response.text === undefined) {
             throw new Error("Response is undefined");
