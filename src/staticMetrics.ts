@@ -1,10 +1,11 @@
 import { Category } from "./types";
+
 /**
-   * Accesses the specified category of the snippet
+ * Accesses the specified category of the snippet
    * @param snippet - The snippet to access
    * @param category - The category to access. Must be one of the following: TITLE, DESCRIPTION, SOURCE, LANGUAGE, CODE (case-sensitive)
-   * @returns The category, or if the category is language or code, then it is everything after that
-   */
+   * @returns The category, or if the category is language or code, then it is everything that occurs after the category keyword
+ */
 function accessCategory(snippet: string, category: Category): string | string[] {
   if (!snippet) {
     throw new Error("Snippet must be non-empty strings");
@@ -23,7 +24,7 @@ function accessCategory(snippet: string, category: Category): string | string[] 
 }
 
 /**
- * Checks if code snippets exist
+ * Checks if all categories exist in the snippet
  * @returns a boolean indicating if the snippet is incomplete
  */
 export function snippetIncomplete(snippet: string): boolean {
@@ -32,7 +33,7 @@ export function snippetIncomplete(snippet: string): boolean {
 }
 
 /**
- * Checks if the code is too short (defined as less than 5 tokens)
+ * Checks if the code is too short (defined as less than 5 words)
  * @returns a boolean indicating if the code snippet is too short
  */
 export function codeSnippetLength(snippet: string): boolean {
@@ -46,15 +47,15 @@ export function codeSnippetLength(snippet: string): boolean {
 }
 
 /**
- * Checks if there are multiple code snippets in a snippet
- * @returns A boolean indicating if there are more than 2 components when splitting on CODE: or LANGUAGE:
+ * Checks if there are multiple code or language categories in a snippet
+ * @returns A boolean indicating if there are multiple instances of CODE: or LANGUAGE:
  */
 export function multipleCode(snippet: string): boolean {
   return snippet.split("CODE:").length > 2 || snippet.split("LANGUAGE:").length > 2;
 }
 
 /**
- * Checks if the languages are actually descriptions
+ * Checks if the LANGUAGE category is actually a description of the code
  * @returns A boolean indicating if the language is a description of the code (e.g., "CLI Arguments") or not a proper language (e.g., "console")
  */
 export function languageDesc(snippet: string): boolean {
@@ -111,7 +112,7 @@ export function citations(snippet: string): boolean {
 }
 
 /**
- * Checks if there are any snippets about licensing
+ * Checks if the snippet is about licensing
  * @returns A boolean indicating that code is about a license
  */
 export function licenseInfo(snippet: string): boolean {
@@ -120,7 +121,7 @@ export function licenseInfo(snippet: string): boolean {
 }
 
 /**
- * Checks if there are any snippets about the directory structure
+ * Checks if the snippet is about the directory structure
  * @returns A boolean indicating that code is about a directory structure
  */
 export function directoryStructure(snippet: string): boolean {
@@ -139,7 +140,7 @@ export function directoryStructure(snippet: string): boolean {
 }
 
 /**
- * Checks if there are any snippets about imports
+ * Checks if the snippet is about imports
  * @returns A boolean indicating that code is about imports
  */
 export function imports(snippet: string): boolean {
@@ -158,7 +159,7 @@ export function imports(snippet: string): boolean {
 }
 
 /**
- * Checks if there are any snippets about installations
+ * Checks if the snippet is about installations
  * @returns A boolean indicating that code is about installations
  */
 export function installs(snippet: string): boolean {

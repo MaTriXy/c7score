@@ -56,21 +56,20 @@ export async function getScore(
         }
     }
 
-    const redirect = await checkRedirects(library);
+    const redirect = await checkRedirects(library, headerConfig);
     const prod = identifyProduct(redirect);
+    const search = new Search(prod, client, configOptions?.llm ?? defaultConfigOptions.llm, configOptions?.prompts);
 
     // Check if the product has an existing questions file
-    const search = new Search(prod, client, configOptions?.llm ?? defaultConfigOptions.llm);
     const filePath = await identifyProductFile(prod, githubClient);
     let questions = "";
     if (filePath === null) {
         questions = await search.googleSearch();
         await createQuestionFile(prod, questions, githubClient);
-
     } else {
         const res = await githubClient.rest.repos.getContent({
             owner: "upstash",
-            repo: "ContextTrace",
+            repo: "c7score",
             path: `benchmark-questions/${filePath}`,
             ref: "main",
             headers: {
@@ -80,8 +79,7 @@ export async function getScore(
         const contentFile = res.data
         // Ensure that the contentFile is not a directory and content exists
         if (!Array.isArray(contentFile) && contentFile.type === "file" && contentFile.content) {
-            const decodedContent = Buffer.from(contentFile.content, 'base64').toString('utf-8');
-            questions = JSON.parse(decodedContent);
+            questions = Buffer.from(contentFile.content, 'base64').toString('utf-8');
         } else {
             throw new Error("Content file is a directory or does not contain content.");
         }
@@ -93,7 +91,7 @@ export async function getScore(
 
     const snippets = await scrapeContext7Snippets(redirect, headerConfig);
 
-    const llm_evaluator = new LLMEvaluator(client, configOptions?.llm ?? defaultConfigOptions.llm);
+    const llm_evaluator = new LLMEvaluator(client, configOptions?.llm ?? defaultConfigOptions.llm, configOptions?.prompts);
     const llmResponse = await llm_evaluator.llmEvaluate(snippets);
 
     const {

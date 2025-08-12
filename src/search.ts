@@ -2,51 +2,52 @@ import { Type, GoogleGenAI } from '@google/genai';
 import { QuestionEvaluationOutput, QuestionEvaluationPairOutput } from './types';
 import axios from 'axios';
 import { runLLM } from './utils';
+import { questionEvaluationPrompt, questionEvaluationPromptCompare, searchTopicsPrompt } from './prompts';
 
 export class Search {
     private product: string;
     private client: GoogleGenAI;
     private llmConfig: Record<string, any>;
+    private prompts?: Record<string, any>;
 
-    constructor(product: string, client: GoogleGenAI, llmConfig: Record<string, any>) {
+    constructor(product: string, client: GoogleGenAI, llmConfig: Record<string, any>, prompts?: Record<string, any>) {
         this.product = product;
         this.client = client;
         this.llmConfig = llmConfig;
+        this.prompts = prompts;
     }
 
     /**
      * Generates 15 questions about a product one might ask an AI coding assistant.
-     * @returns The 15 questions
+     * @returns The 15 questions as a string
      */
     async googleSearch(): Promise<string> {
-        const prompt = `
-        Generate 15 questions, 10 of which should be common and practical 
-        questions that developers frequently ask when using the product ${this.product}. 
-        These should represent real-world use cases and coding challenges. 
-
-        Add 5 more questions that might not be very common but relevant to edge cases and 
-        less common use cases. Format each question on a new line, numbered 1-15. 
-        Questions should be specific and actionable, the kind that a developer would ask an 
-        AI coding assistant.
-
-        Focus on diverse topics like:
-        - Component building (cards, navigation, forms, modals)
-        - Responsive design patterns
-        - Animation and transitions
-        - Dark mode implementation
-        - Custom styling and configuration
-        - Performance optimization
-        - Common UI patterns
-
-        Example questions:
-        1. "Show me how to build a card component with shadow, hover effects, and truncated text in ${this.product}"
-        2. "How to create a responsive navigation bar with dropdown menus in ${this.product}"
-
-        Do not include any headers in your response, only the list of questions. You may search 
-        Google for the questions.
-        `;
-
-        // Google Search tool
+        const prompt =  `
+            Generate 15 questions, 10 of which should be common and practical 
+            questions that developers frequently ask when using the product ${this.product}. 
+            These should represent real-world use cases and coding challenges. 
+        
+            Add 5 more questions that might not be very common but relevant to edge cases and 
+            less common use cases. Format each question on a new line, numbered 1-15. 
+            Questions should be specific and actionable, the kind that a developer would ask an 
+            AI coding assistant.
+        
+            Focus on diverse topics like:
+            - Component building (cards, navigation, forms, modals)
+            - Responsive design patterns
+            - Animation and transitions
+            - Dark mode implementation
+            - Custom styling and configuration
+            - Performance optimization
+            - Common UI patterns
+        
+            Example questions:
+            1. "Show me how to build a card component with shadow, hover effects, and truncated text in ${this.product}"
+            2. "How to create a responsive navigation bar with dropdown menus in ${this.product}"
+        
+            Do not include any headers in your response, only the list of questions. You may search 
+            Google for the questions.
+            `;
         const searchTool = { googleSearch: {} };
 
         const defaultConfig: object = {
@@ -71,13 +72,7 @@ export class Search {
      * @returns 75 search topics
      */
     async generateSearchTopics(questions: string): Promise<string[][]> {
-        const prompt = `
-        For each question about ${this.product}, generate 5 relevant search topics 
-        as comma-separated keywords/phrases. These topics should help find the most 
-        relevant documentation and code examples.
-
-        Questions: ${questions}
-        `;
+        const prompt = searchTopicsPrompt(this.product, questions, this.prompts?.searchTopics);
 
         const config: object = {
             responseMimeType: "application/json",
@@ -114,7 +109,7 @@ export class Search {
             for (const topic of questionTopics) {  // total of 5 topics per question
                 let snippets = "";
                 const topicUrl = encodeURIComponent(topic);
-                const url = `https://context7.com/api/v1${library}?tokens=10000&topic=${topicUrl}`;
+                const url = `https://context7.com/api/v1/${library}?tokens=10000&topic=${topicUrl}`;
                 const response = await axios.get(url, headerConfig)
                 snippets = String(response.data).replace(snippet_title, "").split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet
                 questionContexts.push(snippets);
@@ -126,32 +121,12 @@ export class Search {
 
     /**
      * Evaluates how well the snippets answer the questions based on 5 criteria.
-     * @param questions - The questions to evaluate. There may be two questions for comparing libraries
-     * @param contexts - The context/code snippets per topic. There may be two context collections for comparing libraries
-     * @returns The scores, average score, and explanations for the context collection(s)
+     * @param questions - The questions to evaluate
+     * @param contexts - The context/code snippets per topic
+     * @returns The scores, average score, and explanations for each context collection
      */
     async evaluateQuestionsPair(questions: string, contexts: string[][][]): Promise<QuestionEvaluationPairOutput> {
-        const prompt =
-        `You are evaluating two different documentation contexts for their quality and relevance in helping an AI 
-        coding assistant answer the following question:
-
-        Questions: "${questions}"
-
-        Contexts (${contexts[0]} and ${contexts[1]}):
-
-        For each question, evaluate and score the context from 0-100 based on the following criteria:
-        1. Relevance to the specific question (40%)
-        2. Code example quality and completeness (25%)
-        3. Practical applicability (15%)
-        4. Coverage of requested features (15%)
-        5. Clarity and organization (5%)
-
-        Your response should contain one list that contains two sublists for each context (4 in total), where the first sublist represents 
-        your responses for the first context and the second sublist represents your responses for the second context. 
-        Each sublist should have two sublists, where the first sublist represents the scores for each question,
-        and should have 15 elements. The second sublist represents the correspond explanations for each score,
-        and should also have 15 elements. Each context will return an average score, with a total of 2 average scores.
-        `;
+        const prompt = questionEvaluationPromptCompare(contexts, questions, this.prompts?.questionEvaluation);
         const config: object = {
             responseMimeType: "application/json",
             responseSchema: {
@@ -178,24 +153,14 @@ export class Search {
         }
     }
 
+    /**
+     * Evaluates how well the snippets answer the questions based on 5 criteria.
+     * @param questions - The questions to evaluate
+     * @param contexts - The context/code snippets per topic
+     * @returns The scores, average score, and explanations for the context collection
+     */
     async evaluateQuestions(questions: string, contexts: string[][]): Promise<QuestionEvaluationOutput> {
-        const prompt = `
-        You are evaluating documentation context for its quality and relevance in helping an AI 
-        coding assistant answer the following question:
-
-        Questions: "${questions}"
-
-        Context: ${contexts}
-
-        For each question, evaluate and score the context from 0-100 based on the following criteria:
-        1. Relevance to the specific question (40%)
-        2. Code example quality and completeness (25%)
-        3. Practical applicability (15%)
-        4. Coverage of requested features (15%)
-        5. Clarity and organization (5%)
-
-        Your response should contain a list of scores, one average score, and one explanation for each score.
-        `;
+        const prompt = questionEvaluationPrompt(contexts, questions, this.prompts?.questionEvaluation);
         const config: object = {
             responseMimeType: "application/json",
             responseSchema: {

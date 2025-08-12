@@ -10,7 +10,7 @@ import { Octokit } from 'octokit';
 import { config } from 'dotenv';
 
 /**
- * Evaluates the snippets of a library using 5 metrics
+ * Compares the snippets of two library using 5 metrics
  * @param library1 - The first library to evaluate
  * @param library2 - The second library to evaluate
  * @param configOptions - The options for the evaluation
@@ -20,6 +20,7 @@ export async function compareLibraries(
     library2: string,
     configOptions?: evalOptions
 ): Promise<void> {
+
     // Configurations
     config();
     const envConfig = {
@@ -51,7 +52,6 @@ export async function compareLibraries(
             initialization: 0.025,
         },
         llm: {
-            model: "gemini-2.5-pro",
             temperature: 1.0,
             topP: 0.95,
             topK: 64
@@ -63,12 +63,13 @@ export async function compareLibraries(
     let prods = [];
     let newLibraryList = [];
     for (const library of libraryList) {
-        const redirect = await checkRedirects(library);
+        const redirect = await checkRedirects(library, headerConfig);
         newLibraryList.push(redirect);
         const prod = identifyProduct(redirect);
         prods.push(prod);
     }
-    // For compare, check if the products are the same
+
+    // Check that the libraries have the same product
     const prod1 = prods[0];
     const prod2 = prods[1];
     const matchScore = fuzzy(prod1, prod2);
@@ -76,18 +77,18 @@ export async function compareLibraries(
         throw new Error(`${newLibraryList[0]} and ${newLibraryList[1]} do not have the same product`);
     }
 
+    const search = new Search(prods[0], client, configOptions?.llm ?? defaultConfigOptions.llm, configOptions?.prompts);
+
     // Check if the product has an existing questions file
-    const search = new Search(prods[0], client, configOptions?.llm ?? defaultConfigOptions.llm);
     const filePath = await identifyProductFile(prods[0], githubClient);
     let questions = "";
     if (filePath === null) {
-        console.log("❌ No existing questions file found for", prods[0]);
         questions = await search.googleSearch();
         await createQuestionFile(prods[0], questions, githubClient);
     } else {
         const res = await githubClient.rest.repos.getContent({
             owner: "upstash",
-            repo: "ContextTrace",
+            repo: "c7score",
             path: `benchmark-questions/${filePath}`,
             ref: "main",
             headers: {
@@ -97,30 +98,26 @@ export async function compareLibraries(
         const contentFile = res.data
         // Ensure that the contentFile is not a directory and content exists
         if (!Array.isArray(contentFile) && contentFile.type === "file" && contentFile.content) {
-            const decodedContent = Buffer.from(contentFile.content, 'base64').toString('utf-8');
-            questions = JSON.parse(decodedContent);
+            questions = Buffer.from(contentFile.content, 'base64').toString('utf-8');
         } else {
             throw new Error("Content file is a directory or does not contain content.");
         }
     }
-
+    
     const searchTopics = await search.generateSearchTopics(questions);
-
     const contexts = await Promise.all(newLibraryList.map(newLibrary =>
         search.fetchRelevantSnippets(searchTopics, newLibrary, headerConfig)
     ));
 
     const questionResponse = await search.evaluateQuestionsPair(questions, contexts);
-    console.log("questionResponse: ", questionResponse);
+    console.log(questionResponse);
 
     const snippets = await Promise.all(newLibraryList.map(newLibrary =>
         scrapeContext7Snippets(newLibrary, headerConfig)
     ));
 
-    const llm_evaluator = new LLMEvaluator(client, configOptions?.llm ?? defaultConfigOptions.llm);
+    const llm_evaluator = new LLMEvaluator(client, configOptions?.llm ?? defaultConfigOptions.llm, configOptions?.prompts);
     const llmResponse = await llm_evaluator.llmEvaluateCompare(snippets);
-
-    console.log("llmResponse: ", llmResponse);
 
     for (let i = 0; i < newLibraryList.length; i++) {
 
@@ -151,8 +148,8 @@ export async function compareLibraries(
             metadataAvgScore: metadata.averageScore,
             initializationAvgScore: initialization.averageScore,
         }
-        await humanReadableReport(newLibraryList[i], fullResults, configOptions?.report ?? defaultConfigOptions.report);
+        await humanReadableReport(newLibraryList[i], fullResults, configOptions?.report ?? defaultConfigOptions.report, true);
         const scoresObject = convertScorestoObject(newLibraryList[i], scores, averageScore);
-        await machineReadableReport(scoresObject, configOptions?.report ?? defaultConfigOptions.report);
+        await machineReadableReport(scoresObject, configOptions?.report ?? defaultConfigOptions.report, true);
     }
 }

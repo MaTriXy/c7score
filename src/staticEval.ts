@@ -10,15 +10,15 @@ export class StaticEvaluator {
 
   /**
    * Splits the entire snippet file into individual snippets
-   * @returns The snippets
+   * @returns The individual snippets
    */
   splitSnippets(): string[] {
     return this.snippets.split("\n" + "-".repeat(40) + "\n");
   }
 
   /**
-   * Evaluates the formatting of the snippets
-   * @returns The average score
+   * Evaluates the formatting of snippets
+   * @returns The average score for the library
    */
   formatting(): StaticEvaluatorOutput {
     try {
@@ -29,11 +29,10 @@ export class StaticEvaluator {
 
         const missingInfo = staticMetrics.snippetIncomplete( snippet);
         const shortCode = staticMetrics.codeSnippetLength(snippet);
-        const multipleCodeSnippets = staticMetrics.multipleCode(snippet);
         const descriptionForLang = staticMetrics.languageDesc(snippet);
         const containsList = staticMetrics.containsList(snippet);
 
-        if ([missingInfo, shortCode, multipleCodeSnippets, descriptionForLang, containsList].some(test => test)) {
+        if ([missingInfo, shortCode, descriptionForLang, containsList].some(test => test)) {
           improperFormatting++;
         }
       }
@@ -46,7 +45,7 @@ export class StaticEvaluator {
 
   /**
    * Evaluates the frequency of project metadata in the snippets
-   * @returns The average score
+   * @returns The average score for the library
    */
   metadata(): StaticEvaluatorOutput {
     try {
@@ -70,7 +69,7 @@ export class StaticEvaluator {
 
   /**
    * Evaluates the frequency of initialization information in the snippets
-   * @returns The average score
+   * @returns The average score for the library
    */
   initialization(): StaticEvaluatorOutput {
     try {

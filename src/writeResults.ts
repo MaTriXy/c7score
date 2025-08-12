@@ -1,7 +1,8 @@
 import fs from "fs/promises";
 import { ProjectData } from "./types";
+
 /**
- * Converts the scores and average score into an object.
+ * Converts the scores and average score into an object
  * @param productName - The name of the product
  * @param scores - The scores to convert
  * @param averageScore - The average score to convert
@@ -17,8 +18,10 @@ export const convertScorestoObject = (productName: string, scores: ProjectData["
 }
 
 /**
- * Writes the convertScoresToObject results to a machine-readable JSON file.
+ * Writes the convertScoresToObject results to a machine-readable JSON file
  * @param input - The input to write to the file
+ * @param reportOptions - The options for the report, specifically the folder path
+ * @param compare - Whether the report is for a comparison or individual library
  */
 export const machineReadableReport = async (input: Record<string, ProjectData>, reportOptions: Record<string, any>, compare: boolean = false): Promise<void> => {
     if (reportOptions.folderPath) {
@@ -28,9 +31,11 @@ export const machineReadableReport = async (input: Record<string, ProjectData>, 
             const resultFile = await fs.readFile(filePath, "utf-8");
             obj = JSON.parse(resultFile);
         } catch (err) {
-            console.error(err);
-            obj = {};
-
+            if (err instanceof Error && err.message.includes("ENOENT")) {
+                obj = {}
+            } else {
+                throw err;
+            }
         }
         // Assumes the data we add only has one project
         const projectName = Object.keys(input)[0];
@@ -42,10 +47,11 @@ export const machineReadableReport = async (input: Record<string, ProjectData>, 
 }
 
 /**
- * Writes the full results to a human-readable text file.
+ * Writes the full results to a human-readable text file
  * @param library - The name of the library
  * @param fullResults - The full results to write
- * @param directory - The directory to write the file to
+ * @param reportOptions - The options for the report, specifically the folder path and console output
+ * @param compare - Whether the report is for a comparison or individual library
  */
 export const humanReadableReport = async (library: string, fullResults: Record<string, any>, reportOptions: Record<string, any>, compare: boolean = false): Promise<void> => {
     const toSave = [
@@ -70,7 +76,7 @@ export const humanReadableReport = async (library: string, fullResults: Record<s
     ]
     if (reportOptions.folderPath) {
         const directory = reportOptions.folderPath;
-        await fs.writeFile(`${directory}/result${compare ? "-compare" : ""}-${library.replace(/\/\.\_/g, "-").toLowerCase()}.txt`, toSave.join("\n\n"));
+        await fs.writeFile(`${directory}/result${compare ? "-compare" : ""}-${library.replace(/[/._]/g, "-").toLowerCase()}.txt`, toSave.join("\n\n"));
     }
     if (reportOptions.console) {
         console.log(toSave.join("\n\n"));

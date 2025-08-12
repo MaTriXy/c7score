@@ -1,7 +1,6 @@
 import { getScore } from "../src/getScore";
 import fs from "fs/promises";
 
-
 /**
  * Gets the top n libraries from Context7
  * @returns The top n libraries as an array of strings
@@ -18,7 +17,6 @@ export async function getPopLibraries(top_num: number): Promise<string[]> {
     const topPopLibraries = Object.keys(popLibraries).slice(0, top_num);
     return topPopLibraries;
 }
-
 
 async function main() {
 
@@ -40,25 +38,68 @@ async function main() {
     for (const library of libraries) {
         try {
             console.log(`Working on ${library}...`)
-            await getScore(library, 
-                { 
-                report: {
-                    console: true,
-                    folderPath: `${__dirname}/../results`
-                },
-                weights: {
-                question: 0.8,
-                llm: 0.05,
-                formatting: 0.05,
-                metadata: 0.025,
-                initialization: 0.025,
-                },
-                llm: {
-                    temperature: 0.9,
-                    topP: 0.85,
-                    topK: 45
-                }
-        });
+            await getScore(library,
+                {
+                    report: {
+                        console: true,
+                        folderPath: `${__dirname}/../results`
+                    },
+                    weights: {
+                        question: 0.8,
+                        llm: 0.05,
+                        formatting: 0.05,
+                        metadata: 0.025,
+                        initialization: 0.025,
+                    },
+                    llm: {
+                        temperature: 0.9,
+                        topP: 0.85,
+                        topK: 45
+                    },
+                    prompts: {
+                        searchTopics: `
+                                For each question about {{product}}, generate 5 topics thatshould help find the most 
+                                relevant documentation and code examples.
+
+                                Here are the questions: {{questions}}
+                                `,
+                        questionEvaluation: `
+                                You are evaluating documentation context for its quality and relevance in helping an AI 
+                                coding assistant answer the following question:
+
+                                Questions: {{questions}}
+
+                                Context: {{contexts}}
+
+                                For each question, evaluate and score the context from 0-100 based on the following criteria:
+                                1. Relevance to the specific question (50%)
+                                2. Code example quality and completeness (25%)
+                                3. Practical applicability (15%)
+                                4. Coverage of requested features (10%)
+
+                                Your response should contain a list of scores, one average score, and one explanation for each score.
+                                `,
+                        llmEvaluation: `
+                                Rate the quality of the snippets using the criteria. 
+                                Your total score for the snippets should be between 0 and 100, 
+                                where 0 is the indicates that the snippets did not meet the criteria 
+                                at all, 50 is the criteria was partially met, and 100 is the 
+                                criteria was fully met with no room for improvement.
+                                The snippets are separated by {{snippetDelimiter}} 
+                                and the code blocks are enclosed in \`\`\`.
+                                Your scores should represent a ratio of how many
+                                snippets meet the criterion out of the total number of snippets.
+                                
+                                Criteria:
+                                1. Relevance to the specific question (55%)
+                                2. Code example quality and completeness (45%).
+
+                                In your response, include the average score and the explanation for each score.
+
+                                Snippets: {{snippets}}
+                                `
+                    }
+                });
 
         } catch (error) {
             console.error(`${library} error: ${error}`);

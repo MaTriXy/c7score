@@ -21,15 +21,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/upstash/ContextTrace"
+    "url": "git+https://github.com/upstash/c7score"
   },
   "keywords": [],
   "author": "Shannon Rumsey",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/upstash/ContextTrace/issues"
+    "url": "https://github.com/upstash/c7score/issues"
   },
-  "homepage": "https://github.com/upstash/ContextTrace",
+  "homepage": "https://github.com/upstash/c7score",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.57.0",
     "@google/genai": "^1.9.0",

@@ -1,3 +1,17 @@
+export interface QuestionEvaluationOutput {
+    questionScores: number[];
+    questionAverageScore: number;
+    questionExplanations: string[];
+}
+
+export interface QuestionEvaluationPairOutput {
+    questionScores: number[][];
+    questionAverageScores: number[];
+    questionExplanations: string[][];
+}
+
+export type Category = "TITLE" | "DESCRIPTION" | "SOURCE" | "LANGUAGE" | "CODE";
+
 export interface LLMScoresCompare {
     llmAverageScores: number[];
     llmExplanations: string[];
@@ -19,21 +33,6 @@ export interface StaticEvaluatorOutput {
     averageScore: number;
 }
 
-export interface QuestionEvaluationOutput {
-    questionScores: number[];
-    questionAverageScore: number;
-    questionExplanations: string[];
-}
-
-
-export interface QuestionEvaluationPairOutput {
-    questionScores: number[][];
-    questionAverageScores: number[];
-    questionExplanations: string[][];
-}
-
-export type Category = "TITLE" | "DESCRIPTION" | "SOURCE" | "LANGUAGE" | "CODE";
-
 export interface evalOptions {
     report?: {
         console?: boolean;
@@ -51,6 +50,11 @@ export interface evalOptions {
         topP: number;
         topK: number;
     };
+    prompts?: {
+        searchTopics?: string;
+        questionEvaluation?: string;
+        llmEvaluation?: string;
+    }
 }
 
 export interface ProjectData {

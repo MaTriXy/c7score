@@ -8,19 +8,18 @@ import { Octokit } from 'octokit';
 /**
  * Checks if the library has any redirects
  * @param library - The library to check
- * @returns The redirect if it exists, otherwise an empty string
+ * @returns The redirected library if it exists, otherwise the original library
  */
-export async function checkRedirects(library: string): Promise<string> {
+export async function checkRedirects(library: string, headerConfig: object): Promise<string> {
     try {
         const context7Libraries = `https://context7.com/api/v1/${library}?tokens=10000`;
-        await axios.get(context7Libraries);
+        await axios.get(context7Libraries, headerConfig);
         return library;
     } catch (error) {
         if (error instanceof AxiosError && error.response?.status === 404) {
             const redirectKeyword = `Library ${library} has been redirected to this library: `
             const errorMessage = error.response.data;
             if (errorMessage.includes(redirectKeyword)) {
-                console.log("Redirect found for", library);
                 const newLibrary = errorMessage.split(redirectKeyword)[1].split(".").slice(0, -1).join(".").trim();
                 return newLibrary;
             }
@@ -30,7 +29,7 @@ export async function checkRedirects(library: string): Promise<string> {
 }
 
 /**
- * Creates a JSON file for the questions
+ * Creates a JSON file for the questions in the c7score repo
  * @param product - The product to create the file for
  * @param questions - The questions to create the file for
  */
@@ -45,7 +44,7 @@ export async function createQuestionFile(product: string, questions: string, git
     const questionJson = JSON.stringify(isolatedQuestions, null, 2);
     await githubClient.rest.repos.createOrUpdateFileContents({
         owner: "upstash",
-        repo: "ContextTrace",
+        repo: "c7score",
         path: `benchmark-questions/${product}.json`,
         message: `Add questions file for ${product}`,
         content: Buffer.from(questionJson).toString('base64'),
@@ -54,13 +53,13 @@ export async function createQuestionFile(product: string, questions: string, git
 }
 
 /**
- * Scrapes snippets from the Context7 API.
+ * Scrapes snippets from the Context7 API
  * @param library - The library to scrape snippets from
  * @param headerConfig - The header config to use for the Context7 API
  * @returns The scraped snippets
  */
 export async function scrapeContext7Snippets(library: string, headerConfig: object): Promise<string> {
-    const context7Url = `https://context7.com/api/v1${library}?tokens=10000`
+    const context7Url = `https://context7.com/api/v1/${library}?tokens=10000`
     const response = await axios.get(context7Url, headerConfig);
     const snippet_title = "=".repeat(24) + "\nCODE SNIPPETS\n" + "=".repeat(24);
     const snippets = String(response.data).replace(snippet_title, "");
@@ -68,9 +67,9 @@ export async function scrapeContext7Snippets(library: string, headerConfig: obje
 }
 
 /**
- * Runs the LLM on a prompt. This is for evaluating context and LLM metrics.
+ * Runs the LLM on a prompt. This is for evaluating question and LLM metrics.
  * @param prompt - The prompt to run the LLM on
- * @param config - The config to use. Specifies formatting and tool calling.
+ * @param config - The config to use, which specifies formatting, tool calling, and model configuration.
  * @param client - The client to use for the LLM evaluation
  * @returns The response from the LLM
  */
@@ -111,7 +110,7 @@ export async function runLLM(prompt: string, config: Record<string, any>, client
 /**
  * Runs all three static analysis metrics on the snippets
  * @param snippets - The snippets to run static analysis on
- * @returns The average score for each metric
+ * @returns The average scores for each metric
  */
 export function runStaticAnalysis(snippets: string): {
     formatting: StaticEvaluatorOutput,
@@ -126,9 +125,9 @@ export function runStaticAnalysis(snippets: string): {
 }
 
 /**
- * Calculates the average score based on context, static analysis, and LLM metrics.
+ * Calculates the final average score based on context, static analysis, and LLM metrics
  * @param scores - The scores used to calculate the weighted average
- * @param weights - The weights to use for the average score (optional)
+ * @param weights - The weights to use for the weighted average
  * @returns The weighted average score
  */
 export function calculateAverageScore(scores: Metrics, weights: Record<string, number>): number {

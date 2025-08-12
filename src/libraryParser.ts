@@ -15,7 +15,7 @@ export function identifyProduct(library: string): string {
 }
 
 /**
- * Determines if a product has an existing questions file
+ * Determines if a product has an existing questions file in the c7score repo
  * @param newProduct - The product to identify the file for
  * @returns The file path if a match is found, null otherwise
  */
@@ -23,7 +23,7 @@ export async function identifyProductFile(newProduct: string, githubClient: Octo
     try {
         const questions = await githubClient.rest.repos.getContent({
             owner: "upstash",
-            repo: "ContextTrace",
+            repo: "c7score",
             path: "benchmark-questions",
             ref: "main"
         });
