@@ -1,0 +1,17 @@
+{
+  "Question 1": "How do I build a responsive form with validation for email, password, and required fields in ui?",
+  "Question 2": "Show me the code for a responsive navigation bar with a hamburger menu for mobile and dropdowns for desktop in ui.",
+  "Question 3": "How can I create a data table in ui that supports sorting, pagination, and a search filter?",
+  "Question 4": "Provide an example of a modal component in ui that animates on open/close and traps focus for accessibility.",
+  "Question 5": "What is the standard way to implement a dark mode toggle that persists across sessions using ui components and theme providers?",
+  "Question 6": "How do I override the default styles of a ui Button component, like changing its border-radius and box-shadow, without using `!important`?",
+  "Question 7": "Generate a ui card component that includes an image, a title, a description with truncated text, and tags.",
+  "Question 8": "How can I create a multi-step \"wizard\" form with progress indicators using ui?",
+  "Question 9": "Show me how to add a custom animated loading spinner to a ui component while its data is being fetched.",
+  "Question 10": "How do I implement a lazy-loaded responsive image grid in ui for better performance?",
+  "Question 11": "How can I build a complex layout with resizable and draggable panes, similar to a VS Code interface, using ui?",
+  "Question 12": "Show me how to create a custom, animated chart or graph component in ui that updates in real-time with new data.",
+  "Question 13": "How do I manage focus and keyboard navigation correctly within nested modals or popovers for advanced accessibility compliance in ui?",
+  "Question 14": "What's the best approach for creating a dynamic theming system in ui that allows users to pick their own primary colors and font sizes?",
+  "Question 15": "How can I create a parallax scrolling effect on a hero image behind other ui components as the user scrolls down the page?"
+}
