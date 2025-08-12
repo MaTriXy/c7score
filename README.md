@@ -37,21 +37,9 @@ contextTrace.getScore(
     prompt:
         {
             questionEvaluation: `
-                                You are evaluating documentation context for its quality and relevance in helping an AI 
-                                coding assistant answer the following question:
-
-                                Questions: {{questions}}
-
-                                Context: {{contexts}}
-
-                                For each question, evaluate and score the context from 0-100 based on the following criteria:
-                                1. Relevance to the specific question (50%)
-                                2. Code example quality and completeness (25%)
-                                3. Practical applicability (15%)
-                                4. Coverage of requested features (10%)
-
-                                Your response should contain a list of scores, one average score, and one explanation for each score.
-                                `
+                    You are evaluating documentation 
+                    ...
+                    `
         }
     }
 );
@@ -74,26 +62,9 @@ contextTrace.compareLibraries(
     prompt:
         {   
             questionEvaluation: `
-                                You are evaluating two different documentation contexts for their quality and relevance in helping an AI 
-                                coding assistant answer the following question:
-
-                                Questions: {{questions}}
-
-                                Contexts ({{contexts[0]}} and {{contexts[1]}}):
-
-                                For each question, evaluate and score the context from 0-100 based on the following criteria:
-                                1. Relevance to the specific question (40%)
-                                2. Code example quality and completeness (25%)
-                                3. Practical applicability (15%)
-                                4. Coverage of requested features (15%)
-                                5. Clarity and organization (5%)
-
-                                Your response should contain one list that contains two sublists for each context (4 in total), where the first sublist represents 
-                                your responses for the first context and the second sublist represents your responses for the second context. 
-                                Each sublist should have two sublists, where the first sublist represents the scores for each question,
-                                and should have 15 elements. The second sublist represents the correspond explanations for each score,
-                                and should also have 15 elements. Each context will return an average score, with a total of 2 average scores.
-                                `
+                    You are evaluating two different 
+                    documentation contexts ...
+                    `
         }
     }
 );
@@ -182,12 +153,15 @@ context-trace getscore "/facebook/react" -c '{
         },
     "prompts":
         {
-            "searchTopics": "For each question about {{product}}, generate 5 topics that should help find the most relevant documentation and code examples. Here are the questions: {{questions}}"
+            "searchTopics": "For each question ..."
         }
 }'
 
 
-context-trace comparelibraries "/tailwindlabs/tailwindcss.com" "/context7/tailwindcss" -c '{
+context-trace \ 
+    comparelibraries \ 
+    "/tailwindlabs/tailwindcss.com" \ 
+    "/context7/tailwindcss" -c '{
     "report": 
         {
             "console": true
