@@ -27,7 +27,8 @@ export const questionEvaluationPrompt = (contexts: string[][], questions: string
         2. Practical applicability (15%)
         3. Coverage of requested features (35%)
 
-        Your response should contain a list of scores, one average score, and one explanation for each score.
+        Your response should contain a list of scores, one average score, and an explanation.
+        Make sure that the explanation is 1-2 sentences. Separate each sentence in the explanation with a new line.
         `;
 
     if (newPrompt) {
@@ -50,16 +51,14 @@ export const questionEvaluationPromptCompare = (contexts: string[][][], question
         2. Practical applicability (15%)
         3. Coverage of requested features (35%)
 
-        Your response should contain one list that contains two sublists for each context (4 in total), where the first sublist represents 
-        your responses for the first context and the second sublist represents your responses for the second context. 
-        Each sublist should have two sublists, where the first sublist represents the scores for each question,
-        and should have 15 elements. The second sublist represents the correspond explanations for each score,
-        and should also have 15 elements. Each context will return an average score, with a total of 2 average scores.
+        Your response should contain a nested list where each sublist contains the 15 scores associated with the context. 
+        The first of the sublists corresponds to the first context, and the second corresponds to the second context. 
+        You should also return a list that contains the average score for each context and a list of two explanations, 
+        one for each context. Make sure that each explanation is 1-2 sentences and each sentence is separated by a new line.
         `;
 
     if (newPrompt) {
         prompt = newPrompt.replace("{{contexts[0]}}", contexts[0].toString()).replace("{{contexts[1]}}", contexts[1].toString()).replace("{{questions}}", questions);
-        console.log(prompt);
     }
     return prompt;
 }
@@ -86,7 +85,8 @@ export const llmEvaluationPrompt = (snippets: string, snippetDelimiter: string, 
         that you can easily isolate the code (e.g., no placeholders or ellipses). The programming language of 
         the code snippet is correct.
 
-        In your response, include the average score and the explanation for each score.
+        In your response, include the average score and a 1-2 sentence explanation for the score.
+        Make sure that each sentence is separated by a new line.
 
         Snippets: ${snippets}
         `;
@@ -119,7 +119,8 @@ export const llmEvaluationPromptCompare = (snippets: string[], snippetDelimiter:
         that you can easily isolate the code (e.g., no placeholders or ellipses). The programming language of 
         the code snippet is correct.
 
-        In your response, include the average score and the explanation of the score for each snippet source.
+        In your response, include the average score and a 1-2 sentence explanation of the score for each snippet source.
+        Make sure that each sentence is separated by a new line.
 
         Snippets 1: ${snippets[0]}
         Snippets 2: ${snippets[1]}
@@ -127,7 +128,6 @@ export const llmEvaluationPromptCompare = (snippets: string[], snippetDelimiter:
 
     if (newPrompt) {
         prompt = newPrompt.replace("{{snippets[0]}}", snippets[0]).replace("{{snippets[1]}}", snippets[1]).replace("{{snippetDelimiter}}", snippetDelimiter);
-        console.log("Using new llm evaluation prompt compare");
     }
     return prompt;
 }

@@ -110,7 +110,6 @@ export async function compareLibraries(
     ));
 
     const questionResponse = await search.evaluateQuestionsPair(questions, contexts);
-    console.log(questionResponse);
 
     const snippets = await Promise.all(newLibraryList.map(newLibrary =>
         scrapeContext7Snippets(newLibrary, headerConfig)
@@ -139,7 +138,6 @@ export async function compareLibraries(
 
         const fullResults = {
             averageScore: averageScore,
-            questionScore: questionResponse.questionScores[i],
             questionAverageScore: questionResponse.questionAverageScores[i],
             questionExplanation: questionResponse.questionExplanations[i],
             llmAverageScore: llmResponse.llmAverageScores[i],

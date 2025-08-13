@@ -123,7 +123,7 @@ export class Search {
      * Evaluates how well the snippets answer the questions based on 5 criteria.
      * @param questions - The questions to evaluate
      * @param contexts - The context/code snippets per topic
-     * @returns The scores, average score, and explanations for each context collection
+     * @returns The average scores and explanations for each context collection
      */
     async evaluateQuestionsPair(questions: string, contexts: string[][][]): Promise<QuestionEvaluationPairOutput> {
         const prompt = questionEvaluationPromptCompare(contexts, questions, this.prompts?.questionEvaluation);
@@ -132,23 +132,21 @@ export class Search {
             responseSchema: {
                 type: Type.OBJECT,
                 properties: {
-                    questionScores: { type: Type.ARRAY, minItems: contexts.length, items: { type: Type.ARRAY, minItems: 15, items: { type: Type.NUMBER } } },
                     questionAverageScores: { type: Type.ARRAY, minItems: contexts.length, items: { type: Type.NUMBER } },
                     questionExplanations: { type: Type.ARRAY, minItems: contexts.length, items: { type: Type.STRING } }
                 },
-                required: ["questionScores", "questionAverageScores", "questionExplanations"],
+                required: ["questionAverageScores", "questionExplanations"],
             },
             ...this.llmConfig
         }
         const response = await runLLM(prompt, config, this.client);
         const jsonResponse = JSON.parse(response);
-        if (jsonResponse.questionScores == undefined || jsonResponse.questionAverageScores == undefined || jsonResponse.questionExplanations == undefined) {
+        if (jsonResponse.questionAverageScores == undefined || jsonResponse.questionExplanations == undefined) {
             throw new Error("Question scores are undefined");
         } else {
             return {
-                questionScores: jsonResponse.questionScores as number[][],
                 questionAverageScores: jsonResponse.questionAverageScores as number[],
-                questionExplanations: jsonResponse.questionExplanations as string[][]
+                questionExplanations: jsonResponse.questionExplanations as string[]
             }
         }
     }
@@ -157,7 +155,7 @@ export class Search {
      * Evaluates how well the snippets answer the questions based on 5 criteria.
      * @param questions - The questions to evaluate
      * @param contexts - The context/code snippets per topic
-     * @returns The scores, average score, and explanations for the context collection
+     * @returns The average score and explanation for the context collection
      */
     async evaluateQuestions(questions: string, contexts: string[][]): Promise<QuestionEvaluationOutput> {
         const prompt = questionEvaluationPrompt(contexts, questions, this.prompts?.questionEvaluation);
@@ -166,24 +164,22 @@ export class Search {
             responseSchema: {
                 type: Type.OBJECT,
                 properties: {
-                    questionScores: { type: Type.ARRAY, items: { type: Type.NUMBER } },
                     questionAverageScore: { type: Type.NUMBER },
-                    questionExplanations: { type: Type.ARRAY, items: { type: Type.STRING } }
+                    questionExplanation: { type: Type.STRING }
                 },
-                required: ["questionScores", "questionAverageScore", "questionExplanations"],
+                required: ["questionAverageScore", "questionExplanation"],
             },
             ...this.llmConfig
         }
 
         const response = await runLLM(prompt, config, this.client);
         const jsonResponse = JSON.parse(response);
-        if (jsonResponse.questionScores == undefined || jsonResponse.questionAverageScore == undefined || jsonResponse.questionExplanations == undefined) {
+        if (jsonResponse.questionAverageScore == undefined || jsonResponse.questionExplanation == undefined) {
             throw new Error("Question scores are undefined");
         } else {
             return {
-                questionScores: jsonResponse.questionScores as number[],
                 questionAverageScore: jsonResponse.questionAverageScore as number,
-                questionExplanations: jsonResponse.questionExplanations as string[]
+                questionExplanation: jsonResponse.questionExplanation as string
             }
         }
     }

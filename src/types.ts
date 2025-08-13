@@ -1,13 +1,11 @@
 export interface QuestionEvaluationOutput {
-    questionScores: number[];
     questionAverageScore: number;
-    questionExplanations: string[];
+    questionExplanation: string;
 }
 
 export interface QuestionEvaluationPairOutput {
-    questionScores: number[][];
     questionAverageScores: number[];
-    questionExplanations: string[][];
+    questionExplanations: string[];
 }
 
 export type Category = "TITLE" | "DESCRIPTION" | "SOURCE" | "LANGUAGE" | "CODE";

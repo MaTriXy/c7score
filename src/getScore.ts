@@ -112,9 +112,8 @@ export async function getScore(
 
     const fullResults = {
         averageScore: averageScore,
-        questionScore: questionResponse.questionScores,
         questionAverageScore: questionResponse.questionAverageScore,
-        questionExplanation: questionResponse.questionExplanations,
+        questionExplanation: questionResponse.questionExplanation,
         llmAverageScore: llmResponse.llmAverageScore,
         llmExplanation: llmResponse.llmExplanation,
         formattingAvgScore: formatting.averageScore,
