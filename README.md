@@ -3,11 +3,11 @@
 The `context-trace` package is used to evaluate the quality of Upstash's Context7 MCP snippets.
 
 ## Metrics
-`context-trace` uses the following five metrics to grade quality. The metrics can be divided into two groups: LLM analysis and static analysis.
+`context-trace` uses the following five metrics to grade quality. The metrics can be divided into two groups: LLM analysis and rule-based text analysis.
 1. LLM Analysis
     * Metric 1 (Question-Snippet Comparison): How well the snippets answer common developer questions.
     * Metric 2 (LLM substitute for human eval): Evaluates snippet relevancy, clarity, and correctness. 
-2. Static Analysis
+2. Text Analysis
     * Metric 3 (Formatting): Determines whether the snippets have the expected format. 
     * Metric 4 (Project Metadata): Checks for irrelevant project information.
     * Metric 5 (Initialization): Looks for basic import and installation statements.

@@ -29,7 +29,7 @@ export interface Metrics {
     initialization: number;
 }
 
-export interface StaticEvaluatorOutput {
+export interface TextEvaluatorOutput {
     averageScore: number;
 }
 

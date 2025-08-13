@@ -73,9 +73,7 @@ async function main() {
 
                                 For each question, evaluate and score the context from 0-100 based on the following criteria:
                                 1. Relevance to the specific question (50%)
-                                2. Code example quality and completeness (25%)
-                                3. Practical applicability (15%)
-                                4. Coverage of requested features (10%)
+                                2. Coverage of requested features (50%)
 
                                 Your response should contain a list of scores, one average score, and one explanation for each score.
                                 `,
@@ -91,8 +89,11 @@ async function main() {
                                 snippets meet the criterion out of the total number of snippets.
                                 
                                 Criteria:
-                                1. Relevance to the specific question (55%)
-                                2. Code example quality and completeness (45%).
+                                1. Unique Information (50%): Snippets contain unique information that is not already included in 
+                                another snippet. There can be some overlap, but the snippets should not be identical.
+                                2. Correct Syntax (50%): No snippets contain any obvious syntax errors. Snippets are formatted in such a way 
+                                that you can easily isolate the code (e.g., no placeholders or ellipses). The programming language of 
+                                the code snippet is correct.
 
                                 In your response, include the average score and the explanation for each score.
 

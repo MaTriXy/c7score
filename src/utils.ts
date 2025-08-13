@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
-import { StaticEvaluator } from './staticEval';
-import { Metrics, StaticEvaluatorOutput } from './types';
+import { TextEvaluator } from './textEval';
+import { Metrics, TextEvaluatorOutput } from './types';
 import { GoogleGenAI } from '@google/genai';
 import { backOff } from 'exponential-backoff';
 import { Octokit } from 'octokit';
@@ -108,24 +108,24 @@ export async function runLLM(prompt: string, config: Record<string, any>, client
 }
 
 /**
- * Runs all three static analysis metrics on the snippets
- * @param snippets - The snippets to run static analysis on
+ * Runs all three text analysis metrics on the snippets
+ * @param snippets - The snippets to run text analysis on
  * @returns The average scores for each metric
  */
-export function runStaticAnalysis(snippets: string): {
-    formatting: StaticEvaluatorOutput,
-    metadata: StaticEvaluatorOutput,
-    initialization: StaticEvaluatorOutput
+export function runTextAnalysis(snippets: string): {
+    formatting: TextEvaluatorOutput,
+    metadata: TextEvaluatorOutput,
+    initialization: TextEvaluatorOutput
 } {
-    const staticEvaluator = new StaticEvaluator(snippets);
-    const formatting = staticEvaluator.formatting();
-    const metadata = staticEvaluator.metadata();
-    const initialization = staticEvaluator.initialization();
+    const textEvaluator = new TextEvaluator(snippets);
+    const formatting = textEvaluator.formatting();
+    const metadata = textEvaluator.metadata();
+    const initialization = textEvaluator.initialization();
     return { formatting, metadata, initialization };
 }
 
 /**
- * Calculates the final average score based on context, static analysis, and LLM metrics
+ * Calculates the final average score based on context, text analysis, and LLM metrics
  * @param scores - The scores used to calculate the weighted average
  * @param weights - The weights to use for the weighted average
  * @returns The weighted average score

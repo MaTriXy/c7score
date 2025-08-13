@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 import { program } from 'commander';
-import * as staticMetrics from '../src/staticMetrics';
+import * as textMetrics from '../src/textMetrics';
 import { scrapeContext7Snippets } from '../src/utils';
 
 // Note: test URL information may change when snippets are refreshed on website
@@ -17,12 +17,12 @@ const headerConfig = {
     }
 }
 
-async function staticTester(): Promise<void> {
+async function textMetricsTester(): Promise<void> {
     for (const [metricName, libraries] of Object.entries(testCases)) {
         for (const [library, answer] of Object.entries(libraries)) {
             const scrapedSnippets = await scrapeContext7Snippets(library, headerConfig);
             const snippets = scrapedSnippets.split('-'.repeat(40));
-            if (snippets.some(snippet => (staticMetrics as any)[metricName](snippet)) === answer) {
+            if (snippets.some(snippet => (textMetrics as any)[metricName](snippet)) === answer) {
                 console.log(`✅ ${metricName} is correct for ${library}`);
             } else {
                 console.log(`❌ ${metricName} is incorrect for ${library}`);
@@ -56,7 +56,7 @@ const testCases: { [key: string]: Record<string, boolean> } = {
     containsList: {
         '/directus/directus': true,
         '/context7/ctrl-plex_vercel_app': true,
-        '/mhsanaei/3x-ui': false,
+        '/mhsanaei/3x-ui': true,
     },
     citations: {
         '/cleardusk/3ddfa_v2': true,
@@ -89,7 +89,7 @@ const testCases: { [key: string]: Record<string, boolean> } = {
 
 program
     .action(() => {
-        staticTester();
+        textMetricsTester();
     });
 
 program.parse(process.argv);

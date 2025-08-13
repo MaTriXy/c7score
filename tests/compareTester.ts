@@ -41,8 +41,8 @@ async function main() {
                     Contexts ({{contexts[0]}}, {{contexts[1]}}):
 
                     For each question, evaluate and score the context from 0-100 based on the following criteria:
-                    1. Relevance to the specific question (55%)
-                    2. Code example quality and completeness (45%)
+                    1. Relevance to the specific question (50%)
+                    2. Coverage of requested features (50%)
 
                     Your response should contain one list that contains two sublists for each context (4 in total), where the first sublist represents 
                     your responses for the first context and the second sublist represents your responses for the second context. 
@@ -61,7 +61,7 @@ async function main() {
                     Criteria:
                     1. Unique Information (50%): Snippets contain unique information that is not already included in 
                     another snippet. There can be some overlap, but the snippets should not be identical.
-                    3. Correct Syntax (50%): No snippets contain any obvious syntax errors. Snippets are formatted in such a way 
+                    2. Correct Syntax (50%): No snippets contain any obvious syntax errors. Snippets are formatted in such a way 
                     that you can easily isolate the code (e.g., no placeholders or ellipses). The programming language of 
                     the code snippet is correct.
 

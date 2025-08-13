@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { Search } from './search';
 import { LLMEvaluator } from './llmEval'
-import { scrapeContext7Snippets, runStaticAnalysis, calculateAverageScore, checkRedirects, createQuestionFile } from './utils';
+import { scrapeContext7Snippets, runTextAnalysis, calculateAverageScore, checkRedirects, createQuestionFile } from './utils';
 import { identifyProduct, identifyProductFile } from './libraryParser';
 import { humanReadableReport, machineReadableReport, convertScorestoObject } from './writeResults';
 import { evalOptions } from './types';
@@ -98,7 +98,7 @@ export async function getScore(
         formatting,
         metadata,
         initialization,
-    } = runStaticAnalysis(snippets);
+    } = runTextAnalysis(snippets);
 
     const scores = {
         question: questionResponse.questionAverageScore,

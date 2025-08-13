@@ -23,11 +23,9 @@ export const questionEvaluationPrompt = (contexts: string[][], questions: string
         Context: ${contexts}
 
         For each question, evaluate and score the context from 0-100 based on the following criteria:
-        1. Relevance to the specific question (40%)
-        2. Code example quality and completeness (25%)
-        3. Practical applicability (15%)
-        4. Coverage of requested features (15%)
-        5. Clarity and organization (5%)
+        1. Relevance to the specific question (50%)
+        2. Practical applicability (15%)
+        3. Coverage of requested features (35%)
 
         Your response should contain a list of scores, one average score, and one explanation for each score.
         `;
@@ -48,11 +46,9 @@ export const questionEvaluationPromptCompare = (contexts: string[][][], question
         Contexts (${contexts[0]} and ${contexts[1]}):
 
         For each question, evaluate and score the context from 0-100 based on the following criteria:
-        1. Relevance to the specific question (40%)
-        2. Code example quality and completeness (25%)
-        3. Practical applicability (15%)
-        4. Coverage of requested features (15%)
-        5. Clarity and organization (5%)
+        1. Relevance to the specific question (50%)
+        2. Practical applicability (15%)
+        3. Coverage of requested features (35%)
 
         Your response should contain one list that contains two sublists for each context (4 in total), where the first sublist represents 
         your responses for the first context and the second sublist represents your responses for the second context. 

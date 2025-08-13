@@ -1,7 +1,7 @@
-import { StaticEvaluatorOutput } from './types';
-import * as staticMetrics from './staticMetrics';
+import { TextEvaluatorOutput } from './types';
+import * as metrics from './textMetrics';
 
-export class StaticEvaluator {
+export class TextEvaluator {
   private snippets: string;
 
   constructor(snippets: string) {
@@ -20,17 +20,17 @@ export class StaticEvaluator {
    * Evaluates the formatting of snippets
    * @returns The average score for the library
    */
-  formatting(): StaticEvaluatorOutput {
+  formatting(): TextEvaluatorOutput {
     try {
       const snippetsList = this.splitSnippets();
       let improperFormatting = 0;
 
       for (const snippet of snippetsList) {
 
-        const missingInfo = staticMetrics.snippetIncomplete( snippet);
-        const shortCode = staticMetrics.codeSnippetLength(snippet);
-        const descriptionForLang = staticMetrics.languageDesc(snippet);
-        const containsList = staticMetrics.containsList(snippet);
+        const missingInfo = metrics.snippetIncomplete( snippet);
+        const shortCode = metrics.codeSnippetLength(snippet);
+        const descriptionForLang = metrics.languageDesc(snippet);
+        const containsList = metrics.containsList(snippet);
 
         if ([missingInfo, shortCode, descriptionForLang, containsList].some(test => test)) {
           improperFormatting++;
@@ -47,16 +47,16 @@ export class StaticEvaluator {
    * Evaluates the frequency of project metadata in the snippets
    * @returns The average score for the library
    */
-  metadata(): StaticEvaluatorOutput {
+  metadata(): TextEvaluatorOutput {
     try {
       const snippetsList = this.splitSnippets();
       let projectMetadata = 0;
 
       for (const snippet of snippetsList) {
 
-        const citations = staticMetrics.citations(snippet);
-        const licenseInfo = staticMetrics.licenseInfo(snippet);
-        const directoryStructure = staticMetrics.directoryStructure(snippet);
+        const citations = metrics.citations(snippet);
+        const licenseInfo = metrics.licenseInfo(snippet);
+        const directoryStructure = metrics.directoryStructure(snippet);
         if ([citations, licenseInfo, directoryStructure].some(test => test)) {
           projectMetadata++;
         }
@@ -71,15 +71,15 @@ export class StaticEvaluator {
    * Evaluates the frequency of initialization information in the snippets
    * @returns The average score for the library
    */
-  initialization(): StaticEvaluatorOutput {
+  initialization(): TextEvaluatorOutput {
     try {
       const snippetsList = this.splitSnippets();
       let initializationCheck = 0;
 
       for (const snippet of snippetsList) {
 
-        const imports = staticMetrics.imports(snippet);
-        const installs = staticMetrics.installs(snippet);
+        const imports = metrics.imports(snippet);
+        const installs = metrics.installs(snippet);
         if ([imports, installs].some(test => test)) {
           initializationCheck++;
         }

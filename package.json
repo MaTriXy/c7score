@@ -12,10 +12,10 @@
     "dev": "ts-node src/main.ts",
     "build": "tsc",
     "prepare": "npm run build",
-    "test": "npm run test-individual && npm run test-compare && npm run test-static",
+    "test": "npm run test-individual && npm run test-compare && npm run test-text-metrics",
     "test-individual": "ts-node tests/individualTester.ts",
     "test-compare": "ts-node tests/compareTester.ts",
-    "test-static": "ts-node tests/staticTester.ts",
+    "test-text-metrics": "ts-node tests/textMetricsTester.ts",
     "ctrace-worker": "node dist/bin/cli.js worker",
     "ctrace": "node dist/bin/cli.js compare"
   },

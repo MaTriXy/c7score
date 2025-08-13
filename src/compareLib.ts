@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { Search } from './search';
 import { LLMEvaluator } from './llmEval'
-import { scrapeContext7Snippets, runStaticAnalysis, calculateAverageScore, checkRedirects, createQuestionFile } from './utils';
+import { scrapeContext7Snippets, runTextAnalysis, calculateAverageScore, checkRedirects, createQuestionFile } from './utils';
 import { identifyProduct, identifyProductFile } from './libraryParser';
 import { fuzzy } from "fast-fuzzy";
 import { convertScorestoObject, humanReadableReport, machineReadableReport } from './writeResults';
@@ -125,7 +125,7 @@ export async function compareLibraries(
             formatting,
             metadata,
             initialization,
-        } = runStaticAnalysis(snippets[i]);
+        } = runTextAnalysis(snippets[i]);
 
         const scores = {
             question: questionResponse.questionAverageScores[i],

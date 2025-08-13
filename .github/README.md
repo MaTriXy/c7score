@@ -8,7 +8,7 @@ Given a source URL, prompt an LLM to determine 15 common questions a developer m
 ## LLM Eval `llmEval.ts`
 Uses an LLM to evaluate qualities that cannot be automated. This includes checking that the snippets contain unique information, are syntactically correct, and are clear. 
 
-## Static Metrics `staticEval.ts`
+## Rule-Based Text Metrics `textEval.ts`
 * `formatting`
     * Are any of the categories in a snippet missing?
     * Are any code snippets very short? Too short or too long could indicate unhelpful docs or information such as directory structure or lists
@@ -36,8 +36,8 @@ To run tests on comparison evaluation: `compareTester.ts`
     npm run test-compare
 
 
-To check that the static evaluation metrics work as expected: `staticTester.ts`
+To check that the text evaluation metrics work as expected: `textMetricsTester.ts`
 
-    npm run test-static
+    npm run test-text-metrics
 
-**Note:** the static test may become out-of-date when libraries are refreshed.
+**Note:** the text tests may become out-of-date when libraries are refreshed.
