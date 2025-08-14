@@ -1,0 +1,17 @@
+{
+  "Question 1": "How do I implement role-based access control (RBAC) in Supabase to create protected admin routes accessible only to users with an 'admin' role?",
+  "Question 2": "What is the most secure and efficient way to fetch data that only belongs to the currently authenticated user, and how do I write the corresponding Row Level Security (RLS) policy for it?",
+  "Question 3": "Show me how to build a multi-step form that saves a user's progress to a 'drafts' table on each step, and then, upon final submission, moves the data to a 'posts' table and deletes the draft.",
+  "Question 4": "How can I use Supabase Realtime to listen for new messages in a chat application and automatically scroll the chat window to the bottom when a new message is received?",
+  "Question 5": "What is the best practice for uploading a user's profile picture to Supabase Storage, generating a public URL for it, and then updating the 'avatar_url' field in the 'profiles' table for that user?",
+  "Question 6": "How do I implement infinite scroll pagination on a social media feed, fetching the next set of posts as the user scrolls down, and what are the performance benefits of using cursor-based pagination over offset?",
+  "Question 7": "How can I create a dark mode toggle that saves the user's preference to their `user_metadata` in Supabase Auth and applies the theme change instantly without a page reload?",
+  "Question 8": "How do I create a Supabase Edge Function that listens for a Stripe webhook to confirm a successful payment and then updates a user's 'subscription_status' in my database?",
+  "Question 9": "What is the best approach to building a responsive navigation bar that shows different links, like \"Dashboard\" and \"Logout\" for authenticated users, and \"Login\" for unauthenticated users, based on the user's session from Supabase?",
+  "Question 10": "How do I model a many-to-many relationship, such as 'students' and 'courses' with a 'enrollments' join table, and then write a query to fetch all courses a single student is enrolled in?",
+  "Question 11": "What is a robust strategy for implementing offline data synchronization for a mobile to-do list app, including how to handle data conflicts when the app reconnects to the internet?",
+  "Question 12": "Since the Supabase client library doesn't support traditional database transactions, how can I reliably perform multiple related database operations, like creating a new user and an associated profile, as a single atomic unit using a Postgres function?",
+  "Question 13": "How can I implement a smooth re-ordering animation for a list of items when their order is updated in real-time through a Supabase subscription?",
+  "Question 14": "How can I build a completely custom, multi-page authentication flow (including sign-up, sign-in, and password reset forms) with my own styling and animations, while securely using Supabase for the authentication logic?",
+  "Question 15": "How can I use a Supabase Edge Function to connect to a third-party API, fetch data, and then use that data to update multiple rows in my database, all while keeping the third-party API key secure?"
+}
