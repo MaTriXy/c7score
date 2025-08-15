@@ -152,7 +152,7 @@ export function imports(snippet: string): boolean {
       const codeSnippet = code.split("CODE:")
       const cleanedCode = codeSnippet[codeSnippet.length - 1].trim().replace(/```/g, "");
       const singleLine = cleanedCode.split(/\r?\n/).filter(line => line.trim() !== "").length == 1;
-      // Not a descriptive import statement
+      // Not a descriptive import statement such as a specific path
       const noPath = !cleanedCode.includes("/");
       return singleLine && noPath;
     })

@@ -9,7 +9,6 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "ts-node src/main.ts",
     "build": "tsc",
     "prepare": "npm run build",
     "test": "npm run test-individual && npm run test-compare && npm run test-text-metrics",

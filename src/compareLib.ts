@@ -19,9 +19,8 @@ export async function compareLibraries(
     library1: string,
     library2: string,
     configOptions?: evalOptions
-): Promise<void> {
+): Promise<void | Record<string, number>> {
 
-    // Configurations
     config();
     const envConfig = {
         GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
@@ -38,28 +37,9 @@ export async function compareLibraries(
             }
         }
     }
- 
-    // Defaults
-    const defaultConfigOptions = {
-        report: {
-            console: true
-        },
-        weights: {
-            question: 0.8,
-            llm: 0.05,
-            formatting: 0.05,
-            metadata: 0.025,
-            initialization: 0.025,
-        },
-        llm: {
-            temperature: 1.0,
-            topP: 0.95,
-            topK: 64
-        }
-    }
 
+    // Identify products of libraries and redirections
     const libraryList = [library1, library2];
-
     let prods = [];
     let newLibraryList = [];
     for (const library of libraryList) {
@@ -77,9 +57,9 @@ export async function compareLibraries(
         throw new Error(`${newLibraryList[0]} and ${newLibraryList[1]} do not have the same product`);
     }
 
-    const search = new Search(prods[0], client, configOptions?.llm ?? defaultConfigOptions.llm, configOptions?.prompts);
+    const search = new Search(prods[0], client, configOptions?.llm, configOptions?.prompts);
 
-    // Check if the product has an existing questions file
+    // Get questions file for product
     const filePath = await identifyProductFile(prods[0], githubClient);
     let questions = "";
     if (filePath === null) {
@@ -96,36 +76,42 @@ export async function compareLibraries(
             }
         });
         const contentFile = res.data
-        // Ensure that the contentFile is not a directory and content exists
         if (!Array.isArray(contentFile) && contentFile.type === "file" && contentFile.content) {
             questions = Buffer.from(contentFile.content, 'base64').toString('utf-8');
         } else {
             throw new Error("Content file is a directory or does not contain content.");
         }
     }
-    
+
+    // Generate search topics and fetch relevant snippets
     const searchTopics = await search.generateSearchTopics(questions);
     const contexts = await Promise.all(newLibraryList.map(newLibrary =>
         search.fetchRelevantSnippets(searchTopics, newLibrary, headerConfig)
     ));
 
+    // Questions evaluation
     const questionResponse = await search.evaluateQuestionsPair(questions, contexts);
 
+    // Scrape Context7 snippets
     const snippets = await Promise.all(newLibraryList.map(newLibrary =>
         scrapeContext7Snippets(newLibrary, headerConfig)
     ));
 
-    const llm_evaluator = new LLMEvaluator(client, configOptions?.llm ?? defaultConfigOptions.llm, configOptions?.prompts);
+    // LLM evaluation
+    const llm_evaluator = new LLMEvaluator(client, configOptions?.llm, configOptions?.prompts);
     const llmResponse = await llm_evaluator.llmEvaluateCompare(snippets);
 
+    let returnScores: Record<string, number> = {};
     for (let i = 0; i < newLibraryList.length; i++) {
 
+        // Text analysis
         const {
             formatting,
             metadata,
             initialization,
         } = runTextAnalysis(snippets[i]);
 
+        // Calculate scores
         const scores = {
             question: questionResponse.questionAverageScores[i],
             llm: llmResponse.llmAverageScores[i],
@@ -133,21 +119,27 @@ export async function compareLibraries(
             metadata: metadata.averageScore,
             initialization: initialization.averageScore,
         }
+        const averageScore = calculateAverageScore(scores, configOptions?.weights);
+        const roundedAverageScore = Math.round(averageScore);
 
-        const averageScore = calculateAverageScore(scores, configOptions?.weights ?? defaultConfigOptions.weights);
-
+        // Write results
         const fullResults = {
-            averageScore: averageScore,
-            questionAverageScore: questionResponse.questionAverageScores[i],
+            averageScore: roundedAverageScore,
+            questionAverageScore: Math.round(questionResponse.questionAverageScores[i]),
             questionExplanation: questionResponse.questionExplanations[i],
-            llmAverageScore: llmResponse.llmAverageScores[i],
+            llmAverageScore: Math.round(llmResponse.llmAverageScores[i]),
             llmExplanation: llmResponse.llmExplanations[i],
-            formattingAvgScore: formatting.averageScore,
-            metadataAvgScore: metadata.averageScore,
-            initializationAvgScore: initialization.averageScore,
+            formattingAvgScore: Math.round(formatting.averageScore),
+            metadataAvgScore: Math.round(metadata.averageScore),
+            initializationAvgScore: Math.round(initialization.averageScore),
         }
-        await humanReadableReport(newLibraryList[i], fullResults, configOptions?.report ?? defaultConfigOptions.report, true);
-        const scoresObject = convertScorestoObject(newLibraryList[i], scores, averageScore);
-        await machineReadableReport(scoresObject, configOptions?.report ?? defaultConfigOptions.report, true);
+        returnScores[newLibraryList[i]] = roundedAverageScore;
+        await humanReadableReport(newLibraryList[i], fullResults, configOptions?.report, true);
+        const scoresObject = convertScorestoObject(newLibraryList[i], scores, roundedAverageScore);
+        await machineReadableReport(scoresObject, configOptions?.report, true);
+    }
+
+    if (configOptions?.report?.returnScore) {
+        return returnScores as Record<string, number>;
     }
 }

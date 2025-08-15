@@ -1,13 +1,13 @@
+import axios from "axios";
 import { getScore } from "../src/getScore";
-import fs from "fs/promises";
 
 /**
  * Gets the top n libraries from Context7
  * @returns The top n libraries as an array of strings
  */
 export async function getPopLibraries(top_num: number): Promise<string[]> {
-    const data = await fs.readFile(`${__dirname}/../context7_api_stats.json`, "utf8");
-    const jsonData = JSON.parse(data);
+    const response = await axios.get("https://context7.com/api/stats", {timeout: 30000});
+    const jsonData = response.data as Record<string, any>;
     const libraries = jsonData["data"];
     const librariesByPop = Object.entries(libraries).reduce((acc, [key, value]) => {
         acc[key] = Object.values(value as Record<string, number>).reduce((sum: number, curr: number) => sum + curr, 0);
@@ -17,6 +17,7 @@ export async function getPopLibraries(top_num: number): Promise<string[]> {
     const topPopLibraries = Object.keys(popLibraries).slice(0, top_num);
     return topPopLibraries;
 }
+
 
 async function main() {
 

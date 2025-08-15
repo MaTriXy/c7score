@@ -16,9 +16,8 @@ import { config } from 'dotenv';
 export async function getScore(
     library: string,
     configOptions?: evalOptions
-): Promise<void> {
+): Promise<void | number> {
     
-    // Configurations
     config();
     const envConfig = {
         GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
@@ -36,31 +35,12 @@ export async function getScore(
             }
         }
     }
-
-    // Defaults
-    const defaultConfigOptions = {
-        report: {
-            console: true
-        },
-        weights: {
-            question: 0.8,
-            llm: 0.05,
-            formatting: 0.05,
-            metadata: 0.025,
-            initialization: 0.025,
-        },
-        llm: {
-            temperature: 1.0,
-            topP: 0.95,
-            topK: 64
-        }
-    }
-
+    // Identify product of library and redirections
     const redirect = await checkRedirects(library, headerConfig);
     const prod = identifyProduct(redirect);
-    const search = new Search(prod, client, configOptions?.llm ?? defaultConfigOptions.llm, configOptions?.prompts);
 
-    // Check if the product has an existing questions file
+    // Get questions file for product
+    const search = new Search(prod, client, configOptions?.llm, configOptions?.prompts);
     const filePath = await identifyProductFile(prod, githubClient);
     let questions = "";
     if (filePath === null) {
@@ -77,29 +57,35 @@ export async function getScore(
             }
         });
         const contentFile = res.data
-        // Ensure that the contentFile is not a directory and content exists
         if (!Array.isArray(contentFile) && contentFile.type === "file" && contentFile.content) {
             questions = Buffer.from(contentFile.content, 'base64').toString('utf-8');
         } else {
             throw new Error("Content file is a directory or does not contain content.");
         }
     }
+
+    // Generate search topics and fetch relevant snippets
     const searchTopics = await search.generateSearchTopics(questions);
     const contexts = await search.fetchRelevantSnippets(searchTopics, redirect, headerConfig);
 
+    // Questions evaluation
     const questionResponse = await search.evaluateQuestions(questions, contexts);
 
+    // Scrape Context7 snippets
     const snippets = await scrapeContext7Snippets(redirect, headerConfig);
 
-    const llm_evaluator = new LLMEvaluator(client, configOptions?.llm ?? defaultConfigOptions.llm, configOptions?.prompts);
+    // LLM evaluation
+    const llm_evaluator = new LLMEvaluator(client, configOptions?.llm, configOptions?.prompts);
     const llmResponse = await llm_evaluator.llmEvaluate(snippets);
 
+    // Text analysis
     const {
         formatting,
         metadata,
         initialization,
     } = runTextAnalysis(snippets);
 
+    // Calculate scores
     const scores = {
         question: questionResponse.questionAverageScore,
         llm: llmResponse.llmAverageScore,
@@ -107,20 +93,25 @@ export async function getScore(
         metadata: metadata.averageScore,
         initialization: initialization.averageScore,
     }
+    const averageScore = calculateAverageScore(scores, configOptions?.weights);
+    const roundedAverageScore = Math.round(averageScore);
 
-    const averageScore = calculateAverageScore(scores, configOptions?.weights ?? defaultConfigOptions.weights);
-
+    // Write results
     const fullResults = {
-        averageScore: averageScore,
-        questionAverageScore: questionResponse.questionAverageScore,
+        averageScore: roundedAverageScore,
+        questionAverageScore: Math.round(questionResponse.questionAverageScore),
         questionExplanation: questionResponse.questionExplanation,
-        llmAverageScore: llmResponse.llmAverageScore,
+        llmAverageScore: Math.round(llmResponse.llmAverageScore),
         llmExplanation: llmResponse.llmExplanation,
-        formattingAvgScore: formatting.averageScore,
-        metadataAvgScore: metadata.averageScore,
-        initializationAvgScore: initialization.averageScore,
+        formattingAvgScore: Math.round(formatting.averageScore),
+        metadataAvgScore: Math.round(metadata.averageScore),
+        initializationAvgScore: Math.round(initialization.averageScore),
     }
-    await humanReadableReport(redirect, fullResults, configOptions?.report ?? defaultConfigOptions.report, false);
-    const scoresObject = convertScorestoObject(redirect, scores, averageScore);
-    await machineReadableReport(scoresObject, configOptions?.report ?? defaultConfigOptions.report, false);
+    await humanReadableReport(redirect, fullResults, configOptions?.report, false);
+    const scoresObject = convertScorestoObject(redirect, scores, roundedAverageScore);
+    await machineReadableReport(scoresObject, configOptions?.report, false);
+
+    if (configOptions?.report?.returnScore) {
+        return roundedAverageScore;
+    }
 }

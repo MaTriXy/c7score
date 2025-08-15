@@ -4,6 +4,7 @@ import { Metrics, TextEvaluatorOutput } from './types';
 import { GoogleGenAI } from '@google/genai';
 import { backOff } from 'exponential-backoff';
 import { Octokit } from 'octokit';
+import { defaultConfigOptions } from './config';
 
 /**
  * Checks if the library has any redirects
@@ -130,7 +131,7 @@ export function runTextAnalysis(snippets: string): {
  * @param weights - The weights to use for the weighted average
  * @returns The weighted average score
  */
-export function calculateAverageScore(scores: Metrics, weights: Record<string, number>): number {
+export function calculateAverageScore(scores: Metrics, weights: Record<string, number> = defaultConfigOptions.weights): number {
     const averageScore = Object.entries(scores).reduce((total, [key, value]) => total + value * weights[key], 0);
     return averageScore;
 }

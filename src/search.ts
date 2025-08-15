@@ -3,14 +3,19 @@ import { QuestionEvaluationOutput, QuestionEvaluationPairOutput } from './types'
 import axios from 'axios';
 import { runLLM } from './utils';
 import { questionEvaluationPrompt, questionEvaluationPromptCompare, searchTopicsPrompt } from './prompts';
+import { defaultConfigOptions } from './config';
 
 export class Search {
     private product: string;
     private client: GoogleGenAI;
-    private llmConfig: Record<string, any>;
-    private prompts?: Record<string, any>;
+    private llmConfig: Record<string, number>;
+    private prompts?: Record<string, string>;
 
-    constructor(product: string, client: GoogleGenAI, llmConfig: Record<string, any>, prompts?: Record<string, any>) {
+    constructor(
+        product: string,
+        client: GoogleGenAI,
+        llmConfig: Record<string, number> = defaultConfigOptions.llm,
+        prompts?: Record<string, string>) {
         this.product = product;
         this.client = client;
         this.llmConfig = llmConfig;
@@ -96,22 +101,24 @@ export class Search {
 
     /**
      * Fetches 1 context/code snippet per topic for the library from Context7.
-     * @param topics - The search topics
+     * @param topics - The search topics. 15 questions, 5 topics per question.
      * @param library - The library to fetch the context for
      * @param headerConfig - The header config to use for the Context7 API
      * @returns 75 context/code snippets
      */
     async fetchRelevantSnippets(topics: string[][], library: string, headerConfig: object): Promise<string[][]> {
         const snippet_title = "=".repeat(24) + "\nCODE SNIPPETS\n" + "=".repeat(24);
-        const contexts = []; // 15 x 5 = 75 snippets
-        for (const questionTopics of topics) {  // total of 15 questions
-            const questionContexts = [];  // 5 snippets per question
-            for (const topic of questionTopics) {  // total of 5 topics per question
+        const contexts = [];
+        for (const questionTopics of topics) {
+            const questionContexts = [];
+            for (const topic of questionTopics) {
                 let snippets = "";
                 const topicUrl = encodeURIComponent(topic);
                 const url = `https://context7.com/api/v1/${library}?tokens=10000&topic=${topicUrl}`;
                 const response = await axios.get(url, headerConfig)
-                snippets = String(response.data).replace(snippet_title, "").split("\n" + "-".repeat(40) + "\n")[0]; // Take first snippet
+
+                // Take only first snippet to avoid high token count downstream
+                snippets = String(response.data).replace(snippet_title, "").split("\n" + "-".repeat(40) + "\n")[0];
                 questionContexts.push(snippets);
             }
             contexts.push(questionContexts);
