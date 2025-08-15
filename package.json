@@ -1,6 +1,6 @@
 {
   "name": "@shannonrumsey/context-trace",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Evaluates the quality of code snippets.",
   "main": "dist/app/index.js",
   "bin": {
