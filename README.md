@@ -44,7 +44,7 @@ await getScore("/facebook/react", {
 
 await compareLibraries(
   "/tailwindlabs/tailwindcss.com",
-  "/context7/tailwindcss",
+  "/websites/tailwindcss",
   {
     report: {
       console: true
@@ -159,10 +159,9 @@ context-trace getscore "/facebook/react" -c '{
   }
 }'
 
-context-trace \ 
-  comparelibraries \ 
+context-trace comparelibraries \ 
   "/tailwindlabs/tailwindcss.com" \ 
-  "/context7/tailwindcss" -c '{
+  "/websites/tailwindcss" -c '{
   "report": {
     "console": true
   },

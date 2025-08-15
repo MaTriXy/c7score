@@ -1,9 +1,10 @@
 import { Type, GoogleGenAI } from '@google/genai';
-import { QuestionEvaluationOutput, QuestionEvaluationPairOutput } from './types';
+import { QuestionEvaluationOutput, QuestionEvaluationPairOutput } from '../lib/types';
 import axios from 'axios';
-import { runLLM } from './utils';
-import { questionEvaluationPrompt, questionEvaluationPromptCompare, searchTopicsPrompt } from './prompts';
-import { defaultConfigOptions } from './config';
+import { runLLM } from './llmUtils';
+import { questionEvaluationPromptHandler, questionEvaluationPromptCompareHandler, searchTopicsPromptHandler } from './prompts/handler';
+import { defaultConfigOptions } from '../config/options';
+import { searchPrompt } from './prompts/templates';
 
 export class Search {
     private product: string;
@@ -24,35 +25,11 @@ export class Search {
 
     /**
      * Generates 15 questions about a product one might ask an AI coding assistant.
+     * The search prompt is not customizable by user.
      * @returns The 15 questions as a string
      */
     async googleSearch(): Promise<string> {
-        const prompt =  `
-            Generate 15 questions, 10 of which should be common and practical 
-            questions that developers frequently ask when using the product ${this.product}. 
-            These should represent real-world use cases and coding challenges. 
-        
-            Add 5 more questions that might not be very common but relevant to edge cases and 
-            less common use cases. Format each question on a new line, numbered 1-15. 
-            Questions should be specific and actionable, the kind that a developer would ask an 
-            AI coding assistant.
-        
-            Focus on diverse topics like:
-            - Component building (cards, navigation, forms, modals)
-            - Responsive design patterns
-            - Animation and transitions
-            - Dark mode implementation
-            - Custom styling and configuration
-            - Performance optimization
-            - Common UI patterns
-        
-            Example questions:
-            1. "Show me how to build a card component with shadow, hover effects, and truncated text in ${this.product}"
-            2. "How to create a responsive navigation bar with dropdown menus in ${this.product}"
-        
-            Do not include any headers in your response, only the list of questions. You may search 
-            Google for the questions.
-            `;
+        const prompt = searchPrompt.replace("{{product}}", this.product);
         const searchTool = { googleSearch: {} };
 
         const defaultConfig: object = {
@@ -77,7 +54,7 @@ export class Search {
      * @returns 75 search topics
      */
     async generateSearchTopics(questions: string): Promise<string[][]> {
-        const prompt = searchTopicsPrompt(this.product, questions, this.prompts?.searchTopics);
+        const prompt = searchTopicsPromptHandler(this.product, questions, this.prompts?.searchTopics);
 
         const config: object = {
             responseMimeType: "application/json",
@@ -133,14 +110,14 @@ export class Search {
      * @returns The average scores and explanations for each context collection
      */
     async evaluateQuestionsPair(questions: string, contexts: string[][][]): Promise<QuestionEvaluationPairOutput> {
-        const prompt = questionEvaluationPromptCompare(contexts, questions, this.prompts?.questionEvaluation);
+        const prompt = questionEvaluationPromptCompareHandler(contexts, questions, this.prompts?.questionEvaluation);
         const config: object = {
             responseMimeType: "application/json",
             responseSchema: {
                 type: Type.OBJECT,
                 properties: {
-                    questionAverageScores: { type: Type.ARRAY, minItems: contexts.length, items: { type: Type.NUMBER } },
-                    questionExplanations: { type: Type.ARRAY, minItems: contexts.length, items: { type: Type.STRING } }
+                    questionAverageScores: { type: Type.ARRAY, minItems: 2, maxItems: 2, items: { type: Type.NUMBER } },
+                    questionExplanations: { type: Type.ARRAY, minItems: 2, maxItems: 2, items: { type: Type.STRING } }
                 },
                 required: ["questionAverageScores", "questionExplanations"],
             },
@@ -165,7 +142,7 @@ export class Search {
      * @returns The average score and explanation for the context collection
      */
     async evaluateQuestions(questions: string, contexts: string[][]): Promise<QuestionEvaluationOutput> {
-        const prompt = questionEvaluationPrompt(contexts, questions, this.prompts?.questionEvaluation);
+        const prompt = questionEvaluationPromptHandler(contexts, questions, this.prompts?.questionEvaluation);
         const config: object = {
             responseMimeType: "application/json",
             responseSchema: {

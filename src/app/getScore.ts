@@ -1,12 +1,16 @@
-import { GoogleGenAI } from '@google/genai';
-import { Search } from './search';
-import { LLMEvaluator } from './llmEval'
-import { scrapeContext7Snippets, runTextAnalysis, calculateAverageScore, checkRedirects, createQuestionFile } from './utils';
-import { identifyProduct, identifyProductFile } from './libraryParser';
-import { humanReadableReport, machineReadableReport, convertScorestoObject } from './writeResults';
-import { evalOptions } from './types';
-import { Octokit } from 'octokit';
 import { config } from 'dotenv';
+import { GoogleGenAI } from '@google/genai';
+import { Octokit } from 'octokit';
+import { buildContext7Header } from '../config/header';
+import { evalOptions } from '../lib/types';
+import { runTextAnalysis, calculateAverageScore } from '../lib/utils';
+import { Search } from '../services/search';
+import { LLMEvaluator } from '../services/llmEval'
+import { getQuestionsFile, identifyProductFile, createQuestionFile } from '../services/github';
+import { checkRedirects, scrapeContext7Snippets } from '../services/context7';
+import { machineReadableReport, convertScorestoObject } from '../reports/machine';
+import { humanReadableReport } from '../reports/human';
+import { identifyProduct } from '../lib/utils';
 
 /**
  * Evaluates the snippets of a library using 5 metrics
@@ -17,7 +21,7 @@ export async function getScore(
     library: string,
     configOptions?: evalOptions
 ): Promise<void | number> {
-    
+    // Load environment variables
     config();
     const envConfig = {
         GEMINI_API_TOKEN: process.env.GEMINI_API_TOKEN,
@@ -27,14 +31,8 @@ export async function getScore(
 
     const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
     const githubClient = new Octokit({ auth: envConfig.GITHUB_API_TOKEN });
-    let headerConfig = {};
-    if (envConfig.CONTEXT7_API_TOKEN) {
-        headerConfig = {
-            headers: {
-                "Authorization": "Bearer " + envConfig.CONTEXT7_API_TOKEN
-            }
-        }
-    }
+    const headerConfig = buildContext7Header(envConfig.CONTEXT7_API_TOKEN);
+
     // Identify product of library and redirections
     const redirect = await checkRedirects(library, headerConfig);
     const prod = identifyProduct(redirect);
@@ -47,21 +45,7 @@ export async function getScore(
         questions = await search.googleSearch();
         await createQuestionFile(prod, questions, githubClient);
     } else {
-        const res = await githubClient.rest.repos.getContent({
-            owner: "upstash",
-            repo: "c7score",
-            path: `benchmark-questions/${filePath}`,
-            ref: "main",
-            headers: {
-                'X-GitHub-Api-Version': '2022-11-28'
-            }
-        });
-        const contentFile = res.data
-        if (!Array.isArray(contentFile) && contentFile.type === "file" && contentFile.content) {
-            questions = Buffer.from(contentFile.content, 'base64').toString('utf-8');
-        } else {
-            throw new Error("Content file is a directory or does not contain content.");
-        }
+        questions = await getQuestionsFile(filePath, githubClient);
     }
 
     // Generate search topics and fetch relevant snippets

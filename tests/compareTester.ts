@@ -1,4 +1,4 @@
-import { compareLibraries } from "../src/compareLib";
+import { compareLibraries } from "../src/app/compareLib";
 
 async function main() {
 

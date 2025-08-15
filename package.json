@@ -2,13 +2,13 @@
   "name": "@shannonrumsey/context-trace",
   "version": "1.2.3",
   "description": "Evaluates the quality of code snippets.",
-  "main": "dist/index.js",
+  "main": "dist/app/index.js",
   "bin": {
     "context-trace": "dist/bin/cli.js"
   },
-  "types": "dist/index.d.ts",
+  "types": "dist/app/index.d.ts",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "node dist/app/index.js",
     "build": "tsc",
     "prepare": "npm run build",
     "test": "npm run test-individual && npm run test-compare && npm run test-text-metrics",

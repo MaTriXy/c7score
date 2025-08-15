@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getScore } from "../src/getScore";
+import { getScore } from "../src/app/getScore";
 
 /**
  * Gets the top n libraries from Context7

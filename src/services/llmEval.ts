@@ -1,8 +1,8 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { LLMScores, LLMScoresCompare } from './types';
-import { runLLM } from './utils';
-import { llmEvaluationPrompt, llmEvaluationPromptCompare } from './prompts';
-import { defaultConfigOptions } from './config';
+import { LLMScores, LLMScoresCompare } from '../lib/types';
+import { runLLM } from './llmUtils';
+import { llmEvaluationPromptHandler, llmEvaluationPromptCompareHandler } from './prompts/handler';
+import { defaultConfigOptions } from '../config/options';
 
 export class LLMEvaluator {
     private client: GoogleGenAI;
@@ -24,7 +24,7 @@ export class LLMEvaluator {
      */
     async llmEvaluate(snippets: string): Promise<LLMScores> {
         const snippetDelimiter = "\n" + "-".repeat(40) + "\n";
-        const prompt = llmEvaluationPrompt(snippets, snippetDelimiter, this.prompts?.llmEvaluation);
+        const prompt = llmEvaluationPromptHandler(snippets, snippetDelimiter, this.prompts?.llmEvaluation);
 
         const config: object = {
                 responseMimeType: 'application/json',
@@ -55,14 +55,14 @@ export class LLMEvaluator {
      */
     async llmEvaluateCompare(snippets: string[]): Promise<LLMScoresCompare> {
         const snippetDelimiter = "\n" + "-".repeat(40) + "\n";
-        const prompt = llmEvaluationPromptCompare(snippets, snippetDelimiter, this.prompts?.llmEvaluation);
+        const prompt = llmEvaluationPromptCompareHandler(snippets, snippetDelimiter, this.prompts?.llmEvaluation);
         const config: object = {
             responseMimeType: 'application/json',
             responseSchema: {
                 type: 'object',
                 properties: {
-                    llmAverageScores: { type: Type.ARRAY, minItems: snippets.length, items: { type: Type.NUMBER } },
-                    llmExplanations: { type: Type.ARRAY, minItems: snippets.length, items: { type: Type.STRING } },
+                    llmAverageScores: { type: Type.ARRAY, minItems: 2, maxItems: 2, items: { type: Type.NUMBER } },
+                    llmExplanations: { type: Type.ARRAY, minItems: 2, maxItems: 2, items: { type: Type.STRING } },
                 },
                 required: ["llmAverageScores", "llmExplanations"],
             },

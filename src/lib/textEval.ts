@@ -1,5 +1,5 @@
-import { TextEvaluatorOutput } from './types';
-import * as metrics from './textMetrics';
+import { TextEvaluatorOutput } from '../lib/types';
+import * as metrics from '../lib/textMetrics';
 
 export class TextEvaluator {
   private snippets: string;

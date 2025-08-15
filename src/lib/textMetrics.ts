@@ -1,4 +1,4 @@
-import { Category } from "./types";
+import { Category } from "../lib/types";
 
 /**
  * Accesses the specified category of the snippet

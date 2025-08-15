@@ -1,7 +1,8 @@
 import { config } from 'dotenv';
 import { program } from 'commander';
-import * as textMetrics from '../src/textMetrics';
-import { scrapeContext7Snippets } from '../src/utils';
+import * as textMetrics from '../src/lib/textMetrics';
+import { scrapeContext7Snippets } from '../src/services/context7';
+import { buildContext7Header } from '../src/config/header';
 
 // Note: test URL information may change when snippets are refreshed on website
 
@@ -11,11 +12,7 @@ const envConfig = {
     CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
 };
 
-const headerConfig = {
-    headers: {
-        "Authorization": "Bearer " + envConfig.CONTEXT7_API_TOKEN
-    }
-}
+const headerConfig = buildContext7Header(envConfig.CONTEXT7_API_TOKEN);
 
 async function textMetricsTester(): Promise<void> {
     for (const [metricName, libraries] of Object.entries(testCases)) {
