@@ -22,12 +22,6 @@ Uses an LLM to evaluate qualities that cannot be automated. This includes checki
     * Are any of the snippets just imports? (e.g. import, require, etc.)
     * Are any of the snippets just installations? (e.g. pip install, etc.)
 
-## Scoring for Context7
-
-To create scores for the Context7 website: `qualityScorer.ts`
-
-    npm run score-context7
-
 ## Tests
 
 To run tests on individual evaluation: `individualTester.ts`
