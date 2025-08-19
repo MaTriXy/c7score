@@ -1,8 +1,8 @@
-# Context7's Code Snippet Evaluator
+# c7score: Context7's Code Snippet Evaluator
 
 Before running any of the files, create an `.env` file with CONTEXT7_API_TOKEN, GITHUB_API_TOKEN, and GEMINI_API_TOKEN. 
 
-## Search `search.ts`
+## Question Eval `questionEval.ts`
 Given a source URL, prompt an LLM to determine 15 common questions a developer might ask about a library. This information can be code snippets or examples. Uses Gemini model paired with Google Search tool-calling to determine the most important information about a library. Using the questions, an LLM generates topics which can be used to retrieve the relevant context7 code snippets. The retrieved snippets are rated based on how well they answer the questions.
 
 ## LLM Eval `llmEval.ts`
@@ -41,3 +41,7 @@ To check that the text evaluation metrics work as expected: `textMetricsTester.t
     npm run test-text-metrics
 
 **Note:** the text tests may become out-of-date when libraries are refreshed.
+
+## Using c7score
+
+You can install and use c7score via the npm package here: http://npmjs.com/package/@shannonrumsey/context-trace
