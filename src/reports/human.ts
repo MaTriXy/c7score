@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import { defaultConfigOptions } from '../config/options';
+import { evalOptions, FullResults } from '../lib/types';
 
 /**
  * Writes the full results to a human-readable text file
@@ -10,8 +11,8 @@ import { defaultConfigOptions } from '../config/options';
  */
 export const humanReadableReport = async (
     library: string,
-    fullResults: Record<string, any>,
-    reportOptions: Record<string, any> = defaultConfigOptions.report,
+    fullResults: FullResults,
+    reportOptions: evalOptions["report"] = defaultConfigOptions.report,
     compare: boolean = false): Promise<void> => {
     const toSave = [
         "== Average Score ==",

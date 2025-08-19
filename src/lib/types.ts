@@ -1,3 +1,11 @@
+export interface Env {
+    GEMINI_API_TOKEN: string;
+    CONTEXT7_API_TOKEN: string;
+    GITHUB_API_TOKEN: string;
+}
+
+export type CategoryType = string | string[];
+
 export interface evalOptions {
     report?: {
         console?: boolean;  // Whether to print to console
@@ -69,4 +77,36 @@ export interface ProjectData {
         initialization: number;
     };
     averageScore: number;
+}
+
+export interface Scores {
+    question: number;
+    llm: number;
+    formatting: number;
+    metadata: number;
+    initialization: number;
+}
+
+export interface FullResults {
+        averageScore: number,
+        questionAverageScore: number,
+        questionExplanation: string,
+        llmAverageScore: number,
+        llmExplanation: string,
+        formattingAvgScore: number,
+        metadataAvgScore: number,
+        initializationAvgScore: number,
+}
+
+export interface ScoresObject {
+    [productName: string]: {
+        scores: {
+            question: number;
+            llm: number;
+            formatting: number;
+            metadata: number;
+            initialization: number;
+        };
+        averageScore: number;
+    }
 }

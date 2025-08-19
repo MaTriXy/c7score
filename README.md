@@ -37,7 +37,7 @@ await getScore("/facebook/react", {
     metadata: 0.025,
     initialization: 0.025
   },
-  prompt: {
+  prompts: {
     questionEvaluation: `Evaluate ...`
   }
 });
@@ -54,7 +54,7 @@ await compareLibraries(
       topP: 0.8,
       topK: 45
     },
-    prompt: {   
+    prompts: {   
       questionEvaluation: `Evaluate ...`
     }
   }
@@ -82,7 +82,7 @@ await compareLibraries(
     topP: number;
     topK: number;
   };
-  prompt: {
+  prompts: {
     searchTopics: string;
     questionEvaluation: string;
     llmEvaluation: string;
@@ -104,7 +104,7 @@ await compareLibraries(
     * Specifies weight breakdown for evaluation metrics. The weights must sum to 1.
 * `llm`
     * LLM configuration options for Gemini
-* `prompt`
+* `prompts`
     * Replaces the current prompts. It is not recommended to change the final output result instructions or score maximum (e.g., 100 -> 10)
     * Each prompt accepts different placeholders, but they must be formatted as {{variableName}} with the correct associated variable name in the prompt (see Placeholder Reference).
 
@@ -142,33 +142,7 @@ await compareLibraries(
 ## CLI Usage
 
 ```shell
-context-trace getscore "/facebook/react" -c '{
-  "report": {
-    "console": true,
-    "folderPath": "./results"
-  },
-  "weights": {
-    "question": 0.8,
-    "llm": 0.05,
-    "formatting": 0.05,
-    "metadata": 0.025,
-    "initialization": 0.025
-  },
-  "prompts": {
-    "searchTopics": "For each question ..."
-  }
-}'
+context-trace getscore "/facebook/react" -c '{"report": {"console": true}}'
 
-context-trace comparelibraries \ 
-  "/tailwindlabs/tailwindcss.com" \ 
-  "/websites/tailwindcss" -c '{
-  "report": {
-    "console": true
-  },
-  "llm": {
-    "temperature": 0.0,
-    "topP": 0.95,
-    "topK": 40
-  }
-}'
+context-trace comparelibraries "/tailwindlabs/tailwindcss.com" "/websites/tailwindcss-com_vercel_app" -c '{"report": {"console": true}}'
 ```

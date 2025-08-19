@@ -20,7 +20,6 @@ export async function identifyProductFile(newProduct: string, githubClient: Octo
             const score = fuzzy(newProduct, fileName);
             fileScores[file.name] = score;
         }
-
         const sortedScores = Object.entries(fileScores).sort((a, b) => b[1] - a[1]);
         const bestScore = sortedScores[0];
         if (bestScore[1] > 0.8) {

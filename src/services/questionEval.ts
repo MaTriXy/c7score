@@ -6,7 +6,7 @@ import { questionEvaluationPromptHandler, questionEvaluationPromptCompareHandler
 import { defaultConfigOptions } from '../config/options';
 import { searchPrompt } from './prompts/templates';
 
-export class Search {
+export class QuestionEvaluator {
     private product: string;
     private client: GoogleGenAI;
     private llmConfig: Record<string, number>;
@@ -28,7 +28,7 @@ export class Search {
      * The search prompt is not customizable by user.
      * @returns The 15 questions as a string
      */
-    async googleSearch(): Promise<string> {
+    async generateQuestions(): Promise<string> {
         const prompt = searchPrompt.replace("{{product}}", this.product);
         const searchTool = { googleSearch: {} };
 

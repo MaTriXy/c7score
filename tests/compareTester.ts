@@ -5,7 +5,7 @@ async function main() {
     console.log("🧪 Running compare tester...")
     const libraries = [
         "/tailwindlabs/tailwindcss.com",
-        "/context7/tailwindcss",
+        "/websites/tailwindcss-com_vercel_app",
     ]
 
     await compareLibraries(libraries[0], libraries[1], {

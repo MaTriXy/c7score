@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import { ProjectData } from "../lib/types";
+import { Scores, ScoresObject } from "../lib/types";
 import { defaultConfigOptions } from '../config/options';
 
 /**
@@ -11,9 +11,9 @@ import { defaultConfigOptions } from '../config/options';
  */
 export const convertScorestoObject = (
     productName: string,
-    scores: ProjectData["scores"],
+    scores: Scores,
     averageScore: number,
-): Record<string, any> => {
+): ScoresObject => {
     return {
         [productName]: {
             scores: scores,
@@ -29,12 +29,12 @@ export const convertScorestoObject = (
  * @param compare - Whether the report is for a comparison or individual library
  */
 export const machineReadableReport = async (
-    input: Record<string, ProjectData>,
+    input: ScoresObject,
     reportOptions: Record<string, any> = defaultConfigOptions.report,
     compare: boolean = false): Promise<void> => {
     if (reportOptions.folderPath) {
         const filePath = `${reportOptions.folderPath}/result${compare ? "-compare" : ""}.json`;
-        let obj: Record<string, ProjectData> = {};
+        let obj: ScoresObject = {};
         try {
             const resultFile = await fs.readFile(filePath, "utf-8");
             obj = JSON.parse(resultFile);

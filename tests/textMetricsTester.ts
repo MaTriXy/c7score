@@ -1,16 +1,12 @@
-import { config } from 'dotenv';
 import { program } from 'commander';
 import * as textMetrics from '../src/lib/textMetrics';
 import { scrapeContext7Snippets } from '../src/services/context7';
 import { buildContext7Header } from '../src/config/header';
+import { validateEnv } from '../src/config/envValidator';
 
 // Note: test URL information may change when snippets are refreshed on website
 
-config();
-
-const envConfig = {
-    CONTEXT7_API_TOKEN: process.env.CONTEXT7_API_TOKEN,
-};
+const envConfig = validateEnv();
 
 const headerConfig = buildContext7Header(envConfig.CONTEXT7_API_TOKEN);
 
@@ -34,13 +30,14 @@ const testCases: { [key: string]: Record<string, boolean> } = {
         '/1password/onepassword-sdk-js': false,
     },
     codeSnippetLength: {
+        'steamre/steamkit': true,
         '/eclipse-4diac/4diac-forte': true,
         '/context7/coderabbitai_github_io-bitbucket': true,
         '/context7/tailwindcss': true,
         '/humanlayer/12-factor-agents': true,
     },
     multipleCode: {
-        '/context7/tailwindcss': true,
+        '/websites/tailwindcss-com_vercel_app': false,
         '/1password/onepassword-sdk-js': true,
         '/nvidia-omniverse/ext-7z': true,
     },

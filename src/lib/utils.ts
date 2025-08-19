@@ -1,6 +1,6 @@
 import { TextEvaluator } from './textEval';
 import { Metrics, TextEvaluatorOutput } from './types';
-
+import { fuzzy } from 'fast-fuzzy';
 import { defaultConfigOptions } from '../config/options';
 
 /**
@@ -14,6 +14,21 @@ export function identifyProduct(library: string): string {
     const prodSplit = libraryNormalized.split("/");
     const finalProduct = prodSplit[prodSplit.length - 1].trim();
     return finalProduct;
+}
+
+/**
+ * Checks if the products are the same
+ * @param prods - The products to check
+ * @returns If the products are the same, returns the first product, otherwise throws an error
+ */
+export function checkSameProduct(prods: string[]): string {
+    const prod1 = prods[0];
+    const prod2 = prods[1];
+    const matchScore = fuzzy(prod1, prod2);
+    if (matchScore < 0.8) {
+        throw new Error(`${prods[0]} and ${prods[1]} are not the same product`);
+    }
+    return prod1
 }
 
 /**
