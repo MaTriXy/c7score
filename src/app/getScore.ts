@@ -1,13 +1,13 @@
 import { GoogleGenAI } from '@google/genai';
 import { Octokit } from 'octokit';
 import { buildContext7Header } from '../config/header';
-import { evalOptions } from '../lib/types';
+import { EvalOptions } from '../lib/types';
 import { runTextAnalysis, calculateAverageScore } from '../lib/utils';
 import { QuestionEvaluator } from '../services/questionEval';
 import { LLMEvaluator } from '../services/llmEval'
 import { getQuestionsFile, identifyProductFile, createQuestionFile } from '../services/github';
 import { checkRedirects, scrapeContext7Snippets } from '../services/context7';
-import { machineReadableReport, convertScorestoObject } from '../reports/machine';
+import { machineReadableReport, convertScoresToObject } from '../reports/machine';
 import { humanReadableReport } from '../reports/human';
 import { identifyProduct } from '../lib/utils';
 import { validateEnv } from '../config/envValidator';
@@ -19,7 +19,7 @@ import { validateEnv } from '../config/envValidator';
  */
 export async function getScore(
     library: string,
-    configOptions?: evalOptions
+    configOptions?: EvalOptions
 ): Promise<void | number> {
     // Load environment variables
     const envConfig = validateEnv();
@@ -71,9 +71,9 @@ export async function getScore(
     const scores = {
         question: questionResponse.questionAverageScore,
         llm: llmResponse.llmAverageScore,
-        formatting: formatting.averageScore,
-        metadata: metadata.averageScore,
-        initialization: initialization.averageScore,
+        formatting: formatting,
+        metadata: metadata,
+        initialization: initialization
     }
     const averageScore = calculateAverageScore(scores, configOptions?.weights);
     const roundedAverageScore = Math.round(averageScore);
@@ -85,12 +85,12 @@ export async function getScore(
         questionExplanation: questionResponse.questionExplanation,
         llmAverageScore: Math.round(llmResponse.llmAverageScore),
         llmExplanation: llmResponse.llmExplanation,
-        formattingAvgScore: Math.round(formatting.averageScore),
-        metadataAvgScore: Math.round(metadata.averageScore),
-        initializationAvgScore: Math.round(initialization.averageScore),
+        formattingAvgScore: Math.round(formatting),
+        metadataAvgScore: Math.round(metadata),
+        initializationAvgScore: Math.round(initialization),
     }
     await humanReadableReport(redirect, fullResults, configOptions?.report, false);
-    const scoresObject = convertScorestoObject(redirect, scores, roundedAverageScore);
+    const scoresObject = convertScoresToObject(redirect, scores, roundedAverageScore);
     await machineReadableReport(scoresObject, configOptions?.report, false);
 
     if (configOptions?.report?.returnScore) {

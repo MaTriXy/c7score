@@ -1,5 +1,5 @@
 import { TextEvaluator } from './textEval';
-import { Metrics, TextEvaluatorOutput } from './types';
+import { Metrics, Weights } from './types';
 import { fuzzy } from 'fast-fuzzy';
 import { defaultConfigOptions } from '../config/options';
 
@@ -37,9 +37,9 @@ export function checkSameProduct(prods: string[]): string {
  * @returns The average scores for each metric
  */
 export function runTextAnalysis(snippets: string): {
-    formatting: TextEvaluatorOutput,
-    metadata: TextEvaluatorOutput,
-    initialization: TextEvaluatorOutput
+    formatting: number,
+    metadata: number,
+    initialization: number
 } {
     const textEvaluator = new TextEvaluator(snippets);
     const formatting = textEvaluator.formatting();
@@ -52,9 +52,29 @@ export function runTextAnalysis(snippets: string): {
  * Calculates the final average score based on context, text analysis, and LLM metrics
  * @param scores - The scores used to calculate the weighted average
  * @param weights - The weights to use for the weighted average
- * @returns The weighted average score
+ * @returns the average score
  */
-export function calculateAverageScore(scores: Metrics, weights: Record<string, number> = defaultConfigOptions.weights): number {
-    const averageScore = Object.entries(scores).reduce((total, [key, value]) => total + value * weights[key], 0);
+export function calculateAverageScore(scores: Metrics, weights: Weights = defaultConfigOptions.weights): number {
+    const scoresKeys = Object.keys(scores);
+    const weightsKeys = Object.keys(weights);
+
+    // Check that the weights sum to 1
+    const EPS = 0.000001;
+    const weightsSum = Object.values(weights).reduce((a, b) => a + b, 0);
+    if (Math.abs(weightsSum - 1) > EPS) {
+        throw new Error("Weights must sum to 1");
+    }
+
+    // Check that the weights and scores have the same keys
+    if (weightsKeys.length !== scoresKeys.length || !scoresKeys.every(key => weightsKeys.includes(key))) {
+        throw new Error("Weights and scores have different number of keys or keys are not the same");
+    }
+
+    // Calculate the average score (weighted)
+    const averageScore = scoresKeys.reduce((total, key) => {
+        const score = scores[key as keyof Metrics];
+        const weight = weights[key as keyof Weights];
+        return total + score * weight;
+    }, 0);
     return averageScore;
 }

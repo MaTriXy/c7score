@@ -8,7 +8,7 @@ import { backOff } from 'exponential-backoff';
  * @param client - The client to use for the LLM evaluation
  * @returns The response from the LLM
  */
-export async function runLLM(prompt: string, config: Record<string, any>, client: GoogleGenAI): Promise<any> {
+export async function runLLM(prompt: string, config: Record<string, any>, client: GoogleGenAI): Promise<string> {
     const countTokensResponse = await client.models.countTokens({
         model: "gemini-2.5-pro",
         contents: prompt,
@@ -18,7 +18,7 @@ export async function runLLM(prompt: string, config: Record<string, any>, client
         // 1 Gemini token = roughly 4 characters, using 3 to not go over limit
         prompt = prompt.slice(0, 1048576 * 3);
     }
-    const generate = async (): Promise<any> => {
+    const generate = async (): Promise<string> => {
         const response = await client.models.generateContent({
             model: "gemini-2.5-pro",
             contents: [prompt],

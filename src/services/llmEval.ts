@@ -1,18 +1,18 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { LLMScores, LLMScoresCompare } from '../lib/types';
+import { LLMScores, LLMScoresCompare, LLMOptions, Prompts } from '../lib/types';
 import { runLLM } from './llmUtils';
 import { llmEvaluationPromptHandler, llmEvaluationPromptCompareHandler } from './prompts/handler';
 import { defaultConfigOptions } from '../config/options';
 
 export class LLMEvaluator {
     private client: GoogleGenAI;
-    private llmConfig: Record<string, number>;
-    private prompts?: Record<string, string>;
+    private llmConfig: LLMOptions;
+    private prompts?: Prompts;
 
     constructor(
         client: GoogleGenAI,
-        llmConfig: Record<string, number> = defaultConfigOptions.llm,
-        prompts?: Record<string, string>) {
+        llmConfig: LLMOptions = defaultConfigOptions.llm,
+        prompts?: Prompts) {
         this.client = client;
         this.llmConfig = llmConfig;
         this.prompts = prompts;

@@ -34,8 +34,8 @@ await getScore("/facebook/react", {
     question: 0.8,
     llm: 0.05,
     formatting: 0.05,
-    metadata: 0.025,
-    initialization: 0.025
+    metadata: 0.05,
+    initialization: 0.05
   },
   prompts: {
     questionEvaluation: `Evaluate ...`
@@ -101,7 +101,7 @@ await compareLibraries(
     * `humanReadable` writes the results to a txt file.
     * `returnScore` returns the average score as a number for `getScore` and an object for `compareLibraries`.
 * `weights`
-    * Specifies weight breakdown for evaluation metrics. The weights must sum to 1.
+    * Specifies weight breakdown for evaluation metrics. If changing the weights, all must have an associated value (can be 0) and must sum to 1.
 * `llm`
     * LLM configuration options for Gemini
 * `prompts`
@@ -127,8 +127,8 @@ await compareLibraries(
     question: 0.8,
     llm: 0.05,
     formatting: 0.05,
-    metadata: 0.025,
-    initialization: 0.025
+    metadata: 0.05,
+    initialization: 0.05
   },
   llm: {
     temperature: 1.0,

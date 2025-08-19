@@ -1,4 +1,4 @@
-import { CategoryType, Category } from "../lib/types";
+import { Category } from "../lib/types";
 
 /**
  * Accesses the specified category of the snippet
@@ -6,7 +6,7 @@ import { CategoryType, Category } from "../lib/types";
    * @param category - The category to access. Must be one of the following: TITLE, DESCRIPTION, SOURCE, LANGUAGE, CODE (case-sensitive)
    * @returns The category, or if the category is language or code, then it is everything that occurs after the category keyword
  */
-function accessCategory(snippet: string, category: Category): CategoryType {
+function accessCategory(snippet: string, category: Category): string | string[] {
     if (!snippet) {
         throw new Error("Snippet must be non-empty strings");
     }

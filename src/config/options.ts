@@ -11,8 +11,8 @@ export const defaultConfigOptions = {
         question: 0.8,
         llm: 0.05,
         formatting: 0.05,
-        metadata: 0.025,
-        initialization: 0.025,
+        metadata: 0.05,
+        initialization: 0.05,
     },
     llm: {
         temperature: 1.0,

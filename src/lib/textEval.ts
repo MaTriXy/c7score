@@ -1,4 +1,3 @@
-import { TextEvaluatorOutput } from '../lib/types';
 import * as metrics from '../lib/textMetrics';
 
 export class TextEvaluator {
@@ -20,7 +19,7 @@ export class TextEvaluator {
    * Evaluates the formatting of snippets
    * @returns The average score for the library
    */
-  formatting(): TextEvaluatorOutput {
+  formatting(): number {
     try {
       const snippetsList = this.splitSnippets();
       let improperFormatting = 0;
@@ -36,7 +35,7 @@ export class TextEvaluator {
           improperFormatting++;
         }
       }
-      return { averageScore: ((snippetsList.length - improperFormatting) / snippetsList.length) * 100 };
+      return ((snippetsList.length - improperFormatting) / snippetsList.length) * 100;
 
     } catch (error) {
       throw new Error("Error in formatting: " + error);
@@ -47,7 +46,7 @@ export class TextEvaluator {
    * Evaluates the frequency of project metadata in the snippets
    * @returns The average score for the library
    */
-  metadata(): TextEvaluatorOutput {
+  metadata(): number {
     try {
       const snippetsList = this.splitSnippets();
       let projectMetadata = 0;
@@ -61,7 +60,7 @@ export class TextEvaluator {
           projectMetadata++;
         }
       }
-      return { averageScore: ((snippetsList.length - projectMetadata) / snippetsList.length) * 100 };
+      return ((snippetsList.length - projectMetadata) / snippetsList.length) * 100;
     } catch (error) {
       throw new Error("Error in project metadata: " + error);
     }
@@ -71,7 +70,7 @@ export class TextEvaluator {
    * Evaluates the frequency of initialization information in the snippets
    * @returns The average score for the library
    */
-  initialization(): TextEvaluatorOutput {
+  initialization(): number {
     try {
       const snippetsList = this.splitSnippets();
       let initializationCheck = 0;
@@ -84,7 +83,7 @@ export class TextEvaluator {
           initializationCheck++;
         }
       }
-      return { averageScore: ((snippetsList.length - initializationCheck) / snippetsList.length) * 100 };
+      return ((snippetsList.length - initializationCheck) / snippetsList.length) * 100;
     } catch (error) {
       throw new Error("Error in initialization: " + error);
     }

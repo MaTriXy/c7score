@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import { Scores, ScoresObject } from "../lib/types";
+import { Scores, ScoresObject, ReportOptions } from "../lib/types";
 import { defaultConfigOptions } from '../config/options';
 
 /**
@@ -9,7 +9,7 @@ import { defaultConfigOptions } from '../config/options';
  * @param averageScore - The average score to convert
  * @returns The converted scores and average score
  */
-export const convertScorestoObject = (
+export const convertScoresToObject = (
     productName: string,
     scores: Scores,
     averageScore: number,
@@ -30,7 +30,7 @@ export const convertScorestoObject = (
  */
 export const machineReadableReport = async (
     input: ScoresObject,
-    reportOptions: Record<string, any> = defaultConfigOptions.report,
+    reportOptions: ReportOptions = defaultConfigOptions.report,
     compare: boolean = false): Promise<void> => {
     if (reportOptions.folderPath) {
         const filePath = `${reportOptions.folderPath}/result${compare ? "-compare" : ""}.json`;

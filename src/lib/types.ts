@@ -4,9 +4,7 @@ export interface Env {
     GITHUB_API_TOKEN: string;
 }
 
-export type CategoryType = string | string[];
-
-export interface evalOptions {
+export interface EvalOptions {
     report?: {
         console?: boolean;  // Whether to print to console
         folderPath?: string; // Where to save the human readable or machine readable report
@@ -33,6 +31,39 @@ export interface evalOptions {
         questionEvaluation?: string;
         llmEvaluation?: string;
     }
+}
+
+export interface HeaderConfig {
+    headers: {
+        "Authorization": string;
+    }
+}
+
+export interface ReportOptions {
+    console?: boolean;
+    folderPath?: string;
+    humanReadable?: boolean;
+    returnScore?: boolean;
+}
+
+export interface Weights {
+    question: number;
+    llm: number;
+    formatting: number;
+    metadata: number;
+    initialization: number;
+}
+
+export interface LLMOptions {
+    temperature?: number;
+    topP?: number;
+    topK?: number;
+}
+
+export interface Prompts {
+    searchTopics?: string;
+    questionEvaluation?: string;
+    llmEvaluation?: string;
 }
 
 export interface QuestionEvaluationOutput {
@@ -64,10 +95,6 @@ export interface Metrics {
     initialization: number;
 }
 
-export interface TextEvaluatorOutput {
-    averageScore: number;
-}
-
 export interface ProjectData {
     scores: {
         question: number;
@@ -88,14 +115,14 @@ export interface Scores {
 }
 
 export interface FullResults {
-        averageScore: number,
-        questionAverageScore: number,
-        questionExplanation: string,
-        llmAverageScore: number,
-        llmExplanation: string,
-        formattingAvgScore: number,
-        metadataAvgScore: number,
-        initializationAvgScore: number,
+    averageScore: number,
+    questionAverageScore: number,
+    questionExplanation: string,
+    llmAverageScore: number,
+    llmExplanation: string,
+    formattingAvgScore: number,
+    metadataAvgScore: number,
+    initializationAvgScore: number,
 }
 
 export interface ScoresObject {
