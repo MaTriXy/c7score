@@ -1,6 +1,6 @@
 # c7score: Context7's Code Snippet Evaluator
 
-Before running any of the files, create an `.env` file with CONTEXT7_API_TOKEN, GITHUB_API_TOKEN, and GEMINI_API_TOKEN. 
+Before running any of the files, create an `.env` file with CONTEXT7_API_TOKEN, GITHUB_API_TOKEN, and GEMINI_API_TOKEN (unless using Vertex AI). If using Vertex AI, the file should include VERTEX_AI, GOOGLE_CLOUD_PROJECT, and GOOGLE_APPLICATION_CREDENTIALS (which is a path to the file containing the credentials).
 
 ## Question Eval `questionEval.ts`
 Given a source URL, prompt an LLM to determine 15 common questions a developer might ask about a library. This information can be code snippets or examples. Uses Gemini model paired with Google Search tool-calling to determine the most important information about a library. Using the questions, an LLM generates topics which can be used to retrieve the relevant context7 code snippets. The retrieved snippets are rated based on how well they answer the questions.

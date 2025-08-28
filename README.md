@@ -15,12 +15,7 @@ The `context-trace` package is used to evaluate the quality of Upstash's Context
 ## Usage
 **Requirements:** 
 
-Create a `.env` file containing:
-```text
-GEMINI_API_TOKEN=...
-GITHUB_API_TOKEN=...
-CONTEXT7_API_TOKEN=...
-```
+Before running any of the files, create an `.env` file with CONTEXT7_API_TOKEN, GITHUB_API_TOKEN, and GEMINI_API_TOKEN (unless using Vertex AI). If using Vertex AI, the file should include VERTEX_AI, GOOGLE_CLOUD_PROJECT, and GOOGLE_APPLICATION_CREDENTIALS (which is a path to the file containing the credentials).
 
 ```typescript
 import { getScore, compareLibraries } from "@shannonrumsey/context-trace";
