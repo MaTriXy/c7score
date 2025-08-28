@@ -1,3 +1,3 @@
-export { getScore } from "./getScore";
-export { compareLibraries } from "./compareLib";
-export * from "../lib/types"
+export { getScore } from "./getScore.js";
+export { compareLibraries } from "./compareLib.js";
+export * from "../lib/types.js";

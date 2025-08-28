@@ -1,4 +1,4 @@
-import * as prompts from "./templates";
+import * as prompts from "./templates.js";
 
 /**
  * Determines if the prompt will be the default or one provided by the user.

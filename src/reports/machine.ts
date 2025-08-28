@@ -1,6 +1,6 @@
 import fs from "fs/promises";
-import { Scores, ScoresObject, ReportOptions } from "../lib/types";
-import { defaultConfigOptions } from '../config/options';
+import { Scores, ScoresObject, ReportOptions } from "../lib/types.js";
+import { defaultConfigOptions } from '../config/options.js';
 
 /**
  * Converts the scores and average score into an object

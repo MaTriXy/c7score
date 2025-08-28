@@ -1,14 +1,17 @@
 import { program } from 'commander';
-import * as textMetrics from '../src/lib/textMetrics';
-import { scrapeContext7Snippets } from '../src/services/context7';
-import { buildContext7Header } from '../src/config/header';
-import { validateEnv } from '../src/config/envValidator';
+import * as textMetrics from '../src/lib/textMetrics.ts';
+import { scrapeContext7Snippets } from '../src/services/context7.ts';
+import { buildContext7Header } from '../src/config/header.ts';
+import { config } from 'dotenv';
 
 // Note: test URL information may change when snippets are refreshed on website
 
-const envConfig = validateEnv();
+config();
 
-const headerConfig = buildContext7Header(envConfig.CONTEXT7_API_TOKEN);
+if (!process.env.CONTEXT7_API_TOKEN) {
+    throw new Error("CONTEXT7_API_TOKEN environment variable is required for Context7 API authentication!");
+}
+const headerConfig = buildContext7Header(process.env.CONTEXT7_API_TOKEN);
 
 async function textMetricsTester(): Promise<void> {
     for (const [metricName, libraries] of Object.entries(testCases)) {

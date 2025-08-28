@@ -1,17 +1,17 @@
 import { GoogleGenAI } from '@google/genai';
-import { Octokit } from 'octokit';
-import { buildContext7Header } from '../config/header';
-import { EvalOptions } from '../lib/types';
-import { runTextAnalysis, calculateAverageScore } from '../lib/utils';
-import { QuestionEvaluator } from '../services/questionEval';
-import { LLMEvaluator } from '../services/llmEval'
-import { getQuestionsFile, identifyProductFile, createQuestionFile } from '../services/github';
-import { checkRedirects, scrapeContext7Snippets } from '../services/context7';
-import { machineReadableReport, convertScoresToObject } from '../reports/machine';
-import { humanReadableReport } from '../reports/human';
-import { identifyProduct } from '../lib/utils';
-import { validateEnv } from '../config/envValidator';
-import { checkSameProduct } from '../lib/utils';
+import { Octokit } from '@octokit/rest';
+import { buildContext7Header } from '../config/header.js';
+import { EvalOptions } from '../lib/types.js';
+import { runTextAnalysis, calculateAverageScore } from '../lib/utils.js';
+import { QuestionEvaluator } from '../services/questionEval.js';
+import { LLMEvaluator } from '../services/llmEval.js'
+import { getQuestionsFile, identifyProductFile, createQuestionFile } from '../services/github.js';
+import { checkRedirects, scrapeContext7Snippets } from '../services/context7.js';
+import { machineReadableReport, convertScoresToObject } from '../reports/machine.js';
+import { humanReadableReport } from '../reports/human.js';
+import { identifyProduct } from '../lib/utils.js';
+import { checkSameProduct } from '../lib/utils.js';
+import { config } from 'dotenv';
 
 /**
  * Compares the snippets of two library using 5 metrics
@@ -24,15 +24,47 @@ export async function compareLibraries(
     library2: string,
     configOptions?: EvalOptions
 ): Promise<void | Record<string, number>> {
-    // Load environment variables
-    const envConfig = validateEnv();
+    
+   // Load environment variables
+   config();
 
-    // Initialize clients
-    const client = new GoogleGenAI({ apiKey: envConfig.GEMINI_API_TOKEN });
-    const githubClient = new Octokit({ auth: envConfig.GITHUB_API_TOKEN });
+   if (!process.env.CONTEXT7_API_TOKEN) {
+       throw new Error("CONTEXT7_API_TOKEN environment variable is required for Context7 API authentication!");
+   }
+   if (!process.env.GITHUB_API_TOKEN) {
+       throw new Error("GITHUB_API_TOKEN environment variable is required for GitHub API authentication!");
+   }
+
+   // Initialize clients
+   let client: GoogleGenAI;
+   if (process.env.VERTEX_AI) {
+       if (!process.env.GOOGLE_CLOUD_PROJECT) {
+           throw new Error("GOOGLE_CLOUD_PROJECT environment variable is required for Vertex AI authentication!");
+       }
+       const GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT;
+       const GOOGLE_CLOUD_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || "global";
+
+       // Always set GOOGLE_APPLICATION_CREDENTIALS if not already set
+       if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+           throw new Error("Google Application Credentials not set!");
+       }
+
+       client = new GoogleGenAI({
+           vertexai: true,
+           project: GOOGLE_CLOUD_PROJECT,
+           location: GOOGLE_CLOUD_LOCATION,
+
+       });
+   } else {
+       if (!process.env.GEMINI_API_TOKEN) {
+           throw new Error("GEMINI_API_TOKEN environment variable is required for Gemini API authentication!");
+       }
+       client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_TOKEN });
+   }
+   const githubClient = new Octokit({ auth: process.env.GITHUB_API_TOKEN });
 
     // Build header config for Context7 API
-    const headerConfig = buildContext7Header(envConfig.CONTEXT7_API_TOKEN);
+    const headerConfig = buildContext7Header(process.env.CONTEXT7_API_TOKEN);
 
     // Identify products of libraries and redirections
     const libraryList = [library1, library2];

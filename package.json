@@ -2,6 +2,7 @@
   "name": "@shannonrumsey/context-trace",
   "version": "1.2.6",
   "description": "Evaluates the quality of code snippets.",
+  "type": "module",
   "main": "dist/app/index.js",
   "bin": {
     "context-trace": "dist/bin/cli.js"
@@ -12,9 +13,9 @@
     "build": "tsc",
     "prepare": "npm run build",
     "test": "npm run test-individual && npm run test-compare && npm run test-text-metrics",
-    "test-individual": "ts-node tests/individualTester.ts",
-    "test-compare": "ts-node tests/compareTester.ts",
-    "test-text-metrics": "ts-node tests/textMetricsTester.ts",
+    "test-individual": "tsx tests/individualTester.ts",
+    "test-compare": "tsx tests/compareTester.ts",
+    "test-text-metrics": "tsx tests/textMetricsTester.ts",
     "ctrace-worker": "node dist/bin/cli.js worker",
     "ctrace": "node dist/bin/cli.js compare"
   },
@@ -32,13 +33,13 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.57.0",
     "@google/genai": "^1.9.0",
+    "@octokit/rest": "^21.1.1",
     "@upstash/redis": "^1.35.2",
     "axios": "^1.7.2",
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "exponential-backoff": "^3.1.2",
     "fast-fuzzy": "^1.12.0",
-    "octokit": "^5.0.3",
     "openai": "^5.12.1"
   },
   "devDependencies": {
@@ -46,6 +47,7 @@
     "@types/node": "^24.0.14",
     "eslint": "^9.31.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
     "typescript": "^5.8.3"
   }
 }

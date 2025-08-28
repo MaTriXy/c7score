@@ -1,4 +1,4 @@
-import * as metrics from '../lib/textMetrics';
+import * as metrics from '../lib/textMetrics.js';
 
 export class TextEvaluator {
   private snippets: string;

@@ -1,10 +1,10 @@
 import { Type, GoogleGenAI } from '@google/genai';
-import { QuestionEvaluationOutput, QuestionEvaluationPairOutput } from '../lib/types';
+import { QuestionEvaluationOutput, QuestionEvaluationPairOutput } from '../lib/types.js';
 import axios from 'axios';
-import { runLLM } from './llmUtils';
-import { questionEvaluationPromptHandler, questionEvaluationPromptCompareHandler, searchTopicsPromptHandler } from './prompts/handler';
-import { defaultConfigOptions } from '../config/options';
-import { searchPrompt } from './prompts/templates';
+import { runLLM } from './llmUtils.js';
+import { questionEvaluationPromptHandler, questionEvaluationPromptCompareHandler, searchTopicsPromptHandler } from './prompts/handler.js';
+import { defaultConfigOptions } from '../config/options.js';
+import { searchPrompt } from './prompts/templates.js';
 
 export class QuestionEvaluator {
     private product: string;

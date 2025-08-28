@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { program } from 'commander';
-import { getScore } from '../app/getScore';
-import { compareLibraries } from '../app/compareLib';
+import { getScore } from '../app/getScore.js';
+import { compareLibraries } from '../app/compareLib.js';
     
 program
     .command('getscore')

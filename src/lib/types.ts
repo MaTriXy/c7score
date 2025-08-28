@@ -1,10 +1,19 @@
 export interface Env {
-    GEMINI_API_TOKEN: string;
+    GEMINI_API_TOKEN?: string;
     CONTEXT7_API_TOKEN: string;
     GITHUB_API_TOKEN: string;
+    USE_VERTEX_AI?: boolean;
+    GOOGLE_CLOUD_PROJECT?: string;
+    GOOGLE_CLOUD_LOCATION?: string;
 }
 
 export interface EvalOptions {
+    geminiConfig?: {
+        vertexai: boolean,
+        project: string,
+        location: string,
+        httpOptions: {timeout: number}
+    };
     report?: {
         console?: boolean;  // Whether to print to console
         folderPath?: string; // Where to save the human readable or machine readable report

@@ -1,8 +1,8 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { LLMScores, LLMScoresCompare, LLMOptions, Prompts } from '../lib/types';
-import { runLLM } from './llmUtils';
-import { llmEvaluationPromptHandler, llmEvaluationPromptCompareHandler } from './prompts/handler';
-import { defaultConfigOptions } from '../config/options';
+import { LLMScores, LLMScoresCompare, LLMOptions, Prompts } from '../lib/types.js';
+import { runLLM } from './llmUtils.js';
+import { llmEvaluationPromptHandler, llmEvaluationPromptCompareHandler } from './prompts/handler.js';
+import { defaultConfigOptions } from '../config/options.js';
 
 export class LLMEvaluator {
     private client: GoogleGenAI;

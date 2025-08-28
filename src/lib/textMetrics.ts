@@ -1,4 +1,4 @@
-import { Category } from "../lib/types";
+import { Category } from "../lib/types.js";
 
 /**
  * Accesses the specified category of the snippet

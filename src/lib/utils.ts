@@ -1,7 +1,8 @@
-import { TextEvaluator } from './textEval';
-import { Metrics, Weights } from './types';
+import { TextEvaluator } from './textEval.js';
+import { Metrics, Weights } from './types.js';
 import { fuzzy } from 'fast-fuzzy';
-import { defaultConfigOptions } from '../config/options';
+import { defaultConfigOptions } from '../config/options.js';
+import axios from 'axios';
 
 /**
  * Identifies the product of a library
@@ -78,3 +79,22 @@ export function calculateAverageScore(scores: Metrics, weights: Weights = defaul
     }, 0);
     return averageScore;
 }
+
+/**
+ * [ARCHIVED] TODO: Update this function with the new url
+ * Gets the top n libraries from Context7
+ * @returns The top n libraries as an array of strings
+ */
+export async function getPopLibraries(top_num: number): Promise<string[]> {
+    const response = await axios.get("https://context7.com/admin/stats", {timeout: 30000});
+    const jsonData = response.data as Record<string, any>;
+    const libraries = jsonData["data"];
+    const librariesByPop = Object.entries(libraries).reduce((acc, [key, value]) => {
+        acc[key] = Object.values(value as Record<string, number>).reduce((sum: number, curr: number) => sum + curr, 0);
+        return acc;
+    }, {} as Record<string, number>);
+    const popLibraries = Object.fromEntries(Object.entries(librariesByPop).sort((a, b) => b[1] - a[1]));
+    const topPopLibraries = Object.keys(popLibraries).slice(0, top_num);
+    return topPopLibraries;
+}
+

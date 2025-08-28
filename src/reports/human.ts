@@ -1,6 +1,6 @@
 import fs from "fs/promises";
-import { defaultConfigOptions } from '../config/options';
-import { FullResults, ReportOptions } from '../lib/types';
+import { defaultConfigOptions } from '../config/options.js';
+import { FullResults, ReportOptions } from '../lib/types.js';
 
 /**
  * Writes the full results to a human-readable text file

@@ -1,4 +1,4 @@
-import { HeaderConfig } from "../lib/types";
+import { HeaderConfig } from "../lib/types.js";
 
 /**
  * Builds the header config for the Context7 API
