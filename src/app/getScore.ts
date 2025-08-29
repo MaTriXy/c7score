@@ -28,9 +28,13 @@ export async function getScore(
     if (!process.env.CONTEXT7_API_TOKEN) {
         throw new Error("CONTEXT7_API_TOKEN environment variable is required for Context7 API authentication!");
     }
+    // Build header config for Context7 API
+    const headerConfig = buildContext7Header(process.env.CONTEXT7_API_TOKEN);
+    
     if (!process.env.GITHUB_API_TOKEN) {
         throw new Error("GITHUB_API_TOKEN environment variable is required for GitHub API authentication!");
     }
+    const githubClient = new Octokit({ auth: process.env.GITHUB_API_TOKEN });
 
     // Initialize clients
     let client: GoogleGenAI;
@@ -41,9 +45,8 @@ export async function getScore(
         const GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT;
         const GOOGLE_CLOUD_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || "global";
 
-        // Always set GOOGLE_APPLICATION_CREDENTIALS if not already set
         if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-            throw new Error("Google Application Credentials not set!");
+            throw new Error("GOOGLE_APPLICATION_CREDENTIALS not set!");
         }
 
         client = new GoogleGenAI({
@@ -54,14 +57,10 @@ export async function getScore(
         });
     } else {
         if (!process.env.GEMINI_API_TOKEN) {
-            throw new Error("GEMINI_API_TOKEN environment variable is required for Gemini API authentication!");
+            throw new Error("If using Vertex AI, set VERTEX_AI to true, otherwise GEMINI_API_TOKEN environment variable is needed");
         }
         client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_TOKEN });
     }
-    const githubClient = new Octokit({ auth: process.env.GITHUB_API_TOKEN });
-    
-    // Build header config for Context7 API
-    const headerConfig = buildContext7Header(process.env.CONTEXT7_API_TOKEN);
 
     // Identify product of library and redirections
     const redirect = await checkRedirects(library, headerConfig);
