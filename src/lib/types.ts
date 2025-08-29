@@ -1,12 +1,3 @@
-export interface Env {
-    GEMINI_API_TOKEN?: string;
-    CONTEXT7_API_TOKEN: string;
-    GITHUB_API_TOKEN: string;
-    USE_VERTEX_AI?: boolean;
-    GOOGLE_CLOUD_PROJECT?: string;
-    GOOGLE_CLOUD_LOCATION?: string;
-}
-
 export interface EvalOptions {
     geminiConfig?: {
         vertexai: boolean,
