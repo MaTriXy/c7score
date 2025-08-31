@@ -1,10 +1,4 @@
 export interface EvalOptions {
-    geminiConfig?: {
-        vertexai: boolean,
-        project: string,
-        location: string,
-        httpOptions: {timeout: number}
-    };
     report?: {
         console?: boolean;  // Whether to print to console
         folderPath?: string; // Where to save the human readable or machine readable report
